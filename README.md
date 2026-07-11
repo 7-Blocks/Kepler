@@ -5,7 +5,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Space-Tech-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/AI-Powered-green?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Open%20Innovation-FAR%20AWAY%202026-orange?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Status-Active%20Development-red?style=for-the-badge" />
 </p>
 
