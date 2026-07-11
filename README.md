@@ -506,38 +506,6 @@ Future capabilities:
 
 ---
 
-# 🏆 FAR AWAY 2026 Alignment
-
-### Innovation
-
-✅ AI-powered orbital intelligence
-
-### Technical Depth
-
-✅ Orbital mechanics + AI + visualization
-
-### Engineering Quality
-
-✅ Production-grade architecture
-
-### Real-World Impact
-
-✅ Space safety
-
-### Scalability
-
-✅ Global deployment potential
-
-### Design
-
-✅ Mission-control experience
-
-### Execution
-
-✅ Prototype-ready implementation
-
----
-
 # 🔮 Future Roadmap
 
 ### Phase 1
