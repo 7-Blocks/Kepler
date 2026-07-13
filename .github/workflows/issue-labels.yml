@@ -1,0 +1,73 @@
+name: Issue Labels
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+
+jobs:
+  label-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply Event and Mentor Labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: |
+          # Use GitHub CLI to add standard event labels.
+          # The || true ensures this step doesn't fail if the label doesn't exist.
+          gh issue edit "$ISSUE_URL" --add-label "ECSoC26,mentor:Krish-Khinchi,issue-valid" || true
+
+      - name: Parse Issue Forms for Labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body;
+            if (!body) return;
+            
+            const labelsToAdd = new Set();
+            
+            // Extract Priority
+            const priorityMatch = body.match(/### Priority\s*[\r\n]+([^\r\n]+)/);
+            if (priorityMatch) {
+              const p = priorityMatch[1].trim();
+              if (p === 'Critical') labelsToAdd.add('priority:critical');
+              else if (p === 'High') labelsToAdd.add('priority:high');
+              else if (p === 'Medium') labelsToAdd.add('priority:medium');
+              else if (p === 'Low') labelsToAdd.add('priority:low');
+            }
+            
+            // Extract Platform
+            const platformMatch = body.match(/### Platform\s*[\r\n]+([^\r\n]+)/);
+            if (platformMatch) {
+              const p = platformMatch[1].trim();
+              if (p === 'Website') labelsToAdd.add('website');
+              if (p === 'Backend') labelsToAdd.add('type:backend');
+              if (p === 'Frontend') labelsToAdd.add('type:frontend');
+              if (p === 'API') labelsToAdd.add('api');
+              if (p === 'Mobile') labelsToAdd.add('mobile');
+            }
+            
+            // Extract Difficulty
+            const diffMatch = body.match(/### Difficulty\s*[\r\n]+([^\r\n]+)/);
+            if (diffMatch) {
+              const d = diffMatch[1].trim();
+              if (d === 'Beginner') labelsToAdd.add('level:beginner');
+              if (d === 'Intermediate') labelsToAdd.add('level:intermediate');
+              if (d === 'Advanced') labelsToAdd.add('level:advanced');
+            }
+            
+            if (labelsToAdd.size > 0) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  labels: Array.from(labelsToAdd)
+                });
+              } catch (error) {
+                console.log('Error adding labels. Some labels may not exist yet:', error);
+              }
+            }

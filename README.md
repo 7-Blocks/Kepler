@@ -559,3 +559,49 @@ This project is released under the MIT License.
 **Building the future of autonomous orbital safety through AI-powered space intelligence.**
 
 *"Protecting Earth’s orbital environment, one trajectory at a time."* 🚀🌍
+
+## Automated Pull Request Labels
+
+This repository uses GitHub Actions to automate PR labeling, ensuring consistency for ECSoC26.
+
+- **Automatic labels**: Every PR is automatically tagged with ECSoC26, mentor:Krish-Khinchi, and pr-valid using the GITHUB_TOKEN.
+- **File-based labels**: The ctions/labeler automatically assigns labels based on which files were changed (e.g. 	ype:frontend, 	ype:documentation, website).
+- **Mentor labels**: Pre-assigned mentor labels (like mentor:Krish-Khinchi) help route PRs.
+- **Event labels**: The ECSoC26 label ensures PRs are tracked for the event.
+- **Status labels**: Labels like pr-valid, 
+eeds-review, and eady-to-merge track the PR lifecycle.
+
+## Automated Issue Labels
+
+Issues are also automatically labeled using GitHub Actions when opened, edited, or reopened.
+
+- **Issue forms**: We use structured issue templates (e.g. Bug Report, Feature Request).
+- **Automatic labels**: The action automatically applies ECSoC26, mentor:Krish-Khinchi, and issue-valid.
+- **Type labels**: Labels (e.g., 	ype:bug) are automatically assigned via the Issue Template configurations.
+- **Priority, Platform, & Difficulty labels**: A custom GitHub Actions script parses dropdown selections from the issue body and assigns the corresponding labels.
+
+## Creating Missing Labels
+
+If a label does not exist, the workflows are designed to fail gracefully without breaking the CI. You can create missing labels using:
+
+- **GitHub UI**: Navigate to Issues -> Labels and click "New label".
+- **GitHub CLI**: `gh label create "label-name" --description "desc" --color "colorhex"`
+- **labels.yml**: A comprehensive list is located at .github/labels.yml containing names, colors, and descriptions.
+
+## Customizing Labels
+
+Maintainers can update the system easily:
+
+- **Change mentors**: Edit the workflows in .github/workflows/ and replace mentor:Krish-Khinchi with the new mentor.
+- **Rename labels**: Rename them in the GitHub UI, and update .github/workflows/ or Issue Templates.
+- **Add new labels**: Create them via the UI or CLI.
+- **Modify mappings**: Edit .github/labeler.yml for file paths or the regex parsing in .github/workflows/issue-labels.yml.
+- **Add new issue forms**: Create a new .yml file in .github/ISSUE_TEMPLATE/ following the existing format.
+
+## Troubleshooting
+
+- **Labels missing**: Ensure the label has been created in the repo. The action skips assigning labels that do not exist.
+- **Workflow permissions**: Ensure your GitHub Action settings have "Read and write permissions" for the GITHUB_TOKEN.
+- **Labeler not running**: Verify that .github/labeler.yml paths match your directory structure.
+- **Incorrect mappings**: Double-check regex mapping logic in issue-labels.yml if dropdown values have changed.
+

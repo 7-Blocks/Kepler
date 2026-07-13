@@ -1,0 +1,41 @@
+type:frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'frontend/**'
+
+type:backend:
+  - changed-files:
+    - any-glob-to-any-file: 'backend/**'
+
+type:documentation:
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**'
+    - any-glob-to-any-file: 'README.md'
+    - any-glob-to-any-file: '*.md'
+
+type:devops:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**'
+    - any-glob-to-any-file: 'docker/**'
+    - any-glob-to-any-file: 'Dockerfile'
+    - any-glob-to-any-file: 'docker-compose.yml'
+
+website:
+  - changed-files:
+    - any-glob-to-any-file: 'website/**'
+
+mobile:
+  - changed-files:
+    - any-glob-to-any-file: 'mobile/**'
+
+api:
+  - changed-files:
+    - any-glob-to-any-file: 'api/**'
+
+type:testing:
+  - changed-files:
+    - any-glob-to-any-file: 'tests/**'
+
+type:ui:
+  - changed-files:
+    - any-glob-to-any-file: 'public/**'
+    - any-glob-to-any-file: 'assets/**'

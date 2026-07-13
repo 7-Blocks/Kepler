@@ -1,0 +1,57 @@
+name: Performance
+description: Report a performance issue
+labels: ["type:performance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this performance report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of the performance bottleneck.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: How do you trigger the performance issue?
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform does this affect?
+      options:
+        - Website
+        - Backend
+        - Frontend
+        - API
+        - Mobile
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      description: How difficult do you think this is to fix?
+      options:
+        - Beginner
+        - Intermediate
+        - Advanced
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How critical is this issue?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Any other context about the problem here (e.g. metrics, profiler output).

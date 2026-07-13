@@ -1,0 +1,69 @@
+name: Bug Report
+description: Create a report to help us improve
+labels: ["type:bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: How do you trigger this bug?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform does this affect?
+      options:
+        - Website
+        - Backend
+        - Frontend
+        - API
+        - Mobile
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      description: How difficult do you think this is to fix?
+      options:
+        - Beginner
+        - Intermediate
+        - Advanced
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How critical is this issue?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Any other context about the problem here.

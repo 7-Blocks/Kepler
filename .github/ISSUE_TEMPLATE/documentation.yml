@@ -1,0 +1,50 @@
+name: Documentation
+description: Report or suggest an update to our docs
+labels: ["type:documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What part of the documentation needs to be improved?
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform does this affect?
+      options:
+        - Website
+        - Backend
+        - Frontend
+        - API
+        - Mobile
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      description: How difficult do you think this is?
+      options:
+        - Beginner
+        - Intermediate
+        - Advanced
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How critical is this?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Any other context about the issue.

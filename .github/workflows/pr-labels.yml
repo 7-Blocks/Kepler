@@ -1,0 +1,31 @@
+name: PR Labels
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply Event and Mentor Labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          # Use GitHub CLI to add standard event labels.
+          # The || true ensures this step doesn't fail if the label doesn't exist in the repo yet.
+          gh pr edit "$PR_URL" --add-label "ECSoC26,mentor:Krish-Khinchi,pr-valid" || true
+
+      - name: Assign File-based Labels
+        uses: actions/labeler@v5
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          sync-labels: false

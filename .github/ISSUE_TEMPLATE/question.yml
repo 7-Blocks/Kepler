@@ -1,0 +1,50 @@
+name: Question
+description: Ask a question or request help
+labels: ["help-wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        How can we help? Let us know your question.
+  - type: textarea
+    id: description
+    attributes:
+      label: Question
+      description: Please ask your question here. Provide as much detail as possible.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform does your question relate to?
+      options:
+        - Website
+        - Backend
+        - Frontend
+        - API
+        - Mobile
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      description: How difficult do you think this is?
+      options:
+        - Beginner
+        - Intermediate
+        - Advanced
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How critical is getting an answer?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Any other context.
