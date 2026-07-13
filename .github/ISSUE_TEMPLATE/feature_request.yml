@@ -1,0 +1,60 @@
+name: Feature Request
+description: Suggest an idea for this project
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature!
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots or mockups.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What platform does this affect?
+      options:
+        - Website
+        - Backend
+        - Frontend
+        - API
+        - Mobile
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      description: How difficult do you think this is to implement?
+      options:
+        - Beginner
+        - Intermediate
+        - Advanced
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How critical is this feature?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Any other context about the feature here.
