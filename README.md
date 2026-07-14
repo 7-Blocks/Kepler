@@ -15,6 +15,7 @@
 
 <!-- CONTRIBUTORS_START -->
 <div align="center">
+  
 <h1>Contributors 👥</h1>
 
 <a href="https://github.com/krishkhinchi"><img src="https://github.com/krishkhinchi.png" width="50px" style="border-radius:50%;margin:5px;" alt="krishkhinchi" /></a>
@@ -23,6 +24,8 @@
 <a href="https://github.com/Priteshsolanki12"><img src="https://github.com/Priteshsolanki12.png" width="50px" style="border-radius:50%;margin:5px;" alt="Priteshsolanki12" /></a>
 <a href="https://github.com/deepmhatre13"><img src="https://github.com/deepmhatre13.png" width="50px" style="border-radius:50%;margin:5px;" alt="deepmhatre13" /></a>
 <a href="https://github.com/zuveriyakhan05"><img src="https://github.com/zuveriyakhan05.png" width="50px" style="border-radius:50%;margin:5px;" alt="zuveriyakhan05" /></a>
+<a href="https://github.com/Amayyas"><img src="https://github.com/Amayyas.png" width="50px" style="border-radius:50%;margin:5px;" alt="Amayyas" /></a>
+
 </div>
 <!-- CONTRIBUTORS_END -->
 
