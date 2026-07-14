@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.core.exceptions import register_exception_handlers
 from api.router import api_router
 from websocket.manager import manager
 from models.db_models import Organization, Role
@@ -33,6 +34,9 @@ app.add_middleware(
 
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Centralized, unified JSON error handling for every request.
+register_exception_handlers(app)
 
 
 @app.get("/", tags=["Health"])

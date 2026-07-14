@@ -126,7 +126,7 @@ def get_space_object(catalog_number: str, db: MongoSession = Depends(get_db)):
     if not doc:
         raise HTTPException(
             status_code=404,
-            detail=f"Object {catalog_number} not found in catalog or Space-Track",
+            detail=f"Space object with NORAD catalog number '{catalog_number}' was not found in the catalog or on Space-Track.",
         )
     return APIResponse(success=True, message="Object retrieved", data=_serialize_doc(doc))
 

@@ -4,7 +4,7 @@ Exposes real-time space weather events: CME, solar flares, geomagnetic storms,
 radiation events, and overall severity status from NASA DONKI API.
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -13,6 +13,10 @@ from database.session import get_db
 from models.db_models import SpaceWeather, Alert
 from schemas.api_schemas import APIResponse, PaginationSchema
 from services.weather_service import weather_service
+
+import logging
+
+logger = logging.getLogger("app")
 
 router = APIRouter()
 
@@ -159,14 +163,14 @@ def trigger_weather_sync(
     """
     try:
         weather_service.sync_weather(db)
-        return APIResponse(
-            success=True,
-            message=f"NASA DONKI sync complete — events persisted to database.",
-            data={"synced_at": datetime.utcnow().isoformat(), "source": "NASA DONKI API"},
+    except Exception:
+        logger.error("NASA DONKI weather sync failed", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Space weather sync could not be completed. The NASA DONKI service may be temporarily unavailable.",
         )
-    except Exception as e:
-        return APIResponse(
-            success=False,
-            message=f"Sync failed: {str(e)}",
-            data=None,
-        )
+    return APIResponse(
+        success=True,
+        message="NASA DONKI sync complete — events persisted to database.",
+        data={"synced_at": datetime.utcnow().isoformat(), "source": "NASA DONKI API"},
+    )

@@ -99,7 +99,10 @@ def get_satellite_telemetry(satellite_id: str, db: MongoSession = Depends(get_db
 
     sat = db.db["satellites"].find_one(flt, {"_id": 0})
     if not sat:
-        raise HTTPException(status_code=404, detail="Satellite not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Satellite '{satellite_id}' was not found in the catalog.",
+        )
 
     records = list(
         db.db["telemetry"]

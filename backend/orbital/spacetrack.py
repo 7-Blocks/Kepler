@@ -37,7 +37,7 @@ from pymongo.errors import (
     OperationFailure,
 )
 
-from app.database.session import MongoSession
+from database.session import MongoSession
 from app.core.config import settings
 
 logger = logging.getLogger("app")

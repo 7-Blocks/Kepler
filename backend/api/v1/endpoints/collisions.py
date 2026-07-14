@@ -91,7 +91,10 @@ def get_collision_detail(prediction_id: int, db: MongoSession = Depends(get_db))
         .first()
     )
     if not pred:
-        raise HTTPException(status_code=404, detail=f"Collision prediction {prediction_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Collision prediction with ID {prediction_id} was not found.",
+        )
 
     detail = _serialize_collision(pred)
     detail["risk_scores"] = [
@@ -110,11 +113,17 @@ def update_collision_status(
     """Update the status of a collision prediction (PENDING → MITIGATED | ASSESSED | IGNORED)."""
     valid = {"PENDING", "MITIGATED", "ASSESSED", "IGNORED"}
     if status.upper() not in valid:
-        raise HTTPException(status_code=422, detail=f"Status must be one of {valid}")
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid status '{status}'. Status must be one of: {', '.join(sorted(valid))}.",
+        )
 
     pred = db.query(CollisionPrediction).filter(CollisionPrediction.id == prediction_id).first()
     if not pred:
-        raise HTTPException(status_code=404, detail=f"Prediction {prediction_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Collision prediction with ID {prediction_id} was not found.",
+        )
 
     pred.status = status.upper()
     db.commit()
@@ -156,7 +165,10 @@ def get_conjunction_explanation(prediction_id: int, db: MongoSession = Depends(g
         .first()
     )
     if not pred:
-        raise HTTPException(status_code=404, detail=f"Prediction {prediction_id} not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Collision prediction with ID {prediction_id} was not found.",
+        )
 
     summary = openai_service.explain_collision({
         "obj_a": pred.object_a.name if pred.object_a else "UNKNOWN",

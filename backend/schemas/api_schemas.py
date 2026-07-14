@@ -18,6 +18,28 @@ class APIResponse(BaseModel, Generic[T]):
     metadata: Optional[Dict[str, Any]] = None
 
 
+# ---------------------------------------------------------------------------
+# Unified error response schema
+# ---------------------------------------------------------------------------
+
+class APIErrorDetail(BaseModel):
+    """Structured error payload returned for all failed requests."""
+    code: str
+    message: str
+    details: Optional[Any] = None
+
+
+class APIErrorResponse(BaseModel):
+    """Consistent failure envelope used by all global exception handlers.
+
+    Mirrors the success envelope's `success` flag while nesting failure
+    information under `error` so API consumers can reliably branch on
+    `response.success` and read `response.error.code` / `response.error.message`.
+    """
+    success: bool = False
+    error: APIErrorDetail
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

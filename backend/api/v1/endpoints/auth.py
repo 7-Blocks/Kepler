@@ -14,7 +14,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_in.email).first()
     if user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(
+            status_code=400,
+            detail=f"An account with email '{user_in.email}' is already registered.",
+        )
     
     
     hashed_pwd = get_password_hash(user_in.password)
@@ -56,7 +59,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Login failed: the email or password provided is incorrect.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
