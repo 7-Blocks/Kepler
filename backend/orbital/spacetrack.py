@@ -1,27 +1,81 @@
 """
 Space-Track Live Data Service
 ==============================
-Fetches real GP (General Perturbations) data from Space-Track.org.
-Upserts into MongoDB using NORAD catalog number as the unique key.
+Fetches real GP (General Perturbations) data from Space-Track.org and persists it
+into MongoDB using duplicate-safe bulk upserts keyed on the NORAD catalog id.
 
-Bug Fixes Applied:
-  1. Field names now match the Satellite / SpaceObject MongoDB model
-     (noradId, objectName, objectType, etc.) instead of SQLAlchemy names.
-  2. Lookups now use raw Mongo filter dicts instead of @property fields
-     so queries actually hit the database.
-  3. Satellite documents are populated with all orbital fields on insert.
-  4. Structured logging at every pipeline stage.
+Pipeline stages (each emits a structured log line):
+    authentication -> request sent -> response received -> records fetched
+    -> json parsing -> db connection -> upsert start -> upsert success / failure
+    -> pipeline completion
+
+Fixes for GitHub Issue #10 ("Satellite records not being persisted"):
+  * Uses bulk_write([UpdateOne(filter, {"$set": doc}, upsert=True)]) so reruns
+    never create duplicates (keyed on noradId, which has a unique index).
+  * Exponential backoff retry for both Space-Track HTTP requests and MongoDB
+    bulk writes (network/transient errors only).
+  * Structured logging at every pipeline stage; no silent failures.
+  * Per-group partial-failure isolation: one bad record/batch does not abort
+    the rest of the ingestion.
+  * Ingestion functions return a meaningful status dict.
 """
 
 import httpx
 import math
+import time
 import datetime
 import logging
-from typing import List, Dict, Any, Optional
-from database.session import MongoSession
+from typing import List, Dict, Any, Optional, Tuple
+
+import pymongo
+from pymongo import UpdateOne
+from pymongo.errors import (
+    BulkWriteError,
+    ConnectionFailure,
+    ServerSelectionTimeoutError,
+    NetworkTimeout,
+    OperationFailure,
+)
+
+from app.database.session import MongoSession
 from app.core.config import settings
 
 logger = logging.getLogger("app")
+
+# Retry configuration -------------------------------------------------------
+HTTP_MAX_ATTEMPTS = 4
+HTTP_BASE_DELAY = 2.0          # seconds
+HTTP_MAX_DELAY = 30.0
+MONGO_MAX_ATTEMPTS = 3
+MONGO_BASE_DELAY = 1.5
+MONGO_MAX_DELAY = 15.0
+
+
+def _retry(max_attempts: int, base_delay: float, max_delay: float, retry_on):
+    """Decorator: retry the wrapped callable with exponential backoff."""
+    def decorator(fn):
+        def wrapper(*args, **kwargs):
+            last_exc: Optional[BaseException] = None
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return fn(*args, **kwargs)
+                except retry_on as exc:  # type: ignore[misc]
+                    last_exc = exc
+                    if attempt >= max_attempts:
+                        break
+                    delay = min(base_delay * (2 ** (attempt - 1)), max_delay)
+                    logger.warning(
+                        f"[SpaceTrack] Retry {attempt}/{max_attempts} for "
+                        f"{fn.__name__} after {delay:.1f}s — {exc}"
+                    )
+                    time.sleep(delay)
+            logger.error(
+                f"[SpaceTrack] {fn.__name__} failed after {max_attempts} "
+                f"attempts: {last_exc}"
+            )
+            raise last_exc  # type: ignore[misc]
+        return wrapper
+    return decorator
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +133,7 @@ class SpaceTrackService:
     def authenticate(self) -> bool:
         """Authenticate with Space-Track. Returns True on success."""
         if self._authenticated:
+            logger.info("[SpaceTrack] Authentication: already authenticated (cached session).")
             return True
 
         if not self.username or not self.password:
@@ -89,36 +144,74 @@ class SpaceTrackService:
             return False
 
         try:
-            logger.info(f"[SpaceTrack] Authenticating as '{self.username}' …")
+            logger.info(f"[SpaceTrack] Authentication: logging in as '{self.username}' …")
             resp = self.client.post(
                 f"{self.base_url}/ajaxauth/login",
                 data={"identity": self.username, "password": self.password},
             )
             logger.info(
-                f"[SpaceTrack] Login response: HTTP {resp.status_code}, "
+                f"[SpaceTrack] Authentication response: HTTP {resp.status_code}, "
                 f"cookies={list(self.client.cookies.keys())}"
             )
             if resp.status_code == 200 and "spacetrack_session" in self.client.cookies:
                 self._authenticated = True
-                logger.info("[SpaceTrack] ✅ Authentication successful.")
+                logger.info("[SpaceTrack] Authentication: ✅ successful.")
                 return True
 
             logger.error(
-                f"[SpaceTrack] ❌ Login failed — HTTP {resp.status_code}. "
+                f"[SpaceTrack] Authentication: ❌ failed — HTTP {resp.status_code}. "
                 f"Body preview: {resp.text[:300]}"
             )
             return False
         except Exception as exc:
-            logger.error(f"[SpaceTrack] ❌ Authentication exception: {exc}")
+            logger.error(f"[SpaceTrack] Authentication: ❌ exception: {exc}")
             return False
 
     def _reset_auth(self):
-        """Force re-authentication on next call."""
+        """Force re-authentication on next call (e.g. session expired)."""
         self._authenticated = False
 
     # ------------------------------------------------------------------
-    # Raw API fetch
+    # Raw API fetch (with exponential backoff)
     # ------------------------------------------------------------------
+
+    def _build_group_path(self, group: str, limit: int) -> Optional[str]:
+        if group == "active":
+            return (f"/basicspacedata/query/class/gp/OBJECT_TYPE/PAYLOAD/"
+                    f"decay_date/null-val/orderby/NORAD_CAT_ID/limit/{limit}/format/json")
+        if group == "starlink":
+            return (f"/basicspacedata/query/class/gp/OBJECT_NAME/~~STARLINK/"
+                    f"decay_date/null-val/orderby/NORAD_CAT_ID/limit/{limit}/format/json")
+        if group in ("analyst", "debris"):
+            return (f"/basicspacedata/query/class/gp/OBJECT_TYPE/DEBRIS/"
+                    f"decay_date/null-val/orderby/NORAD_CAT_ID/limit/{limit}/format/json")
+        logger.warning(f"[SpaceTrack] Unknown group '{group}'.")
+        return None
+
+    @_retry(
+        HTTP_MAX_ATTEMPTS,
+        HTTP_BASE_DELAY,
+        HTTP_MAX_DELAY,
+        retry_on=(httpx.RequestError, httpx.HTTPStatusError),
+    )
+    def _send_request(self, url: str, expect_list: bool = True) -> List[Dict[str, Any]]:
+        """Send a GET request with retry/backoff. Raises on persistent failure."""
+        logger.info(f"[SpaceTrack] Request sent: GET {url}")
+        resp = self.client.get(url)
+        resp.raise_for_status()
+        data = resp.json()
+        if expect_list and not isinstance(data, list):
+            logger.error(
+                f"[SpaceTrack] Response received but unexpected type {type(data)} — "
+                f"preview: {str(data)[:300]}"
+            )
+            self._reset_auth()
+            raise ValueError(f"Unexpected Space-Track response type: {type(data)}")
+        logger.info(
+            f"[SpaceTrack] Response received: {len(data) if isinstance(data, list) else '?'} "
+            f"records (HTTP {resp.status_code})."
+        )
+        return data  # type: ignore[return-value]
 
     def fetch_group_json(self, group: str, limit: int = 500) -> List[Dict[str, Any]]:
         """Fetch a named group from Space-Track. Returns list of GP records."""
@@ -126,33 +219,15 @@ class SpaceTrackService:
             logger.error(f"[SpaceTrack] Cannot fetch group '{group}' — auth failed.")
             return []
 
-        if group == "active":
-            path = f"/basicspacedata/query/class/gp/OBJECT_TYPE/PAYLOAD/decay_date/null-val/orderby/NORAD_CAT_ID/limit/{limit}/format/json"
-        elif group == "starlink":
-            path = f"/basicspacedata/query/class/gp/OBJECT_NAME/~~STARLINK/decay_date/null-val/orderby/NORAD_CAT_ID/limit/{limit}/format/json"
-        elif group in ("analyst", "debris"):
-            path = f"/basicspacedata/query/class/gp/OBJECT_TYPE/DEBRIS/decay_date/null-val/orderby/NORAD_CAT_ID/limit/{limit}/format/json"
-        else:
-            logger.warning(f"[SpaceTrack] Unknown group '{group}'.")
+        path = self._build_group_path(group, limit)
+        if not path:
             return []
 
         url = f"{self.base_url}{path}"
-        logger.info(f"[SpaceTrack] → GET {url}")
-
         try:
-            resp = self.client.get(url)
-            resp.raise_for_status()
-            data = resp.json()
-            if not isinstance(data, list):
-                logger.error(
-                    f"[SpaceTrack] Unexpected response type {type(data)} — "
-                    f"preview: {str(data)[:300]}"
-                )
-                # Session may have expired — force re-login next call
-                self._reset_auth()
-                return []
+            data = self._send_request(url, expect_list=True)
             logger.info(
-                f"[SpaceTrack] ✅ Group '{group}': {len(data)} records received. "
+                f"[SpaceTrack] Records fetched for '{group}': {len(data)}. "
                 f"First record keys: {list(data[0].keys()) if data else 'N/A'}"
             )
             return data
@@ -171,18 +246,17 @@ class SpaceTrackService:
         """Fetch a single object by NORAD catalog number."""
         if not self.authenticate():
             return None
-        url = f"{self.base_url}/basicspacedata/query/class/gp/NORAD_CAT_ID/{catalog_number}/format/json"
+        url = (f"{self.base_url}/basicspacedata/query/class/gp/NORAD_CAT_ID/"
+               f"{catalog_number}/format/json")
         try:
-            resp = self.client.get(url)
-            resp.raise_for_status()
-            data = resp.json()
-            return data[0] if isinstance(data, list) and data else None
+            data = self._send_request(url, expect_list=True)
+            return data[0] if data else None
         except Exception as exc:
             logger.error(f"[SpaceTrack] fetch_by_catalog({catalog_number}) failed: {exc}")
             return None
 
     # ------------------------------------------------------------------
-    # FIX #1 — Transform GP record → MongoDB document using correct field names
+    # Transform GP record -> MongoDB document (correct camelCase field names)
     # ------------------------------------------------------------------
 
     def _gp_to_satellite_doc(
@@ -191,10 +265,9 @@ class SpaceTrackService:
         """
         Map a Space-Track GP JSON record to a MongoDB satellite/debris document.
 
-        CRITICAL: Field names MUST match the MongoDB model (Satellite / SpaceObject)
-        which uses camelCase (noradId, objectName, objectType, meanMotion …).
-        The old code wrote snake_case (name, catalog_number, classification …) which
-        were silently ignored by the Mongo adapter, leaving all collections empty.
+        Field names match the MongoDB Satellite/SpaceObject schema (camelCase):
+        noradId, objectName, objectType, meanMotion …  Writing snake_case names
+        earlier left the collections empty because nothing matched the schema.
         """
         norad_id     = str(rec.get("NORAD_CAT_ID", "")).strip()
         object_name  = rec.get("OBJECT_NAME", f"OBJ-{norad_id}").strip()
@@ -217,8 +290,7 @@ class SpaceTrackService:
         now = datetime.datetime.utcnow().isoformat()
 
         return {
-            # ── Primary fields that match the MongoDB Satellite collection schema ──
-            "noradId":      norad_id,
+            "noradId":      norad_id,           # unique key (unique index exists)
             "objectName":   object_name,
             "objectType":   object_type,
             "countryCode":  rec.get("COUNTRY_CODE", ""),
@@ -230,7 +302,6 @@ class SpaceTrackService:
             "source":       "space-track",
             "createdAt":    now,
             "updatedAt":    now,
-            # ── Extended orbital elements ──
             "semimajor_axis":  semimajor,
             "period":          period,
             "raan":            raan,
@@ -238,64 +309,68 @@ class SpaceTrackService:
             "mean_anomaly":    mean_anomaly,
             "tle_line1":       tle1,
             "tle_line2":       tle2,
-            # ── Operational fields (satellites only) ──
             "status":           "ACTIVE",
             "fuel_percentage":  100.0,
             "operational_mode": "NORMAL",
         }
 
     # ------------------------------------------------------------------
-    # FIX #2 — Use raw dict filter (not @property field) for Mongo lookups
+    # MongoDB write (bulk_write + UpdateOne upsert, with backoff retry)
     # ------------------------------------------------------------------
 
-    def _find_by_norad(self, db: MongoSession, collection: str, norad_id: str):
-        """Find a document by noradId using a raw dict filter (bypasses @property bug)."""
-        return db.db[collection].find_one({"noradId": norad_id})
-
-    def _upsert_satellite_doc(
-        self, db: MongoSession, rec: Dict[str, Any], object_type_override: Optional[str] = None
-    ) -> Optional[str]:
-        """
-        Upsert a Space-Track GP record into the satellites collection.
-        Returns the noradId on success, None on failure.
-        """
-        norad_id = str(rec.get("NORAD_CAT_ID", "")).strip()
-        if not norad_id:
-            return None
-
-        doc = self._gp_to_satellite_doc(rec, object_type_override)
-
+    def _ensure_db_connection(self, db: MongoSession) -> bool:
+        """Verify the Mongo client can reach the server; log the result."""
         try:
-            db.db["satellites"].update_one(
-                {"noradId": norad_id},
-                {"$set": doc},
-                upsert=True,
-            )
-            return norad_id
+            logger.info("[SpaceTrack] Database connection: pinging MongoDB …")
+            db.client.admin.command("ping")
+            logger.info("[SpaceTrack] Database connection: ✅ reachable.")
+            return True
         except Exception as exc:
-            logger.warning(f"[SpaceTrack] Upsert failed for NORAD {norad_id}: {exc}")
-            return None
+            logger.error(f"[SpaceTrack] Database connection: ❌ unreachable: {exc}")
+            return False
 
-    def _upsert_debris_doc(
-        self, db: MongoSession, rec: Dict[str, Any]
-    ) -> Optional[str]:
-        """Upsert a debris record into the debris collection."""
-        norad_id = str(rec.get("NORAD_CAT_ID", "")).strip()
-        if not norad_id:
-            return None
-
-        doc = self._gp_to_satellite_doc(rec, object_type_override="DEBRIS")
-
+    @_retry(
+        MONGO_MAX_ATTEMPTS,
+        MONGO_BASE_DELAY,
+        MONGO_MAX_DELAY,
+        retry_on=(ConnectionFailure, ServerSelectionTimeoutError, NetworkTimeout, OperationFailure),
+    )
+    def _bulk_upsert(
+        self, db: MongoSession, collection: str, docs: List[Dict[str, Any]]
+    ) -> Tuple[int, List[str]]:
+        """
+        Duplicate-safe bulk upsert using UpdateOne(upsert=True) keyed on noradId.
+        Returns (successful_writes, failed_norad_ids).
+        ordered=False so a single bad document does not abort the batch.
+        """
+        ops = [
+            UpdateOne({"noradId": d["noradId"]}, {"$set": d}, upsert=True)
+            for d in docs
+        ]
         try:
-            db.db["debris"].update_one(
-                {"noradId": norad_id},
-                {"$set": doc},
-                upsert=True,
+            result = db.db[collection].bulk_write(ops, ordered=False)
+            written = (result.upserted_count or 0) + (result.modified_count or 0)
+            logger.info(
+                f"[SpaceTrack] Bulk write OK on '{collection}': {written} "
+                f"upserted/modified (matched={result.matched_count})."
             )
-            return norad_id
+            return written, []
+        except BulkWriteError as exc:
+            details = exc.details or {}
+            write_errors = details.get("writeErrors", [])
+            failed_ids = [str(e.get("key", {}).get("noradId", "?")) for e in write_errors]
+            written = (details.get("nUpserted", 0) or 0) + (details.get("nModified", 0) or 0)
+            logger.error(
+                f"[SpaceTrack] Bulk write partial failure on '{collection}': "
+                f"{written} written, {len(failed_ids)} failed — {failed_ids[:10]}"
+            )
+            return written, failed_ids
+        except (ConnectionFailure, ServerSelectionTimeoutError, NetworkTimeout, OperationFailure):
+            # Let the retry decorator handle transient Mongo errors.
+            raise
         except Exception as exc:
-            logger.warning(f"[SpaceTrack] Debris upsert failed for NORAD {norad_id}: {exc}")
-            return None
+            logger.error(f"[SpaceTrack] Bulk write unexpected error on '{collection}': {exc}")
+            raise
 
     # ------------------------------------------------------------------
     # Public sync API
@@ -307,49 +382,92 @@ class SpaceTrackService:
         group: str,
         object_type_override: Optional[str] = None,
         limit: Optional[int] = None,
-    ) -> int:
-        """Fetch a group and upsert all records into MongoDB. Returns count inserted/updated."""
+    ) -> Dict[str, Any]:
+        """
+        Fetch a group and bulk-upsert all records into MongoDB.
+        Returns a meaningful status dict:
+            {group, fetched, parsed, upserted, failed, errors}
+        """
+        if not self._ensure_db_connection(db):
+            return {"group": group, "fetched": 0, "parsed": 0,
+                    "upserted": 0, "failed": 0, "errors": ["db_unreachable"]}
+
+        logger.info(f"[SpaceTrack] Upsert start: group '{group}'.")
         records = self.fetch_group_json(group, limit=limit or 500)
         if not records:
-            logger.warning(f"[SpaceTrack] sync_group('{group}'): 0 records — nothing to upsert.")
-            return 0
+            logger.warning(f"[SpaceTrack] Upsert aborted for '{group}': 0 records fetched.")
+            return {"group": group, "fetched": 0, "parsed": 0,
+                    "upserted": 0, "failed": 0, "errors": ["no_records"]}
 
-        logger.info(f"[SpaceTrack] sync_group('{group}'): upserting {len(records)} records …")
-        count = 0
+        logger.info(f"[SpaceTrack] JSON parsing: building docs for {len(records)} records …")
         is_debris = (object_type_override == "DEBRIS" or group in ("analyst", "debris"))
+        collection = "debris" if is_debris else "satellites"
 
-        for i, rec in enumerate(records):
+        docs: List[Dict[str, Any]] = []
+        parse_errors: List[str] = []
+        for rec in records:
             try:
-                if is_debris:
-                    result = self._upsert_debris_doc(db, rec)
+                doc = self._gp_to_satellite_doc(rec, object_type_override)
+                if doc.get("noradId"):
+                    docs.append(doc)
                 else:
-                    result = self._upsert_satellite_doc(db, rec, object_type_override)
-
-                if result:
-                    count += 1
-                    if i < 3:  # Log first few for verification
-                        logger.info(
-                            f"[SpaceTrack]   ✓ Upserted NORAD {result} "
-                            f"({rec.get('OBJECT_NAME', '?')})"
-                        )
+                    parse_errors.append(str(rec.get("NORAD_CAT_ID", "?")))
             except Exception as exc:
-                logger.warning(
-                    f"[SpaceTrack] Record {i} (NORAD {rec.get('NORAD_CAT_ID', '?')}) "
-                    f"upsert error: {exc}"
-                )
+                parse_errors.append(f"{rec.get('NORAD_CAT_ID', '?')}:{exc}")
 
-        logger.info(f"[SpaceTrack] ✅ sync_group('{group}') complete: {count}/{len(records)} upserted.")
-        return count
+        logger.info(
+            f"[SpaceTrack] Upsert start: writing {len(docs)} docs to '{collection}' "
+            f"({len(parse_errors)} unparseable)."
+        )
+        try:
+            upserted, failed_ids = self._bulk_upsert(db, collection, docs)
+            logger.info(
+                f"[SpaceTrack] ✅ Upsert success: group '{group}' — {upserted} written, "
+                f"{len(failed_ids)} failed."
+            )
+            return {
+                "group": group,
+                "fetched": len(records),
+                "parsed": len(docs),
+                "upserted": upserted,
+                "failed": len(failed_ids) + len(parse_errors),
+                "errors": failed_ids + parse_errors,
+            }
+        except Exception as exc:
+            logger.error(f"[SpaceTrack] ❌ Upsert failure: group '{group}': {exc}")
+            return {
+                "group": group,
+                "fetched": len(records),
+                "parsed": len(docs),
+                "upserted": 0,
+                "failed": len(docs) + len(parse_errors),
+                "errors": [str(exc)] + parse_errors,
+            }
 
-    def sync_all_groups(self, db: MongoSession, limit_per_group: int = 500) -> Dict[str, int]:
-        """Sync all configured groups. Returns {group: count}."""
-        results = {}
+    def sync_all_groups(self, db: MongoSession, limit_per_group: int = 500) -> Dict[str, Any]:
+        """Sync all configured groups. Returns an aggregate status dict."""
+        logger.info("[SpaceTrack] Pipeline start: syncing all groups.")
+        per_group: Dict[str, Any] = {}
+        total_fetched = total_upserted = total_failed = 0
+
         for group, type_override, desc in SYNC_GROUPS:
             logger.info(f"[SpaceTrack] ── Syncing: {group} ({desc})")
-            results[group] = self.sync_group(db, group, type_override, limit=limit_per_group)
-        total = sum(results.values())
-        logger.info(f"[SpaceTrack] 🏁 All groups synced. Total upserted: {total}. Details: {results}")
-        return results
+            status = self.sync_group(db, group, type_override, limit=limit_per_group)
+            per_group[group] = status
+            total_fetched += status["fetched"]
+            total_upserted += status["upserted"]
+            total_failed += status["failed"]
+
+        logger.info(
+            f"[SpaceTrack] 🏁 Pipeline complete: {total_upserted} upserted, "
+            f"{total_failed} failed, {total_fetched} fetched. Details: {per_group}"
+        )
+        return {
+            "total_fetched": total_fetched,
+            "total_upserted": total_upserted,
+            "total_failed": total_failed,
+            "groups": per_group,
+        }
 
     def sync_by_catalog(self, db: MongoSession, catalog_number: str) -> Optional[Dict]:
         """Fetch and upsert a single object by catalog number. Returns the doc."""
@@ -357,12 +475,14 @@ class SpaceTrackService:
         if not rec:
             return None
         obj_type = _TYPE_MAP.get(rec.get("OBJECT_TYPE", "UNKNOWN"), "UNKNOWN")
-        if obj_type == "DEBRIS":
-            self._upsert_debris_doc(db, rec)
-        else:
-            self._upsert_satellite_doc(db, rec, obj_type)
-        return self._find_by_norad(db, "satellites", catalog_number) or \
-               self._find_by_norad(db, "debris", catalog_number)
+        collection = "debris" if obj_type == "DEBRIS" else "satellites"
+        doc = self._gp_to_satellite_doc(rec, obj_type)
+        try:
+            self._bulk_upsert(db, collection, [doc])
+            logger.info(f"[SpaceTrack] ✅ Upserted single catalog {catalog_number}.")
+        except Exception as exc:
+            logger.error(f"[SpaceTrack] ❌ Single upsert failed for {catalog_number}: {exc}")
+        return db.db[collection].find_one({"noradId": catalog_number}, {"_id": 0})
 
     def get_stats(self, db: MongoSession) -> Dict[str, Any]:
         """Return satellite/debris count statistics from MongoDB."""
@@ -388,7 +508,8 @@ class SpaceTrackService:
             }
         except Exception as exc:
             logger.error(f"[SpaceTrack] get_stats failed: {exc}")
-            return {"total": 0, "payloads": 0, "debris": 0, "rocket_bodies": 0, "unknown": 0}
+            return {"total": 0, "payloads": 0, "debris": 0,
+                    "rocket_bodies": 0, "unknown": 0}
 
 
 spacetrack_service = SpaceTrackService()

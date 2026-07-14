@@ -158,11 +158,14 @@ def trigger_sync(
         type_override = next(
             (t for g, t, _ in SYNC_GROUPS if g == group), None
         )
-        count = spacetrack_service.sync_group(db, group, type_override, limit=limit)
+        status = spacetrack_service.sync_group(db, group, type_override, limit=limit)
         return APIResponse(
-            success=True,
-            message=f"Synced group '{group}': {count} objects upserted",
-            data={"group": group, "upserted": count},
+            success=status["failed"] == 0,
+            message=(
+                f"Synced group '{group}': {status['upserted']} upserted, "
+                f"{status['failed']} failed"
+            ),
+            data=status,
         )
 
     def _bg_sync():

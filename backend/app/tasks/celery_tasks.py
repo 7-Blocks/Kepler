@@ -12,10 +12,18 @@ def sync_spacetrack_data():
     logger.info("Executing periodic catalog synchronization...")
     db = SessionLocal()
     try:
-        spacetrack_service.sync_objects(db)
-        logger.info("Space-Track sync succeeded.")
+        status = spacetrack_service.sync_all_groups(db, limit_per_group=500)
+        if status["total_failed"] > 0:
+            logger.warning(
+                f"Space-Track sync completed with issues — "
+                f"upserted={status['total_upserted']}, failed={status['total_failed']}."
+            )
+        else:
+            logger.info(
+                f"Space-Track sync succeeded — upserted={status['total_upserted']}."
+            )
     except Exception as e:
-        logger.error(f"Space-Track sync task failed: {e}")
+        logger.error(f"Space-Track sync task failed: {e}", exc_info=True)
     finally:
         db.close()
 
