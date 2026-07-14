@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     SPACETRACK_USERNAME: Optional[str] = None
     SPACETRACK_PASSWORD: Optional[str] = None
 
+    # Satellite data sources, tried in this order. If one fails, ingestion falls through
+    # to the next, so a single upstream outage cannot stop the pipeline (issue #15).
+    # Known providers: space-track, celestrak, cache.
+    SATELLITE_PROVIDER_PRIORITY: str = "space-track,celestrak,cache"
+    CELESTRAK_BASE_URL: str = "https://celestrak.org"
+
     
     OPENAI_API_KEY: Optional[str] = "mock-key"
 

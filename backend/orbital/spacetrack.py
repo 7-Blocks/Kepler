@@ -39,6 +39,7 @@ from pymongo.errors import (
 
 from database.session import MongoSession
 from app.core.config import settings
+from orbital.providers import AllProvidersFailedError, ProviderChain, build_provider_chain
 
 logger = logging.getLogger("app")
 
@@ -130,6 +131,24 @@ class SpaceTrackService:
         self.base_url = "https://www.space-track.org"
         self.client   = httpx.Client(timeout=60.0, follow_redirects=True)
         self._authenticated = False
+        self._providers: Optional["ProviderChain"] = None
+
+    @property
+    def providers(self) -> "ProviderChain":
+        """
+        The multi-source failover chain (Space-Track -> CelesTrak -> cache).
+
+        Built on first use rather than in __init__ so that tests can substitute a chain,
+        and so importing this module never constructs HTTP clients. `getattr` keeps this
+        working for instances created via `__new__` (as the ingestion tests do).
+        """
+        if getattr(self, "_providers", None) is None:
+            self._providers = build_provider_chain(self)
+        return self._providers
+
+    @providers.setter
+    def providers(self, chain: "ProviderChain") -> None:
+        self._providers = chain
 
     # ------------------------------------------------------------------
     # Authentication
@@ -268,10 +287,16 @@ class SpaceTrackService:
     # ------------------------------------------------------------------
 
     def _gp_to_satellite_doc(
-        self, rec: Dict[str, Any], object_type_override: Optional[str] = None
+        self,
+        rec: Dict[str, Any],
+        object_type_override: Optional[str] = None,
+        source: str = "space-track",
     ) -> Dict[str, Any]:
         """
-        Map a Space-Track GP JSON record to a MongoDB satellite/debris document.
+        Map a GP/OMM JSON record to a MongoDB satellite/debris document.
+
+        Every provider speaks this same CCSDS field vocabulary, so the transform is shared;
+        `source` records which one actually served the record.
 
         Field names match the MongoDB Satellite/SpaceObject schema (camelCase):
         noradId, objectName, objectType, meanMotion …  Writing snake_case names
@@ -307,7 +332,7 @@ class SpaceTrackService:
             "inclination":  inclination,
             "eccentricity": eccentricity,
             "meanMotion":   mean_motion,
-            "source":       "space-track",
+            "source":       source,
             "createdAt":    now,
             "updatedAt":    now,
             "semimajor_axis":  semimajor,
@@ -397,17 +422,28 @@ class SpaceTrackService:
             {group, fetched, parsed, upserted, failed, errors}
         """
         if not self._ensure_db_connection(db):
-            return {"group": group, "fetched": 0, "parsed": 0,
-                    "upserted": 0, "failed": 0, "errors": ["db_unreachable"]}
+            return {"group": group, "fetched": 0, "parsed": 0, "upserted": 0,
+                    "failed": 0, "source": None, "errors": ["db_unreachable"]}
 
-        logger.info(f"[SpaceTrack] Upsert start: group '{group}'.")
-        records = self.fetch_group_json(group, limit=limit or 500)
-        if not records:
-            logger.warning(f"[SpaceTrack] Upsert aborted for '{group}': 0 records fetched.")
-            return {"group": group, "fetched": 0, "parsed": 0,
-                    "upserted": 0, "failed": 0, "errors": ["no_records"]}
+        logger.info(f"[Ingest] Upsert start: group '{group}'.")
 
-        logger.info(f"[SpaceTrack] JSON parsing: building docs for {len(records)} records …")
+        # Ask the provider chain rather than Space-Track directly: if Space-Track is down
+        # we fall through to CelesTrak, then to the last cached payload (issue #15).
+        try:
+            records, source = self.providers.fetch_group(group, limit or 500, db=db)
+        except AllProvidersFailedError as exc:
+            logger.error(f"[Ingest] Upsert aborted for '{group}': every provider failed.")
+            return {
+                "group": group, "fetched": 0, "parsed": 0, "upserted": 0, "failed": 0,
+                "source": None,
+                "errors": ["all_providers_failed"],
+                "provider_failures": exc.failures,
+            }
+
+        logger.info(
+            f"[Ingest] JSON parsing: building docs for {len(records)} records "
+            f"from '{source}' …"
+        )
         is_debris = (object_type_override == "DEBRIS" or group in ("analyst", "debris"))
         collection = "debris" if is_debris else "satellites"
 
@@ -415,7 +451,7 @@ class SpaceTrackService:
         parse_errors: List[str] = []
         for rec in records:
             try:
-                doc = self._gp_to_satellite_doc(rec, object_type_override)
+                doc = self._gp_to_satellite_doc(rec, object_type_override, source=source)
                 if doc.get("noradId"):
                     docs.append(doc)
                 else:
@@ -424,14 +460,14 @@ class SpaceTrackService:
                 parse_errors.append(f"{rec.get('NORAD_CAT_ID', '?')}:{exc}")
 
         logger.info(
-            f"[SpaceTrack] Upsert start: writing {len(docs)} docs to '{collection}' "
+            f"[Ingest] Upsert start: writing {len(docs)} docs to '{collection}' "
             f"({len(parse_errors)} unparseable)."
         )
         try:
             upserted, failed_ids = self._bulk_upsert(db, collection, docs)
             logger.info(
-                f"[SpaceTrack] ✅ Upsert success: group '{group}' — {upserted} written, "
-                f"{len(failed_ids)} failed."
+                f"[Ingest] ✅ Upsert success: group '{group}' via '{source}' — "
+                f"{upserted} written, {len(failed_ids)} failed."
             )
             return {
                 "group": group,
@@ -439,16 +475,18 @@ class SpaceTrackService:
                 "parsed": len(docs),
                 "upserted": upserted,
                 "failed": len(failed_ids) + len(parse_errors),
+                "source": source,
                 "errors": failed_ids + parse_errors,
             }
         except Exception as exc:
-            logger.error(f"[SpaceTrack] ❌ Upsert failure: group '{group}': {exc}")
+            logger.error(f"[Ingest] ❌ Upsert failure: group '{group}': {exc}")
             return {
                 "group": group,
                 "fetched": len(records),
                 "parsed": len(docs),
                 "upserted": 0,
                 "failed": len(docs) + len(parse_errors),
+                "source": source,
                 "errors": [str(exc)] + parse_errors,
             }
 

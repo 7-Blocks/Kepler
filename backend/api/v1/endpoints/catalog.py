@@ -170,6 +170,32 @@ def get_catalog_stats(db: MongoSession = Depends(get_db)):
 
 
 # ---------------------------------------------------------------------------
+# GET /catalog/providers
+# ---------------------------------------------------------------------------
+
+@router.get("/providers", response_model=APIResponse[Dict[str, Any]])
+def get_provider_chain():
+    """
+    Show the data source failover chain and which links are currently usable.
+
+    Ingestion walks this list top to bottom and uses the first provider that answers, so
+    this is the quickest way to see why a sync came back from a fallback source.
+    """
+    chain = spacetrack_service.providers
+    providers = [
+        {"name": p.name, "priority": i + 1, "available": p.is_available()}
+        for i, p in enumerate(chain.providers)
+    ]
+    usable = sum(1 for p in providers if p["available"])
+
+    return APIResponse(
+        success=True,
+        message=f"{usable}/{len(providers)} providers available — {' → '.join(chain.order)}",
+        data={"providers": providers},
+    )
+
+
+# ---------------------------------------------------------------------------
 # POST /catalog/sync
 # ---------------------------------------------------------------------------
 
@@ -180,7 +206,7 @@ def trigger_sync(
     background_tasks: BackgroundTasks = None,
     db: MongoSession = Depends(get_db),
 ):
-    """Manually trigger a Space-Track sync."""
+    """Manually trigger a catalog sync (Space-Track → CelesTrak → cache)."""
     if group:
         _validate_group(group)
         type_override = next(
@@ -197,18 +223,22 @@ def trigger_sync(
                 "The catalog database is unreachable, so the sync could not be stored.",
                 details={"group": group, "sync_status": status},
             )
-        if "no_records" in errors:
+        if "all_providers_failed" in errors:
+            # Only reachable once *every* source is down — including the local cache.
             raise ExternalServiceError(
-                service="Space-Track",
-                reason=f"returned no records for group '{group}'",
-                details={"service": "Space-Track", "group": group, "sync_status": status},
+                f"No satellite data provider could serve group '{group}'.",
+                details={
+                    "group": group,
+                    "providers_tried": spacetrack_service.providers.order,
+                    "provider_failures": status.get("provider_failures", {}),
+                },
             )
 
         return APIResponse(
             success=status["failed"] == 0,
             message=(
-                f"Synced group '{group}': {status['upserted']} upserted, "
-                f"{status['failed']} failed"
+                f"Synced group '{group}' from '{status['source']}': "
+                f"{status['upserted']} upserted, {status['failed']} failed"
             ),
             data=status,
         )

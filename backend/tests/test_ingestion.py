@@ -18,6 +18,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from orbital.providers.chain import ProviderChain
+from orbital.providers.spacetrack import SpaceTrackProvider
 from orbital.spacetrack import SpaceTrackService, SYNC_GROUPS
 
 
@@ -133,6 +135,11 @@ def _build_service_with_mock_client(payloads_per_group):
 
     mock_client.get.side_effect = _get
     svc.client = mock_client
+
+    # These tests exercise the Space-Track path in isolation, so pin the provider chain to
+    # Space-Track alone. Without this the default chain (issue #15) would fall back to
+    # CelesTrak on any group the mock leaves empty — hitting the real network from a test.
+    svc.providers = ProviderChain([SpaceTrackProvider(svc)])
     return svc
 
 
