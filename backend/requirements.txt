@@ -7,6 +7,7 @@ pydantic-settings==2.6.1
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 httpx==0.28.1
+numpy==2.5.1
 sgp4==2.23
 langgraph==0.2.60
 langchain-core==0.3.25

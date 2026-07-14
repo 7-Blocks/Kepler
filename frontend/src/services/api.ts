@@ -18,6 +18,55 @@ export interface APIResponse<T> {
   metadata?: Record<string, unknown>;
 }
 
+/** Stable error identifiers returned by the backend. Mirrors `ErrorCode` in app/core/exceptions.py. */
+export type ErrorCode =
+  | 'VALIDATION_ERROR'
+  | 'NOT_FOUND'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'CONFLICT'
+  | 'EXTERNAL_SERVICE_ERROR'
+  | 'SERVICE_UNAVAILABLE'
+  | 'METHOD_NOT_ALLOWED'
+  | 'INTERNAL_ERROR';
+
+/** The shape every backend error is returned in. */
+export interface ErrorResponse {
+  success: false;
+  message: string;
+  error: {
+    code: ErrorCode;
+    details?: unknown;
+  };
+  path?: string;
+  request_id?: string;
+  timestamp?: string;
+}
+
+/**
+ * Thrown by `apiFetch` on any non-2xx response.
+ *
+ * `message` is the backend's human-readable message, so it can be rendered straight into
+ * a toast. `code` lets callers branch on the reason (e.g. show a login prompt on
+ * UNAUTHORIZED) without matching on English text, and `requestId` is what a user quotes
+ * when reporting a bug.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: ErrorCode;
+  readonly details?: unknown;
+  readonly requestId?: string;
+
+  constructor(status: number, body: Partial<ErrorResponse>) {
+    super(body.message ?? `Request failed with status ${status}`);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = body.error?.code ?? 'INTERNAL_ERROR';
+    this.details = body.error?.details;
+    this.requestId = body.request_id;
+  }
+}
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
@@ -27,10 +76,19 @@ async function apiFetch<T>(
     headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
   });
+
   if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`API ${res.status}: ${text}`);
+    // Every backend error is an ErrorResponse. Fall back gracefully if something
+    // upstream (a proxy, a gateway) returned non-JSON instead.
+    const body = await res.json().catch(() => null);
+    if (body && typeof body === 'object' && 'error' in body) {
+      throw new ApiError(res.status, body as ErrorResponse);
+    }
+    throw new ApiError(res.status, {
+      message: `Request to ${path} failed (HTTP ${res.status} ${res.statusText}).`,
+    });
   }
+
   return res.json();
 }
 

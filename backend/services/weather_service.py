@@ -329,6 +329,10 @@ class SpaceWeatherService:
         except Exception as e:
             db.rollback()
             logger.error(f"Weather DB commit failed: {e}")
+            # Swallowing this used to make a sync that persisted nothing look successful to
+            # every caller. The scheduler and the Celery task both catch and log; the API
+            # endpoint turns it into a 502 instead of a misleading 200.
+            raise
 
     
 

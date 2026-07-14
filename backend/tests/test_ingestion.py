@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.services.spacetrack import SpaceTrackService, SYNC_GROUPS
+from orbital.spacetrack import SpaceTrackService, SYNC_GROUPS
 
 
 # ---------------------------------------------------------------------------

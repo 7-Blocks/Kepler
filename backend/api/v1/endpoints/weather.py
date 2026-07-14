@@ -6,15 +6,32 @@ radiation events, and overall severity status from NASA DONKI API.
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from pymongo.errors import PyMongoError
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+import logging
 
 from database.session import get_db
 from models.db_models import SpaceWeather, Alert
+from app.core.exceptions import (
+    ExternalServiceError,
+    ServiceUnavailableError,
+    ValidationError,
+)
 from schemas.api_schemas import APIResponse, PaginationSchema
 from services.weather_service import weather_service
 
+logger = logging.getLogger("app")
 router = APIRouter()
+
+# The event_type values weather_service actually persists (see services/weather_service.py).
+VALID_EVENT_TYPES = (
+    "SOLAR_CME",
+    "SOLAR_FLARE",
+    "GEOMAGNETIC_STORM",
+    "SOLAR_ENERGETIC_PARTICLE",
+    "RADIATION_BELT_ENHANCEMENT",
+)
 
 
 
@@ -116,6 +133,16 @@ def get_weather_history(
     db: Session = Depends(get_db),
 ):
     """List persisted space weather events from the database."""
+    if event_type and event_type.upper() not in VALID_EVENT_TYPES:
+        raise ValidationError(
+            f"'{event_type}' is not a known space weather event type.",
+            details={
+                "field": "event_type",
+                "value": event_type,
+                "allowed": list(VALID_EVENT_TYPES),
+            },
+        )
+
     query = db.query(SpaceWeather).order_by(SpaceWeather.recorded_at.desc())
     if event_type:
         query = query.filter(SpaceWeather.event_type == event_type.upper())
@@ -123,7 +150,7 @@ def get_weather_history(
     total  = query.count()
     offset = (page - 1) * size
     rows   = query.offset(offset).limit(size).all()
-    pages  = (total + size - 1) // size
+    pages  = (total + size - 1) // size if total else 1
 
     data = [
         {
@@ -157,16 +184,28 @@ def trigger_weather_sync(
     Manually trigger a NASA DONKI space weather sync.
     Fetches latest events and persists them to the database.
     """
+    # This used to return HTTP 200 with success=false on failure, so any caller checking
+    # the status code read a failed sync as a successful one. Now it fails loudly — and
+    # names the dependency that actually broke, rather than blaming NASA DONKI for a
+    # database outage.
     try:
         weather_service.sync_weather(db)
-        return APIResponse(
-            success=True,
-            message=f"NASA DONKI sync complete — events persisted to database.",
-            data={"synced_at": datetime.utcnow().isoformat(), "source": "NASA DONKI API"},
-        )
-    except Exception as e:
-        return APIResponse(
-            success=False,
-            message=f"Sync failed: {str(e)}",
-            data=None,
-        )
+    except PyMongoError as exc:
+        logger.exception(f"Weather sync could not persist to the database: {exc}")
+        raise ServiceUnavailableError(
+            "Space weather data was fetched but could not be saved: the database is "
+            "unreachable.",
+            details={"dependency": "MongoDB"},
+        ) from exc
+    except Exception as exc:
+        logger.exception(f"NASA DONKI sync failed: {exc}")
+        raise ExternalServiceError(
+            service="NASA DONKI",
+            reason="the space weather sync did not complete",
+        ) from exc
+
+    return APIResponse(
+        success=True,
+        message="NASA DONKI sync complete — events persisted to database.",
+        data={"synced_at": datetime.now(timezone.utc).isoformat(), "source": "NASA DONKI API"},
+    )

@@ -1,13 +1,17 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, Body
+from fastapi import APIRouter, Depends, Query, Body
 from database.session import get_db, MongoSession
 from models.db_models import CollisionPrediction
 from schemas.api_schemas import APIResponse, PaginationSchema
+from app.core.exceptions import NotFoundError, ValidationError
 from orbital.collision_engine import collision_engine
 from typing import List, Dict, Any, Optional
 import logging
 
 logger = logging.getLogger("app")
 router = APIRouter()
+
+VALID_STATUSES = ("PENDING", "MITIGATED", "ASSESSED", "IGNORED")
+VALID_RISK_LEVELS = ("LOW", "MEDIUM", "HIGH", "CRITICAL")
 
 
 def _serialize_collision(r: CollisionPrediction) -> Dict[str, Any]:
@@ -51,6 +55,19 @@ def get_collisions(
     Returns an empty list with a clear message if no conjunctions exist.
     NO mock data is returned.
     """
+    # Reject unknown filter values outright. Passing them through would return an empty
+    # page reading "Catalog is clear", which is indistinguishable from a genuine result.
+    if risk_level and risk_level.upper() not in VALID_RISK_LEVELS:
+        raise ValidationError(
+            f"'{risk_level}' is not a valid risk level.",
+            details={"field": "risk_level", "value": risk_level, "allowed": list(VALID_RISK_LEVELS)},
+        )
+    if status and status.upper() not in VALID_STATUSES:
+        raise ValidationError(
+            f"'{status}' is not a valid collision status.",
+            details={"field": "status", "value": status, "allowed": list(VALID_STATUSES)},
+        )
+
     query = (
         db.query(CollisionPrediction)
         .order_by(("probability", -1))
@@ -91,7 +108,7 @@ def get_collision_detail(prediction_id: int, db: MongoSession = Depends(get_db))
         .first()
     )
     if not pred:
-        raise HTTPException(status_code=404, detail=f"Collision prediction {prediction_id} not found")
+        raise NotFoundError(resource="Collision prediction", identifier=prediction_id)
 
     detail = _serialize_collision(pred)
     detail["risk_scores"] = [
@@ -108,13 +125,15 @@ def update_collision_status(
     db: MongoSession = Depends(get_db),
 ):
     """Update the status of a collision prediction (PENDING → MITIGATED | ASSESSED | IGNORED)."""
-    valid = {"PENDING", "MITIGATED", "ASSESSED", "IGNORED"}
-    if status.upper() not in valid:
-        raise HTTPException(status_code=422, detail=f"Status must be one of {valid}")
+    if status.upper() not in VALID_STATUSES:
+        raise ValidationError(
+            f"'{status}' is not a valid collision status.",
+            details={"field": "status", "value": status, "allowed": list(VALID_STATUSES)},
+        )
 
     pred = db.query(CollisionPrediction).filter(CollisionPrediction.id == prediction_id).first()
     if not pred:
-        raise HTTPException(status_code=404, detail=f"Prediction {prediction_id} not found")
+        raise NotFoundError(resource="Collision prediction", identifier=prediction_id)
 
     pred.status = status.upper()
     db.commit()
@@ -156,7 +175,7 @@ def get_conjunction_explanation(prediction_id: int, db: MongoSession = Depends(g
         .first()
     )
     if not pred:
-        raise HTTPException(status_code=404, detail=f"Prediction {prediction_id} not found")
+        raise NotFoundError(resource="Collision prediction", identifier=prediction_id)
 
     summary = openai_service.explain_collision({
         "obj_a": pred.object_a.name if pred.object_a else "UNKNOWN",

@@ -5,9 +5,11 @@ import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.core.error_handlers import register_exception_handlers
 from api.router import api_router
 from websocket.manager import manager
 from models.db_models import Organization, Role
+from schemas.api_schemas import ErrorResponse
 
 
 logging.basicConfig(level=logging.INFO)
@@ -20,7 +22,21 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
     redoc_url=f"{settings.API_V1_STR}/redoc",
+    # Documents the single error shape on every operation in /docs and /redoc.
+    responses={
+        400: {"model": ErrorResponse, "description": "Bad Request"},
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        404: {"model": ErrorResponse, "description": "Not Found"},
+        409: {"model": ErrorResponse, "description": "Conflict"},
+        422: {"model": ErrorResponse, "description": "Validation Error"},
+        502: {"model": ErrorResponse, "description": "Upstream Service Error"},
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
 )
+
+
+# Must be registered before the routers so every route inherits the same error contract.
+register_exception_handlers(app)
 
 
 app.add_middleware(

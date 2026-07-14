@@ -37,7 +37,7 @@ from pymongo.errors import (
     OperationFailure,
 )
 
-from app.database.session import MongoSession
+from database.session import MongoSession
 from app.core.config import settings
 
 logger = logging.getLogger("app")
@@ -86,6 +86,11 @@ SYNC_GROUPS = [
     ("starlink", "PAYLOAD", "Starlink constellation"),
     ("analyst",  "DEBRIS",  "Analyst debris objects"),
 ]
+
+# Every group `_build_group_path` knows how to query, including the "debris" alias for
+# "analyst". The API layer validates against this so an unknown group is rejected with a
+# 422 instead of silently returning zero records.
+KNOWN_GROUPS = ("active", "starlink", "analyst", "debris")
 
 
 _TYPE_MAP = {
@@ -176,6 +181,9 @@ class SpaceTrackService:
     # ------------------------------------------------------------------
 
     def _build_group_path(self, group: str, limit: int) -> Optional[str]:
+        if group not in KNOWN_GROUPS:
+            logger.warning(f"[SpaceTrack] Unknown group '{group}'.")
+            return None
         if group == "active":
             return (f"/basicspacedata/query/class/gp/OBJECT_TYPE/PAYLOAD/"
                     f"decay_date/null-val/orderby/NORAD_CAT_ID/limit/{limit}/format/json")

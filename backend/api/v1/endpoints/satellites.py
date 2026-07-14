@@ -8,11 +8,12 @@ Bug Fixes Applied:
   - Serialisation is done inline — no Pydantic model needed for raw Mongo docs.
 """
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query
 from typing import List, Optional, Dict, Any
 import datetime
 
 from database.session import get_db, MongoSession
+from app.core.exceptions import NotFoundError
 from schemas.api_schemas import APIResponse, PaginationSchema
 
 router = APIRouter()
@@ -99,7 +100,7 @@ def get_satellite_telemetry(satellite_id: str, db: MongoSession = Depends(get_db
 
     sat = db.db["satellites"].find_one(flt, {"_id": 0})
     if not sat:
-        raise HTTPException(status_code=404, detail="Satellite not found")
+        raise NotFoundError(resource="Satellite", identifier=satellite_id)
 
     records = list(
         db.db["telemetry"]

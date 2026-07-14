@@ -7,10 +7,11 @@ Bug Fixes Applied:
   - Now queries MongoDB directly and serialises manually.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from typing import List, Dict, Any, Optional
 
 from database.session import get_db, MongoSession
+from app.core.exceptions import NotFoundError
 from schemas.api_schemas import APIResponse, PaginationSchema
 from ai.workflow import run_agent_workflow
 
@@ -49,7 +50,7 @@ def trigger_agent_mitigation_workflow(
 ):
     collision = db.db["conjunctions"].find_one({"id": collision_id})
     if not collision:
-        raise HTTPException(status_code=404, detail="Collision conjunction not found")
+        raise NotFoundError(resource="Collision conjunction", identifier=collision_id)
 
     run_id = run_agent_workflow(db, collision_id)
     return APIResponse(
@@ -83,7 +84,7 @@ def get_agent_runs(
 def get_agent_run_details(run_id: int, db: MongoSession = Depends(get_db)):
     doc = db.db["agent_runs"].find_one({"id": run_id}, {"_id": 0})
     if not doc:
-        raise HTTPException(status_code=404, detail="Agent run profile not found")
+        raise NotFoundError(resource="Agent run", identifier=run_id)
     return APIResponse(
         success=True,
         message="Agent run telemetry retrieved",

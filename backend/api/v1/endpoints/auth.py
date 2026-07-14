@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from database.session import get_db
 from models.db_models import User, Role, Organization
 from schemas.api_schemas import APIResponse, Token, UserResponse, UserCreate
+from app.core.exceptions import ConflictError, UnauthorizedError
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 import logging
 
@@ -14,8 +15,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_in.email).first()
     if user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
+        # 409, not 400: the request is well-formed, it conflicts with existing state.
+        raise ConflictError(
+            "An operator is already registered with this email address.",
+            details={"field": "email", "value": user_in.email},
+        )
+
     
     hashed_pwd = get_password_hash(user_in.password)
     
@@ -54,12 +59,11 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
+        # Deliberately does not say which of the two was wrong — that would let an
+        # attacker enumerate registered operator accounts.
+        raise UnauthorizedError("Incorrect email or password.")
+
+
     access_token = create_access_token(subject=user.email)
     refresh_token = create_refresh_token(subject=user.email)
     

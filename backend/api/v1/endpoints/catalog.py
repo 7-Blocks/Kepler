@@ -8,16 +8,33 @@ Bug Fixes Applied:
   - _serialize_space_object now reads camelCase Mongo field names correctly.
 """
 
-from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, Query, BackgroundTasks
 from typing import List, Optional, Dict, Any
 import datetime
 import re
 
 from database.session import get_db, MongoSession
+from app.core.exceptions import (
+    ExternalServiceError,
+    NotFoundError,
+    ServiceUnavailableError,
+    ValidationError,
+)
 from schemas.api_schemas import APIResponse, PaginationSchema
-from orbital.spacetrack import spacetrack_service, SYNC_GROUPS
+from orbital.spacetrack import spacetrack_service, KNOWN_GROUPS, SYNC_GROUPS
 
 router = APIRouter()
+
+VALID_CLASSIFICATIONS = ("PAYLOAD", "DEBRIS", "ROCKET_BODY", "UNKNOWN")
+
+
+def _validate_group(group: str) -> None:
+    """Reject an unknown Space-Track group before we waste a round-trip on it."""
+    if group not in KNOWN_GROUPS:
+        raise ValidationError(
+            f"'{group}' is not a known Space-Track group.",
+            details={"field": "group", "value": group, "allowed": list(KNOWN_GROUPS)},
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +88,16 @@ def list_space_objects(
     db: MongoSession = Depends(get_db),
 ):
     """List all tracked space objects from MongoDB (satellites + debris merged view)."""
+    if classification and classification.upper() not in VALID_CLASSIFICATIONS:
+        raise ValidationError(
+            f"'{classification}' is not a valid object classification.",
+            details={
+                "field": "classification",
+                "value": classification,
+                "allowed": list(VALID_CLASSIFICATIONS),
+            },
+        )
+
     flt = _build_filter(classification, search)
 
     # Query both collections
@@ -124,9 +151,9 @@ def get_space_object(catalog_number: str, db: MongoSession = Depends(get_db)):
         doc = db.db["satellites"].find_one({"noradId": catalog_number}, {"_id": 0}) or \
               db.db["debris"].find_one({"noradId": catalog_number}, {"_id": 0})
     if not doc:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Object {catalog_number} not found in catalog or Space-Track",
+        raise NotFoundError(
+            f"Object '{catalog_number}' was not found in the local catalog or on Space-Track.",
+            details={"resource": "SpaceObject", "identifier": catalog_number},
         )
     return APIResponse(success=True, message="Object retrieved", data=_serialize_doc(doc))
 
@@ -155,10 +182,28 @@ def trigger_sync(
 ):
     """Manually trigger a Space-Track sync."""
     if group:
+        _validate_group(group)
         type_override = next(
             (t for g, t, _ in SYNC_GROUPS if g == group), None
         )
         status = spacetrack_service.sync_group(db, group, type_override, limit=limit)
+
+        # sync_group reports an unreachable dependency through sentinels in `errors`
+        # rather than by raising. Surface those as real failures — previously they came
+        # back as "0 upserted, 0 failed" with HTTP 200, which reads like a clean sync.
+        errors = status.get("errors") or []
+        if "db_unreachable" in errors:
+            raise ServiceUnavailableError(
+                "The catalog database is unreachable, so the sync could not be stored.",
+                details={"group": group, "sync_status": status},
+            )
+        if "no_records" in errors:
+            raise ExternalServiceError(
+                service="Space-Track",
+                reason=f"returned no records for group '{group}'",
+                details={"service": "Space-Track", "group": group, "sync_status": status},
+            )
+
         return APIResponse(
             success=status["failed"] == 0,
             message=(
@@ -202,6 +247,16 @@ def fetch_live_from_spacetrack(
     limit: int = Query(100, ge=1, le=1000),
 ):
     """Pass-through: fetch live GP data directly from Space-Track (no DB write)."""
+    _validate_group(group)
+
+    # fetch_group_json swallows auth/HTTP failures and returns []. Checking auth first is
+    # what lets us tell "Space-Track is down" (502) from "Space-Track has no records" (200).
+    if not spacetrack_service.authenticate():
+        raise ExternalServiceError(
+            service="Space-Track",
+            reason="authentication failed — check SPACETRACK_USERNAME / SPACETRACK_PASSWORD",
+        )
+
     records = spacetrack_service.fetch_group_json(group)[:limit]
     return APIResponse(
         success=True,

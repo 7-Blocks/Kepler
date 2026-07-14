@@ -18,6 +18,34 @@ class APIResponse(BaseModel, Generic[T]):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class ErrorDetail(BaseModel):
+    """Machine-readable description of what went wrong."""
+
+    code: str = Field(..., description="Stable error identifier, e.g. NOT_FOUND")
+    details: Optional[Any] = Field(
+        None,
+        description="Structured context: offending fields, valid values, upstream service…",
+    )
+
+
+class ErrorResponse(BaseModel):
+    """
+    The single shape every Kepler API error is returned in.
+
+    It mirrors `APIResponse` — `success` and `message` sit in the same place — so a client
+    can read `success` on any response without first knowing whether the call succeeded.
+    """
+
+    success: bool = Field(False, description="Always false on an error response")
+    message: str = Field(..., description="Human-readable explanation, safe to display")
+    error: ErrorDetail
+    path: Optional[str] = Field(None, description="Path of the request that failed")
+    request_id: Optional[str] = Field(
+        None, description="Correlation id; also returned in the X-Request-ID header"
+    )
+    timestamp: Optional[datetime] = Field(None, description="UTC time the error was produced")
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
