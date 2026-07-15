@@ -488,7 +488,7 @@ export const EarthTwin: React.FC = () => {
             <div className="w-full h-4 bg-surface-container/80 animate-pulse" />
             </>
           ) }
-            <p className={`font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block opacity-0 ${dataLoaded ? 'opacity-100 transition-opacity duration-500' : ''}`}>
+            <p className={`font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block transition-opacity duration-500 ${dataLoaded ? 'opacity-100' : 'opacity-0'}`}>
               WEATHER: {stats.weatherIndex} · DATA SOURCE: SPACE-TRACK / NASA DONKI
             </p>
 
