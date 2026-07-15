@@ -26,7 +26,7 @@ By participating in this project, you agree to uphold a welcoming, inclusive, an
 - **Node.js 18+** and **npm/yarn** (for frontend)
 - **Python 3.10+** and **pip** (for backend)
 - **Git**
-- Basic familiarity with **React**, **TypeScript**, and **Flask**
+- Basic familiarity with **React**, **TypeScript**, and **FastAPI**
 
 ### 1. Fork the Repository
 
@@ -69,7 +69,7 @@ npm install
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`.
+The frontend will be available at `http://localhost:5173` (Vite default).
 
 ### Backend
 
@@ -83,38 +83,47 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
-python app.py
-```
+uvicorn app.main:app --reload --port 8000
 
-The backend API will be available at `http://localhost:5000`.
+The backend API will be available at `http://localhost:8000`.
 
 ### Environment Variables
 
-Copy the example environment file if one exists:
+Create a `.env` file in the `backend/` directory with the required configuration:
 
 ```bash
-cp backend/.env.example backend/.env
+# backend/.env
+DATABASE_URL=sqlite:///./kepler.db
+SECRET_KEY=your-secret-key
 ```
 
 ## Project Structure
 
 ```
 Kepler/
-├── frontend/           # React + TypeScript frontend
+├── frontend/             # React + TypeScript frontend
 │   ├── src/
-│   │   ├── components/ # Reusable UI components
-│   │   ├── pages/      # Route pages
-│   │   ├── utils/      # Helper functions
-│   │   └── styles/     # CSS/styling
-│   └── public/         # Static assets
-├── backend/            # Python Flask API
-│   ├── routes/         # API endpoint definitions
-│   ├── models/         # Data models
-│   ├── services/       # Business logic
-│   └── utils/          # Helper modules
-├── .github/            # GitHub templates and workflows
-├── .vercel/            # Vercel deployment config
-└── vercel.json         # Deployment configuration
+│   │   ├── components/   # Reusable UI components
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── services/     # API client services
+│   │   ├── store/        # State management
+│   │   └── styles/       # CSS/styling
+│   └── public/           # Static assets
+├── backend/              # Python FastAPI backend
+│   ├── app/              # Application entry point
+│   │   ├── core/         # Config, error handling, scheduler
+│   │   └── tasks/        # Background tasks
+│   ├── api/              # API route definitions
+│   ├── models/           # Data models / ORM
+│   ├── schemas/          # Pydantic schemas
+│   ├── services/         # Business logic
+│   ├── websocket/        # WebSocket connection manager
+│   ├── orbital/          # Orbital mechanics
+│   ├── ai/               # AI/ML components
+│   └── database/         # Database setup and migrations
+├── .github/              # GitHub templates and workflows
+├── .vercel/              # Vercel deployment config
+└── vercel.json           # Deployment configuration
 ```
 
 ## How to Contribute
@@ -209,12 +218,13 @@ Closes #N
 - Use meaningful component and variable names.
 - Keep components focused and modular.
 
-### Backend (Python + Flask)
+### Backend (Python + FastAPI)
 
 - Follow **PEP 8** style guidelines.
 - Use descriptive function and variable names.
+- Include type hints and Pydantic schemas for request/response models.
 - Include docstrings for public functions and classes.
-- Keep views thin — business logic belongs in services.
+- Keep route handlers thin — business logic belongs in services.
 
 ### Git Commits
 
@@ -235,7 +245,7 @@ npm test
 
 ```bash
 cd backend
-python -m pytest
+python -m pytest tests/
 ```
 
 ### Manual Testing
@@ -252,9 +262,10 @@ When opening an issue, please use the appropriate template:
 
 | Issue Type | Template | Labels |
 |------------|----------|--------|
-| Bug Report | `.github/ISSUE_TEMPLATE/bug_report.md` | `bug` |
-| Feature Request | `.github/ISSUE_TEMPLATE/feature_request.md` | `enhancement` |
-| Documentation | — | `docs` |
+| Bug Report | `.github/ISSUE_TEMPLATE/bug_report.yml` | `type:bug` |
+| Feature Request | `.github/ISSUE_TEMPLATE/feature_request.yml` | `type:enhancement` |
+| Documentation | `.github/ISSUE_TEMPLATE/documentation.yml` | `type:documentation` |
+| Security | `.github/ISSUE_TEMPLATE/security.yml` | `security` |
 
 ## Community
 
