@@ -77,12 +77,12 @@ export const Debris: React.FC = () => {
   const totalDebris = (stats?.debris ?? 0) + (stats?.rocket_bodies ?? 0);
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">
+    <div className="p-4 md:p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-border-panel pb-4">
         <div>
-          <h2 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
+          <h2 className="font-headline-lg text-lg md:text-headline-lg text-primary tracking-tight font-bold">
             DEBRIS CATALOG
           </h2>
           <p className="text-xs text-on-surface-variant font-technical-data mt-1">
@@ -95,7 +95,7 @@ export const Debris: React.FC = () => {
           <button
             onClick={() => syncM.mutate('analyst')}
             disabled={syncM.isPending}
-            className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 cursor-pointer transition-all disabled:opacity-50"
+            className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 cursor-pointer transition-all disabled:opacity-50 min-h-[44px]"
           >
             <MaterialIcon name={syncM.isPending ? 'sync' : 'cloud_download'} className={`text-sm mr-2 ${syncM.isPending ? 'animate-spin' : ''}`} />
             <span className="font-label-caps text-label-caps">
@@ -150,8 +150,8 @@ export const Debris: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="glass-panel overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="glass-panel overflow-hidden min-w-0">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead className="bg-surface-container-high border-b border-border-panel">
               <tr>

@@ -64,12 +64,12 @@ export const CollisionCenter: React.FC = () => {
   const latestDecision = latestRun?.decisions?.[latestRun.decisions.length - 1];
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">
+    <div className="p-4 md:p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h2 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
+          <h2 className="font-headline-lg text-lg md:text-headline-lg text-primary tracking-tight font-bold">
             COLLISION CENTER
           </h2>
           <div className="flex items-center gap-4 mt-2 flex-wrap">
@@ -101,7 +101,7 @@ export const CollisionCenter: React.FC = () => {
           <select
             value={riskFilter}
             onChange={e => setRiskFilter(e.target.value)}
-            className="bg-surface-container border border-border-panel text-primary font-technical-data text-xs px-3 py-2 focus:outline-none focus:border-primary-container cursor-pointer"
+            className="bg-surface-container border border-border-panel text-primary font-technical-data text-xs px-3 py-2 focus:outline-none focus:border-primary-container cursor-pointer min-h-[44px]"
           >
             <option value="">ALL RISK LEVELS</option>
             <option value="CRITICAL">CRITICAL</option>
@@ -112,7 +112,7 @@ export const CollisionCenter: React.FC = () => {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-surface-container border border-border-panel text-primary font-technical-data text-xs px-3 py-2 focus:outline-none focus:border-primary-container cursor-pointer"
+            className="bg-surface-container border border-border-panel text-primary font-technical-data text-xs px-3 py-2 focus:outline-none focus:border-primary-container cursor-pointer min-h-[44px]"
           >
             <option value="">ALL STATUSES</option>
             <option value="PENDING">PENDING</option>
@@ -123,7 +123,7 @@ export const CollisionCenter: React.FC = () => {
           <button
             onClick={() => evaluate.mutate()}
             disabled={evaluate.isPending}
-            className="bg-primary-container text-on-primary font-label-caps text-label-caps px-6 py-2.5 border-b-2 border-primary hover:brightness-110 transition-all flex items-center gap-2 font-bold cursor-pointer drop-shadow-[0_0_10px_rgba(0,229,255,0.4)] disabled:opacity-50"
+            className="bg-primary-container text-on-primary font-label-caps text-label-caps px-4 md:px-6 py-2.5 border-b-2 border-primary hover:brightness-110 transition-all flex items-center gap-2 font-bold cursor-pointer drop-shadow-[0_0_10px_rgba(0,229,255,0.4)] disabled:opacity-50 min-h-[44px]"
           >
             <MaterialIcon name={evaluate.isPending ? 'sync' : 'bolt'} className={`text-sm ${evaluate.isPending ? 'animate-spin' : ''}`} />
             {evaluate.isPending ? 'SCANNING…' : 'RUN CONJUNCTION SCAN'}
@@ -135,7 +135,7 @@ export const CollisionCenter: React.FC = () => {
       <div className="grid grid-cols-12 gap-6">
 
         {/* Conjunction Table — 8 cols */}
-        <div className="col-span-12 lg:col-span-8 bg-surface-container-lowest/90 backdrop-blur-xl border border-border-panel p-4">
+        <div className="col-span-12 lg:col-span-8 bg-surface-container-lowest/90 backdrop-blur-xl border border-border-panel p-4 min-w-0">
           <div className="flex justify-between items-center mb-4">
             <div className="font-label-caps text-label-caps text-primary-container font-bold tracking-wider">
               PROBABILITY MATRIX

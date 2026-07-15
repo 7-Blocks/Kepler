@@ -79,10 +79,10 @@ export const AIAgents: React.FC = () => {
   }, [allDecisions.length]);
 
   return (
-    <div className="flex h-full min-w-0 overflow-hidden relative">
+    <div className="flex flex-col xl:flex-row h-full min-w-0 overflow-y-auto xl:overflow-hidden relative custom-scrollbar">
 
       {/* ── Left: Agent Status Cards ─────────────────────────── */}
-      <section className="w-80 border-r border-border-panel flex flex-col bg-surface-container-lowest/50 h-full overflow-hidden">
+      <section className="w-full xl:w-80 border-b xl:border-b-0 xl:border-r border-border-panel flex flex-col bg-surface-container-lowest/50 h-[300px] xl:h-full overflow-hidden shrink-0">
         <div className="p-4 border-b border-border-panel">
           <h2 className="font-label-caps text-label-caps text-primary uppercase font-bold tracking-wider">
             Autonomous Fleet
@@ -159,15 +159,15 @@ export const AIAgents: React.FC = () => {
       </section>
 
       {/* ── Center: Workflow Node Visualizer ─────────────────── */}
-      <section className="flex-1 relative bg-[radial-gradient(circle_at_center,_#111827_0%,_#000000_100%)] overflow-hidden h-full">
+      <section className="flex-1 min-h-[500px] xl:min-h-0 relative bg-[radial-gradient(circle_at_center,_#111827_0%,_#000000_100%)] overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none technical-grid" />
 
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+        <svg className="hidden xl:block absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
           <path className="flow-line" d="M 170 300 Q 290 300, 410 300" fill="none" opacity="0.6" stroke="#00e5ff" strokeWidth="2" />
           <path className="flow-line" d="M 570 300 Q 690 300, 810 300" fill="none" opacity="0.6" stroke="#FF9500" strokeWidth="2" style={{ animationDelay: '0.5s' }} />
         </svg>
 
-        <div className="absolute inset-0 flex items-center justify-around px-12">
+        <div className="absolute inset-0 flex flex-col xl:flex-row items-center justify-around px-4 xl:px-12 pt-12 pb-40 xl:py-0 gap-6 xl:gap-0 overflow-y-auto custom-scrollbar">
           {NODE_ROLES.map((node, i) => {
             
             const roleDecision = activeDecisions.find(d =>
@@ -200,20 +200,20 @@ export const AIAgents: React.FC = () => {
         </div>
 
         {/* Status bar */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 glass-panel px-6 py-3 rounded-full flex items-center gap-6 border-primary-container/30">
+        <div className="absolute bottom-4 xl:bottom-10 left-1/2 -translate-x-1/2 glass-panel px-4 xl:px-6 py-3 rounded-xl xl:rounded-full flex flex-col xl:flex-row items-center gap-2 xl:gap-6 border-primary-container/30 w-[90%] xl:w-auto max-w-xl text-center z-10">
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${runs.some(r => r.status === 'RUNNING') ? 'bg-primary-container animate-ping' : 'bg-white/30'}`} />
             <span className="font-label-caps text-[10px] font-bold text-on-surface">
               {runs.some(r => r.status === 'RUNNING') ? 'AGENTS ACTIVE' : 'AGENTS IDLE'}
             </span>
           </div>
-          <div className="h-4 w-[1px] bg-border-panel" />
+          <div className="hidden xl:block h-4 w-[1px] bg-border-panel" />
           <div className="flex items-center gap-2">
             <span className="font-label-caps text-[10px] font-bold text-on-surface">
               {activeRun ? `WORKFLOW: ${activeRun.workflow_name}` : 'NO ACTIVE WORKFLOW'}
             </span>
           </div>
-          <div className="h-4 w-[1px] bg-border-panel" />
+          <div className="hidden xl:block h-4 w-[1px] bg-border-panel" />
           <div className="flex items-center gap-2">
             <span className="font-label-caps text-[10px] font-bold text-on-surface">
               {allDecisions.length} TOTAL DECISIONS
@@ -223,7 +223,7 @@ export const AIAgents: React.FC = () => {
       </section>
 
       {/* ── Right: Execution Log Terminal ─────────────────────── */}
-      <section className="w-80 border-l border-border-panel flex flex-col bg-bg-deep-space h-full overflow-hidden">
+      <section className="w-full xl:w-80 border-t xl:border-t-0 xl:border-l border-border-panel flex flex-col bg-bg-deep-space h-[400px] xl:h-full overflow-hidden shrink-0">
         <div className="p-4 border-b border-border-panel flex justify-between items-center bg-bg-deep-space">
           <h2 className="font-label-caps text-label-caps text-on-surface-variant font-bold">
             Live Execution Log

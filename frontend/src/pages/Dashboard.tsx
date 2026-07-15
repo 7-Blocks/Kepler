@@ -121,12 +121,12 @@ export const Dashboard: React.FC = () => {
     <div className="flex flex-col min-h-screen">
 
       {/* 3D Earth Twin Digital Hero */}
-      <section className="h-[409px] relative border-b border-border-panel bg-bg-deep-space">
+      <section className="h-[250px] md:h-[409px] relative border-b border-border-panel bg-bg-deep-space">
         <EarthTwin />
       </section>
 
       {/* KPI Bento Grid */}
-      <section className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <section className="p-3 md:p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
         {summary.isLoading
           ? Array(6).fill(0).map((_, i) => <KPISkeleton key={i} />)
           : summary.isError
@@ -146,7 +146,7 @@ export const Dashboard: React.FC = () => {
               </p>
               <div className="flex justify-between items-end">
                 <div className="flex items-baseline gap-1">
-                  <span className={`font-headline-lg text-2xl font-bold font-technical-data ${kpi.text}`}>
+                  <span className={`font-headline-lg text-lg md:text-2xl font-bold font-technical-data ${kpi.text}`}>
                     {kpi.value}
                   </span>
                   {kpi.subValue && (
@@ -161,10 +161,10 @@ export const Dashboard: React.FC = () => {
       </section>
 
       {/* Bottom Timeline & Reasoning Stream */}
-      <section className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+      <section className="px-3 md:px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0">
 
         {/* Left (2/3): Live Collision Timeline */}
-        <div className="lg:col-span-2 flex flex-col min-h-0">
+        <div className="lg:col-span-2 flex flex-col min-h-0 min-w-0">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-label-caps text-label-caps text-primary flex items-center gap-2 drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
               <MaterialIcon name="timeline" className="text-sm" />
@@ -199,7 +199,7 @@ export const Dashboard: React.FC = () => {
                 {conjunctions.map((conj: Collision) => (
                   <div
                     key={conj.id}
-                    className={`w-72 glass-panel p-4 border-l-4 ${riskColor(conj.risk_level)} relative overflow-hidden group hover:bg-surface-variant/30 transition-all cursor-pointer`}
+                    className={`w-64 sm:w-72 shrink-0 glass-panel p-4 border-l-4 ${riskColor(conj.risk_level)} relative overflow-hidden group hover:bg-surface-variant/30 transition-all cursor-pointer`}
                   >
                     <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                       <MaterialIcon name="crisis_alert" className={`text-6xl ${riskBarColor(conj.risk_level)}`} />

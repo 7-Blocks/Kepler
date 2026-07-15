@@ -83,12 +83,12 @@ export const Satellites: React.FC = () => {
     <div className="flex h-full min-w-0 relative">
 
       {/* ── Table Section ──────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto custom-scrollbar xl:mr-[420px]">
+      <div className={`flex-1 flex flex-col p-4 md:p-6 space-y-6 overflow-y-auto custom-scrollbar min-w-0 ${selectedObj ? 'xl:mr-[420px]' : ''}`}>
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface">SATELLITE FLEET</h2>
+            <h2 className="font-headline-lg text-lg md:text-headline-lg text-on-surface">SATELLITE FLEET</h2>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               {statsQ.isLoading ? (
                 <div className="h-5 w-32 bg-surface-container-high rounded animate-pulse" />
@@ -113,14 +113,14 @@ export const Satellites: React.FC = () => {
             <button
               onClick={() => syncM.mutate(undefined)}
               disabled={syncM.isPending}
-              className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
             >
               <MaterialIcon name={syncM.isPending ? 'sync' : 'cloud_download'} className={`text-sm mr-2 ${syncM.isPending ? 'animate-spin' : ''}`} />
               <span className="font-label-caps text-label-caps">
                 {syncM.isPending ? 'SYNCING…' : 'SYNC SPACE-TRACK'}
               </span>
             </button>
-            <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-all glow-cyan cursor-pointer">
+            <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-all glow-cyan cursor-pointer min-h-[44px]">
               <MaterialIcon name="filter_alt" className="text-sm mr-2" />
               FILTERS
             </button>
@@ -145,8 +145,8 @@ export const Satellites: React.FC = () => {
         </div>
 
         {/* Data Table */}
-        <div className="glass-panel overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="glass-panel overflow-hidden min-w-0">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead className="bg-surface-container-high border-b border-border-panel">
                 <tr>
@@ -326,11 +326,11 @@ export const Satellites: React.FC = () => {
       <AnimatePresence>
         {selectedObj && (
           <motion.aside
-            initial={{ x: 420 }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: 420 }}
+            exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="w-[420px] border-l border-border-panel bg-surface-container-lowest/95 backdrop-blur-xl h-full flex flex-col fixed right-0 top-12 bottom-0 z-30 shadow-[-10px_0_30px_rgba(0,0,0,0.6)]"
+            className="w-full md:w-[420px] border-l border-border-panel bg-surface-container-lowest/95 backdrop-blur-xl h-full flex flex-col fixed right-0 top-12 bottom-0 z-40 shadow-[-10px_0_30px_rgba(0,0,0,0.6)]"
           >
             {/* Drawer Header */}
             <div className="p-6 border-b border-border-panel flex justify-between items-center">

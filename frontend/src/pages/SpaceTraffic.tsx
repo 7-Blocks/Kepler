@@ -3,10 +3,10 @@ import { MaterialIcon } from '@/components/MaterialIcon';
 
 export const SpaceTraffic: React.FC = () => {
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">
-      <div className="flex justify-between items-end border-b border-border-panel pb-4">
+    <div className="p-4 md:p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 border-b border-border-panel pb-4">
         <div>
-          <h2 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
+          <h2 className="font-headline-lg text-lg md:text-headline-lg text-primary tracking-tight font-bold">
             SPACE TRAFFIC MONITOR
           </h2>
           <p className="text-xs text-on-surface-variant font-technical-data mt-1">
@@ -14,7 +14,7 @@ export const SpaceTraffic: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-all cursor-pointer">
+          <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-all cursor-pointer min-h-[44px]">
             <MaterialIcon name="filter_alt" className="text-sm mr-2" />
             REGISTRY FILTER
           </button>

@@ -442,74 +442,74 @@ export const EarthTwin: React.FC = () => {
       )}
 
       {/* ── HUD Overlay ───────────────────────────────────────── */}
-      <div className="absolute inset-0 p-6 flex flex-col justify-between z-10 pointer-events-none">
+      <div className="absolute inset-0 p-3 md:p-6 flex flex-col justify-between z-10 pointer-events-none overflow-hidden">
 
         {/* Top Row */}
-        <div className="flex justify-between items-start">
-          <div className="glass-panel p-4 border-l-4 border-l-primary-container animate-[slideDown_0.5s_ease-out]">
-            <p className="font-label-caps text-label-caps text-primary-container/80 drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+          <div className="glass-panel p-2 md:p-4 border-l-4 border-l-primary-container animate-[slideDown_0.5s_ease-out] max-w-[70%] sm:max-w-none">
+            <p className="font-label-caps text-[9px] md:text-label-caps text-primary-container/80 drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
               ORBITAL INTELLIGENCE
             </p>
-            <h2 className="font-display-lg text-headline-lg font-bold text-on-surface">
+            <h2 className="font-display-lg text-sm md:text-headline-lg font-bold text-on-surface">
               {activeSector ? activeSector.toUpperCase() : 'GLOBAL VIEW'}
             </h2>
             {dataLoaded && (
-              <p className="font-technical-data text-[10px] text-on-surface-variant mt-1">
+              <p className="font-technical-data text-[9px] md:text-[10px] text-on-surface-variant mt-1">
                 {objectCounts.total.toLocaleString()} objects tracked · Synced {stats.lastSync}
               </p>
             )}
           </div>
 
-          <div className="text-right space-y-1 animate-[slideDown_0.5s_ease-out]">
+          <div className="text-right space-y-1 animate-[slideDown_0.5s_ease-out] hidden sm:block">
             {objectCounts.collisions > 0 ? (
-              <div className="bg-status-emergency/20 border border-status-emergency px-4 py-1 flex items-center gap-2 drop-shadow-[0_0_12px_rgba(255,59,48,0.4)]">
+              <div className="bg-status-emergency/20 border border-status-emergency px-3 md:px-4 py-1 flex items-center gap-2 drop-shadow-[0_0_12px_rgba(255,59,48,0.4)]">
                 <MaterialIcon name="warning" className="text-status-emergency text-sm animate-pulse" />
-                <span className="font-technical-data text-status-emergency text-[12px] font-bold">
+                <span className="font-technical-data text-status-emergency text-[11px] md:text-[12px] font-bold">
                   {objectCounts.collisions} ACTIVE CONJUNCTION{objectCounts.collisions !== 1 ? 'S' : ''}
                 </span>
               </div>
             ) : (
-              <div className="bg-status-success/20 border border-status-success px-4 py-1 flex items-center gap-2">
+              <div className="bg-status-success/20 border border-status-success px-3 md:px-4 py-1 flex items-center gap-2">
                 <MaterialIcon name="verified_user" className="text-status-success text-sm" />
-                <span className="font-technical-data text-status-success text-[12px] font-bold">
-                  ALL CLEAR — NO CONJUNCTION RISKS
+                <span className="font-technical-data text-status-success text-[11px] md:text-[12px] font-bold">
+                  ALL CLEAR
                 </span>
               </div>
             )}
-            <p className="font-technical-data text-[10px] text-primary/70">
+            <p className="font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block">
               WEATHER: {stats.weatherIndex} · DATA SOURCE: SPACE-TRACK / NASA DONKI
             </p>
           </div>
         </div>
 
         {/* Bottom Row */}
-        <div className="flex gap-6 items-end justify-between animate-[slideUp_0.5s_ease-out]">
-          <div className="flex gap-8">
-            <div className="space-y-1">
-              <p className="font-label-caps text-[10px] text-primary/70 uppercase">Objects Tracked</p>
-              <p className="font-headline-lg text-primary text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 items-start sm:items-end justify-between animate-[slideUp_0.5s_ease-out]">
+          <div className="flex gap-4 md:gap-8 flex-wrap">
+            <div className="space-y-0.5">
+              <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Objects Tracked</p>
+              <p className="font-headline-lg text-primary text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
                 {objectCounts.total.toLocaleString()}
               </p>
             </div>
-            <div className="space-y-1">
-              <p className="font-label-caps text-[10px] text-primary/70 uppercase">Debris</p>
-              <p className="font-headline-lg text-status-warning text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(255,170,0,0.4)]">
+            <div className="space-y-0.5">
+              <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Debris</p>
+              <p className="font-headline-lg text-status-warning text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(255,170,0,0.4)]">
                 {objectCounts.debris.toLocaleString()}
               </p>
             </div>
-            <div className="space-y-1">
-              <p className="font-label-caps text-[10px] text-primary/70 uppercase">Collision Risks</p>
-              <p className={`font-headline-lg text-3xl font-bold font-technical-data ${objectCounts.collisions > 0 ? 'text-status-emergency animate-pulse drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]' : 'text-status-success drop-shadow-[0_0_8px_rgba(0,255,136,0.4)]'}`}>
+            <div className="space-y-0.5">
+              <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Collision Risks</p>
+              <p className={`font-headline-lg text-xl md:text-3xl font-bold font-technical-data ${objectCounts.collisions > 0 ? 'text-status-emergency animate-pulse drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]' : 'text-status-success drop-shadow-[0_0_8px_rgba(0,255,136,0.4)]'}`}>
                 {objectCounts.collisions}
               </p>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="flex gap-2 pointer-events-auto">
+          <div className="flex gap-1.5 md:gap-2 pointer-events-auto">
             <button
               onClick={() => setShowLegend(v => !v)}
-              className={`px-4 py-2.5 font-bold text-xs transition-all active:scale-95 cursor-pointer border ${
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-all active:scale-95 cursor-pointer border ${
                 showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
               }`}
             >
@@ -517,7 +517,7 @@ export const EarthTwin: React.FC = () => {
             </button>
             <button
               onClick={() => setShowDensity(v => !v)}
-              className={`px-4 py-2.5 font-bold text-xs transition-all active:scale-95 cursor-pointer border ${
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-all active:scale-95 cursor-pointer border ${
                 showDensity ? 'bg-status-warning text-bg-deep-space border-status-warning' : 'border-status-warning/50 text-status-warning hover:bg-status-warning/10'
               }`}
             >
@@ -525,7 +525,7 @@ export const EarthTwin: React.FC = () => {
             </button>
             <button
               onClick={() => setShowRiskOverlay(v => !v)}
-              className={`px-4 py-2.5 font-bold text-xs transition-all active:scale-95 cursor-pointer border ${
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-all active:scale-95 cursor-pointer border ${
                 showRiskOverlay ? 'bg-status-emergency text-white border-status-emergency' : 'border-status-emergency/50 text-status-emergency hover:bg-status-emergency/10'
               }`}
             >
@@ -537,7 +537,7 @@ export const EarthTwin: React.FC = () => {
 
       {/* ── Legend Panel ───────────────────────────────────────── */}
       {showLegend && (
-        <div className="absolute bottom-24 left-6 z-20 pointer-events-auto animate-[slideUp_0.3s_ease-out]">
+        <div className="absolute bottom-16 md:bottom-24 left-3 md:left-6 z-20 pointer-events-auto animate-[slideUp_0.3s_ease-out]">
           <div className="bg-bg-deep-space/90 backdrop-blur-xl border border-border-panel p-4 min-w-[200px] shadow-[0_0_30px_rgba(0,0,0,0.6)]">
             <div className="flex justify-between items-center mb-3">
               <span className="font-label-caps text-[10px] text-primary-container font-bold tracking-widest">ORBITAL LEGEND</span>
@@ -573,15 +573,10 @@ export const EarthTwin: React.FC = () => {
 
       {/* ── Loading Indicator ─────────────────────────────────── */}
       {!useFallback && !dataLoaded && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
-          <div className="bg-bg-deep-space/80 backdrop-blur-xl border border-primary-container/30 px-8 py-6 flex flex-col items-center gap-3 shadow-[0_0_40px_rgba(0,229,255,0.15)]">
-            <MaterialIcon name="satellite_alt" className="text-primary-container text-4xl animate-pulse" />
-            <p className="font-label-caps text-label-caps text-primary-container font-bold tracking-widest">
-              LOADING ORBITAL DATA
-            </p>
-            <p className="font-technical-data text-[10px] text-on-surface-variant">
-              Fetching real catalog objects from Space-Track GP API…
-            </p>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none">
+          <div className="bg-bg-deep-space/90 backdrop-blur-xl border border-primary-container/50 px-4 py-2 flex items-center gap-3 rounded-full shadow-[0_0_20px_rgba(0,229,255,0.2)]">
+            <MaterialIcon name="sync" className="text-primary-container text-sm animate-spin" />
+            <span className="font-label-caps text-[10px] text-primary-container font-bold tracking-widest">LOADING ORBITAL DATA...</span>
           </div>
         </div>
       )}
