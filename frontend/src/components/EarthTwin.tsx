@@ -498,7 +498,9 @@ export const EarthTwin: React.FC = () => {
         {/* Bottom Row */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 items-start sm:items-end justify-between animate-[slideUp_0.5s_ease-out]">
           <div className="flex gap-4 md:gap-8 flex-wrap">
-            {dataLoaded ? (
+            {!dataLoaded && !useFallback ? (
+              <div className="min-w-[250px] p-4 animate-pulse bg-surface-container/80 h-12" />
+            ) : (
               <>
             <div className="space-y-0.5">
               <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Objects Tracked</p>
@@ -519,9 +521,8 @@ export const EarthTwin: React.FC = () => {
               </p>
             </div>
             </>
-            ) : (
-              <div className="min-w-[250px] p-4 animate-pulse bg-surface-container/80 h-12" />
-            )}
+            )
+          }
           </div>
 
           {/* Controls */}
