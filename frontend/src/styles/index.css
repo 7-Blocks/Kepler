@@ -1,4 +1,9 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
 
 @font-face {
   font-family: "Necosmic";
@@ -88,13 +93,23 @@
   }
 }
 
-
 @layer base {
   body {
     background-color: #0C1220;
     color: #dfe2eb;
     overflow: hidden;
+    @apply bg-background text-foreground;
   }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+.transition-ui {
+  transition: all 0.30s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .scanlines {
@@ -146,7 +161,6 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #00e5ff;
 }
-
 
 @keyframes radar-sweep {
   from { transform: rotate(0deg); }

@@ -32,6 +32,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/ronaksarda"><img src="https://github.com/ronaksarda.png" width="50px" style="border-radius:50%;margin:5px;" alt="ronaksarda" /></a>
 <a href="https://github.com/SankeerthNara"><img src="https://github.com/SankeerthNara.png" width="50px" style="border-radius:50%;margin:5px;" alt="SankeerthNara" /></a>
 <a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a>
+<a href="https://github.com/nayanraj864-cmyk"><img src="https://github.com/nayanraj864-cmyk.png" width="50px" style="border-radius:50%;margin:5px;" alt="nayanraj864-cmyk" /></a>
 
 </div>
 <!-- CONTRIBUTORS_END -->
@@ -277,6 +278,28 @@ Frontend:
 
 ```
 http://localhost:5173
+```
+
+---
+
+## 11. Database Seeding
+
+To quickly populate the local MongoDB database with realistic sample satellite, telemetry, and conjunction records for development, testing, and demonstration, use the seeding script:
+
+```bash
+cd backend
+PYTHONPATH=. python scripts/seed_db.py --count 50 --clear
+```
+
+### Seeding Options
+- `--count` / `-c` (default `50`): Number of satellite records to generate.
+- `--clear` / `-x`: Drops existing satellite, debris, telemetry, and conjunction records from MongoDB before seeding.
+
+### Configuration
+By default, the script connects to the URI specified in the `.env` file or defaults to `mongodb://localhost:27017/orbital_guardian`. You can configure a custom MongoDB connection string by setting the `MONGODB_URI` environment variable:
+
+```bash
+MONGODB_URI=mongodb://localhost:27017/custom_db PYTHONPATH=. python scripts/seed_db.py --count 100 --clear
 ```
 
 ---
@@ -533,3 +556,11 @@ This project is licensed under the **MIT License**.
 Developed and maintained by **7-Blocks**.
 
 We appreciate every contribution that helps make Kepler a better open-source platform for autonomous space traffic management.
+
+---
+
+<div align="center">
+
+⭐ If you found this project helpful, consider giving it a star. ⭐
+
+</div>

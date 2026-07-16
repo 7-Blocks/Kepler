@@ -7,6 +7,7 @@ import { useCollisions } from '@/hooks/useApi';
 import { useAgentRuns } from '@/hooks/useApi';
 import { useWeatherStatus } from '@/hooks/useApi';
 import type { Collision, AgentDecision } from '@/services/api';
+import { toast } from 'sonner';
 
 
 const riskColor = (level: string) => {
@@ -159,7 +160,6 @@ export const Dashboard: React.FC = () => {
           ))
         }
       </section>
-
       {/* Bottom Timeline & Reasoning Stream */}
       <section className="px-3 md:px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0">
 

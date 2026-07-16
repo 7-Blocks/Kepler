@@ -11,11 +11,18 @@ import { CollisionCenter } from '@/pages/CollisionCenter';
 import { AIAgents } from '@/pages/AIAgents';
 import { MissionPlanner } from '@/pages/MissionPlanner';
 import { Settings } from '@/pages/Settings';
+import { Toaster } from 'sonner';
+import { toastOptions } from './constants/toast';
 import { NotFound } from '@/pages/NotFound';
 
 function App() {
   return (
     <BrowserRouter>
+    <Toaster 
+      toastOptions={toastOptions} 
+      position="top-right" 
+      offset={{ top: '4em', right: "16px", left: "16px" }} 
+       />
       <Routes>
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<LandingPage />} />
