@@ -14,6 +14,9 @@
 }
 
 @theme {
+  --color-foreground: #dfe2eb;
+  --color-border: #1B2436;
+  --color-ring: #00e5ff;
   --color-on-primary: #00363d;
   --color-status-emergency: #FF3B30;
   --color-inverse-surface: #dfe2eb;
@@ -266,3 +269,26 @@
     transparent 100%
   );
 }
+
+/* Global minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0C1220;
+}
+::-webkit-scrollbar-thumb {
+  background: #1B2436;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00e5ff;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1B2436 #0C1220;
+}
+
