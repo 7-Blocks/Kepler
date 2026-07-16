@@ -10,6 +10,7 @@ import {
 } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import GlobeBackground from "@/components/GlobeBackground";
 import Lightfall from "@/components/ui/Lightfall";
 import { Database, LineChart, Zap, History } from "lucide-react";
 
@@ -79,8 +80,8 @@ interface HeroProps {
 function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const bodyRef = useRef<HTMLParagraphElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
+  const globeContainerRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -99,8 +100,8 @@ function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
         titleRef.current,
         { y: 60, opacity: 0, duration: 0.9, rotateX: 8, transformOrigin: "50% 100%" }
       )
-        .from(bodyRef.current, { y: 24, opacity: 0, duration: 0.6 }, "-=0.45")
-        .from(buttonsRef.current, { y: 16, opacity: 0, duration: 0.5 }, "-=0.3");
+        .from(buttonsRef.current, { y: 16, opacity: 0, duration: 0.5 }, "-=0.45")
+        .from(globeContainerRef.current, { y: 30, opacity: 0, duration: 0.8 }, "-=0.3");
     }, sectionRef);
 
     return () => ctx.revert();
@@ -110,9 +111,9 @@ function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
     <section
       ref={sectionRef}
       id="product"
-      className="relative min-h-svh flex items-center justify-center px-6 pt-0 mt-0 pb-16 overflow-hidden bg-[#0C1220]"
+      className="relative min-h-svh flex flex-col items-center justify-start px-6 pt-24 mt-0 pb-0 bg-[#0C1220]"
     >
-      {/* Lightfall WebGL Background */}
+      {/* Lightfall WebGL Background with cyber-cyan/teal primary shades */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Lightfall
           colors={['#00e5ff', '#00707cff', '#9ddfe7ff', '#00e5ff']}
@@ -162,19 +163,10 @@ function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
           className="font-necosmic font-bold text-4xl sm:text-5xl md:text-6.5xl leading-[1.1] text-[#E7EBF3] m-0 tracking-tighter"
         >
           Autonomous traffic control <br />
-          for <span className="text-[#00e5ff] drop-shadow-[0_0_15px_rgba(0,229,255,0.25)]">everything in orbit</span>.
+          for <span className="text-[#00e5ff] drop-shadow-[0_0_15px_rgba(0,229,255,0.25)]">orbit</span>.
         </h1>
 
-        <p
-          ref={bodyRef}
-          className="font-body-ui text-[1.05rem] sm:text-[1.12rem] leading-relaxed text-[#8892A6] mt-8 mb-10 max-w-[580px]"
-        >
-          Kepler predicts conjunctions, resolves conflicts autonomously, and provides
-          operators with a clean, explainable decision ledger — before a near-miss ever
-          becomes a headline.
-        </p>
-
-        <div ref={buttonsRef} className="flex gap-4 justify-center flex-wrap">
+        <div ref={buttonsRef} className="flex gap-4 justify-center flex-wrap mt-8">
           <MagneticButton
             onClick={onLaunchDashboard}
             className="font-body-ui font-semibold text-[15px] text-[#060A14] bg-[#00e5ff] hover:bg-[#00daf3] border-none rounded-lg px-8 py-4 cursor-pointer shadow-[0_0_20px_rgba(0,229,255,0.35)] transition-all duration-200"
@@ -189,6 +181,13 @@ function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
           </a>
         </div>
       </motion.div>
+
+      <div
+        ref={globeContainerRef}
+        className="relative w-[500px] h-[500px] sm:w-[900px] sm:h-[900px] md:w-[1400px] md:h-[1400px] -mt-12 sm:-mt-20 md:-mt-28 -mb-[250px] sm:-mb-[450px] md:-mb-[700px] z-20 flex justify-center items-center"
+      >
+        <GlobeBackground />
+      </div>
     </section>
   );
 }
@@ -443,6 +442,12 @@ function ClosingCta({ onLaunchDashboard }: { onLaunchDashboard: () => void }) {
 
 /* ─── Page ──────────────────────────────────────────────────────── */
 
+function GlobeSpacer() {
+  return (
+    <div className="relative h-[250px] sm:h-[450px] md:h-[700px] bg-[#0C1220] pointer-events-none" />
+  );
+}
+
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
@@ -462,6 +467,7 @@ export const LandingPage: React.FC = () => {
     <div className="bg-[#0C1220] select-none">
       {!reduce && <ScrollProgress />}
       <Hero onLaunchDashboard={handleLaunch} prefersReducedMotion={!!reduce} />
+      <GlobeSpacer />
       <HowItWorks />
       <Reliability />
       <ClosingCta onLaunchDashboard={handleLaunch} />
