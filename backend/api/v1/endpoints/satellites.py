@@ -13,7 +13,7 @@ from typing import List, Optional, Dict, Any
 import datetime
 
 from database.session import get_db, MongoSession
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, BadRequestError
 from schemas.api_schemas import APIResponse, PaginationSchema
 
 router = APIRouter()
@@ -81,6 +81,27 @@ def get_satellites(
         message=f"Satellite fleet records retrieved — {total} total",
         data=data,
         pagination=PaginationSchema(page=page, size=size, total=total, pages=pages),
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /satellites/norad/{norad_id}
+# ---------------------------------------------------------------------------
+
+@router.get("/norad/{norad_id}", response_model=APIResponse[dict])
+def get_satellite_by_norad_id(norad_id: str, db: MongoSession = Depends(get_db)):
+    """Search for a satellite using its NORAD Catalog ID."""
+    if not norad_id.isdecimal() or int(norad_id) <= 0:
+        raise BadRequestError(message="NORAD ID must be a positive integer")
+
+    sat = db.db["satellites"].find_one({"noradId": str(int(norad_id))}, {"_id": 0})
+    if not sat:
+        raise NotFoundError(resource="Satellite", identifier=norad_id)
+
+    return APIResponse(
+        success=True,
+        message="Satellite found",
+        data=_serialize_satellite(sat),
     )
 
 
