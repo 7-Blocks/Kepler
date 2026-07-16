@@ -281,6 +281,28 @@ http://localhost:5173
 
 ---
 
+## 11. Database Seeding
+
+To quickly populate the local MongoDB database with realistic sample satellite, telemetry, and conjunction records for development, testing, and demonstration, use the seeding script:
+
+```bash
+cd backend
+PYTHONPATH=. python scripts/seed_db.py --count 50 --clear
+```
+
+### Seeding Options
+- `--count` / `-c` (default `50`): Number of satellite records to generate.
+- `--clear` / `-x`: Drops existing satellite, debris, telemetry, and conjunction records from MongoDB before seeding.
+
+### Configuration
+By default, the script connects to the URI specified in the `.env` file or defaults to `mongodb://localhost:27017/orbital_guardian`. You can configure a custom MongoDB connection string by setting the `MONGODB_URI` environment variable:
+
+```bash
+MONGODB_URI=mongodb://localhost:27017/custom_db PYTHONPATH=. python scripts/seed_db.py --count 100 --clear
+```
+
+---
+
 # 🧪 Running Tests
 
 Backend
