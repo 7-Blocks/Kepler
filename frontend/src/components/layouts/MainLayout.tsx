@@ -37,14 +37,14 @@ export const MainLayout: React.FC = () => {
   }, [location.pathname]);
 
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: 'dashboard' },
-    { name: 'Space Traffic', path: '/space-traffic', icon: 'language' },
-    { name: 'Satellites', path: '/satellites', icon: 'satellite_alt' },
-    { name: 'Debris', path: '/debris', icon: 'delete_sweep' },
-    { name: 'Collision Center', path: '/collision-center', icon: 'warning' },
-    { name: 'AI Agents', path: '/ai-agents', icon: 'smart_toy' },
-    { name: 'Mission Planner', path: '/mission-planner', icon: 'event_note' },
-    { name: 'Settings', path: '/settings', icon: 'settings' }
+    { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
+    { name: 'Space Traffic', path: '/dashboard/space-traffic', icon: 'language' },
+    { name: 'Satellites', path: '/dashboard/satellites', icon: 'satellite_alt' },
+    { name: 'Debris', path: '/dashboard/debris', icon: 'delete_sweep' },
+    { name: 'Collision Center', path: '/dashboard/collision-center', icon: 'warning' },
+    { name: 'AI Agents', path: '/dashboard/ai-agents', icon: 'smart_toy' },
+    { name: 'Mission Planner', path: '/dashboard/mission-planner', icon: 'event_note' },
+    { name: 'Settings', path: '/dashboard/settings', icon: 'settings' }
   ];
 
 
@@ -127,6 +127,7 @@ export const MainLayout: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                end={item.path === '/dashboard'}
                 className={({ isActive }) =>
                   `flex items-center px-3 py-3 min-h-[44px] transition-all duration-200 group border-r-2 ${isActive
                     ? 'text-primary-container bg-primary-fixed-dim/10 border-primary-container'
