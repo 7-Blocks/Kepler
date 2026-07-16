@@ -9,6 +9,7 @@ import { CollisionCenter } from '@/pages/CollisionCenter';
 import { AIAgents } from '@/pages/AIAgents';
 import { MissionPlanner } from '@/pages/MissionPlanner';
 import { Settings } from '@/pages/Settings';
+import { NotFound } from '@/pages/NotFound';
 
 function App() {
   return (
@@ -34,6 +35,9 @@ function App() {
         <Route path="/ai-agents" element={<Navigate to="/dashboard/ai-agents" replace />} />
         <Route path="/mission-planner" element={<Navigate to="/dashboard/mission-planner" replace />} />
         <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
+
+        {/* Catch-all 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
