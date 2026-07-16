@@ -1,3 +1,4 @@
+import Hero from "@/components/Hero";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -137,7 +138,7 @@ function NavBar({ onLaunchDashboard }: NavBarProps) {
       }`}
     >
       <div className="max-w-[1180px] mx-auto px-6 py-4 flex items-center justify-between">
-        <span className="font-display-lg font-semibold text-lg text-[#E7EBF3] tracking-wider">
+        <span className="font-display-xl text-headline-xl text-xl font-bold tracking-tighter text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]">
           Kepler
         </span>
 
@@ -155,63 +156,12 @@ function NavBar({ onLaunchDashboard }: NavBarProps) {
 
         <button
           onClick={onLaunchDashboard}
-          className="font-body-ui font-semibold text-sm text-[#060A14] bg-[#4FE0C8] hover:bg-[#3cd0b8] border-none rounded-md px-4 py-2 cursor-pointer transition-colors duration-150"
+          className="font-body-ui font-semibold bg-primary-container shadow-none transition-ui hover:shadow-[0_0_8px_rgba(0,229,255,1)] text-sm text-[#060A14] bg-[#4FE0C8] border-none rounded-md px-4 py-2 cursor-pointer transition-colors duration-150"
         >
-          Launch Dashboard
+          Dashboard
         </button>
       </div>
     </header>
-  );
-}
-
-/* Hero */
-
-interface HeroProps {
-  onLaunchDashboard: () => void;
-  prefersReducedMotion: boolean;
-}
-
-function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
-  return (
-    <section
-      id="product"
-      className="relative min-h-[85vh] flex items-center justify-center px-6 py-20 overflow-hidden"
-    >
-      <OrbitalField prefersReducedMotion={prefersReducedMotion} />
-
-      <div className="relative z-10 max-w-[720px] text-center flex flex-col items-center">
-        <div className="inline-flex items-center font-technical-data text-xs text-[#4FE0C8] border border-[#1B2436] rounded-full px-3.5 py-1.5 mb-7 bg-[#060A14]">
-          TRACKING 12,400+ OBJECTS · LIVE
-        </div>
-
-        <h1 className="font-display-lg font-bold text-4xl sm:text-5xl md:text-6xl leading-[1.08] text-[#E7EBF3] m-0 tracking-tight">
-          Autonomous traffic control
-          <br />
-          for everything in orbit.
-        </h1>
-
-        <p className="font-body-ui text-[1.05rem] leading-relaxed text-[#8892A6] mt-6 mb-9 max-w-[560px]">
-          Kepler predicts conjunctions, resolves them autonomously, and hands
-          operators a clean, explainable record — before a near-miss ever
-          becomes a headline.
-        </p>
-
-        <div className="flex gap-3 justify-center flex-wrap">
-          <button
-            onClick={onLaunchDashboard}
-            className="font-body-ui font-semibold text-[15px] text-[#060A14] bg-[#FFB020] hover:bg-[#e59b15] border-none rounded-lg px-6.5 py-3 cursor-pointer transition-colors duration-150"
-          >
-            Launch Dashboard
-          </button>
-          <a
-            href="#how-it-works"
-            className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-transparent border border-[#1B2436] hover:bg-[#1B2436]/30 rounded-lg px-6.5 py-3 text-none transition-colors duration-150"
-          >
-            See how it works
-          </a>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -406,7 +356,7 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="bg-[#060A14] min-h-screen text-[#E7EBF3] overflow-x-hidden select-none">
       <NavBar onLaunchDashboard={handleLaunch} />
-      <Hero onLaunchDashboard={handleLaunch} prefersReducedMotion={prefersReducedMotion} />
+      <Hero />
       <HowItWorks />
       <Reliability />
       <Footer />
