@@ -1,101 +1,76 @@
-import Hero from "@/components/Hero";
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import GlobeBackground from "@/components/GlobeBackground";
+import Lightfall from "@/components/ui/Lightfall";
+import { Database, LineChart, Zap, History } from "lucide-react";
 
-/**
- * Kepler — Landing Page
- * -----------------------------------------------------------------------
- * Design tokens
- *   bg          #060A14  deep orbital black
- *   bg-panel    #0C1220  raised panel / nav / footer
- *   line        #1B2436  hairline borders
- *   text        #E7EBF3  primary text
- *   text-dim    #8892A6  secondary text
- *   accent      #4FE0C8  "tracked" telemetry teal (signature color)
- *   warn        #FFB020  "conflict" amber (used sparingly, for CTA + alerts)
- *
- * Type
- *   display: "Space Grotesk" (headlines — geometric, technical, a little cold)
- *   body:    "Inter" (paragraphs, nav, footer)
- *   mono:    "JetBrains Mono" (telemetry labels, coordinates, small data)
- *
- * Signature element
- *   A live orbital field in the hero: thin elliptical paths with small
- *   telemetry dots drifting along them, each carrying a coordinate-style
- *   label. It's the literal subject — space traffic — rendered as the
- *   backdrop rather than an abstract gradient blob.
- *
- * Chrome (nav / footer) lives in MarketingLayout.
- * -----------------------------------------------------------------------
- */
+gsap.registerPlugin(ScrollTrigger);
 
-/* Orbital field */
+/* ─── Shared Components ─────────────────────────────────────────── */
 
-interface OrbitalFieldProps {
-  prefersReducedMotion: boolean;
-}
-
-function OrbitalField({ prefersReducedMotion }: OrbitalFieldProps) {
-  const orbits = [
-    { rx: 260, ry: 90, rotate: -18, dur: 34, dot: "#4FE0C8", label: "SAT-2291" },
-    { rx: 340, ry: 130, rotate: 8, dur: 46, dot: "#4FE0C8", label: "SAT-0417" },
-    { rx: 180, ry: 60, rotate: 22, dur: 22, dot: "#FFB020", label: "CONJ-88" },
-    { rx: 400, ry: 160, rotate: -6, dur: 58, dot: "#4FE0C8", label: "SAT-3355" },
-  ];
+function MagneticButton({
+  children,
+  className,
+  onClick,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const reduce = useReducedMotion();
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { stiffness: 280, damping: 22 });
+  const springY = useSpring(y, { stiffness: 280, damping: 22 });
 
   return (
-    <div
-      aria-hidden="true"
-      className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none z-0"
+    <motion.button
+      type="button"
+      className={className}
+      style={reduce ? undefined : { x: springX, y: springY }}
+      whileHover={reduce ? undefined : { scale: 1.03 }}
+      whileTap={reduce ? undefined : { scale: 0.98 }}
+      onMouseMove={(e) => {
+        if (reduce) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        x.set((e.clientX - rect.left - rect.width / 2) * 0.28);
+        y.set((e.clientY - rect.top - rect.height / 2) * 0.28);
+      }}
+      onMouseLeave={() => {
+        x.set(0);
+        y.set(0);
+      }}
+      onClick={onClick}
     >
-      <svg
-        viewBox="-450 -220 900 440"
-        className="w-[min(1100px,150%)] h-auto opacity-90"
-      >
-        <circle cx="0" cy="0" r="10" fill="#E7EBF3" opacity="0.9" />
-
-        {orbits.map((o, i) => (
-          <g key={i} transform={`rotate(${o.rotate})`}>
-            <ellipse
-              cx="0"
-              cy="0"
-              rx={o.rx}
-              ry={o.ry}
-              fill="none"
-              stroke="#1B2436"
-              strokeWidth="1"
-            />
-            <g>
-              {!prefersReducedMotion && (
-                <animateTransform
-                  attributeName="transform"
-                  type="rotate"
-                  from="0 0 0"
-                  to="360 0 0"
-                  dur={`${o.dur}s`}
-                  repeatCount="indefinite"
-                />
-              )}
-              <circle cx={o.rx} cy="0" r="3.5" fill={o.dot} />
-              <text
-                x={o.rx + 10}
-                y="4"
-                className="font-technical-data"
-                fontSize="9"
-                fill={o.dot}
-                opacity="0.85"
-              >
-                {o.label}
-              </text>
-            </g>
-          </g>
-        ))}
-      </svg>
-    </div>
+      {children}
+    </motion.button>
   );
 }
 
-/* Hero */
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
+
+  return (
+    <motion.div
+      aria-hidden="true"
+      className="fixed top-0 left-0 right-0 h-[2px] origin-left z-[110] bg-[#4FE0C8]"
+      style={{ scaleX }}
+    />
+  );
+}
+
+/* ─── Hero Section (Lightfall Background) ───────────────────────── */
 
 interface HeroProps {
   onLaunchDashboard: () => void;
@@ -103,112 +78,250 @@ interface HeroProps {
 }
 
 function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const buttonsRef = useRef<HTMLDivElement>(null);
+  const globeContainerRef = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, prefersReducedMotion ? 0 : 120]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.75], [1, prefersReducedMotion ? 1 : 0.2]);
+
+  useLayoutEffect(() => {
+    if (prefersReducedMotion) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      tl.from(
+        titleRef.current,
+        { y: 60, opacity: 0, duration: 0.9, rotateX: 8, transformOrigin: "50% 100%" }
+      )
+        .from(buttonsRef.current, { y: 16, opacity: 0, duration: 0.5 }, "-=0.45")
+        .from(globeContainerRef.current, { y: 30, opacity: 0, duration: 0.8 }, "-=0.3");
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [prefersReducedMotion]);
+
   return (
     <section
+      ref={sectionRef}
       id="product"
-      className="relative min-h-svh flex items-center justify-center px-6 pt-0 mt-0 pb-16 overflow-hidden"
+      className="relative min-h-svh flex flex-col items-center justify-start px-6 pt-24 mt-0 pb-0 bg-[#0C1220]"
     >
-      <OrbitalField prefersReducedMotion={prefersReducedMotion} />
+      {/* Lightfall WebGL Background with cyber-cyan/teal primary shades */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <Lightfall
+          colors={['#00e5ff', '#00707cff', '#9ddfe7ff', '#00e5ff']}
+          backgroundColor="#0C1220"
+          speed={0.4}
+          streakCount={3}
+          streakWidth={1.2}
+          streakLength={1.2}
+          glow={0.8}
+          density={0.5}
+          twinkle={0.8}
+          zoom={2.5}
+          backgroundGlow={0.4}
+          opacity={0.1}
+          mouseInteraction={!prefersReducedMotion}
+          mouseStrength={0.6}
+          mouseRadius={1.2}
+        />
+      </div>
 
-      <div className="relative z-10 max-w-[720px] text-center flex flex-col items-center">
-        <div className="inline-flex items-center font-technical-data text-xs text-[#4FE0C8] border border-[#1B2436] rounded-full px-3.5 py-1.5 mb-7 bg-[#0C1220]">
-          TRACKING 12,400+ OBJECTS · LIVE
-        </div>
+      {/* Background Atmosphere Overlay for smooth blending */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none z-1"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 70% at 50% 30%, rgba(12,18,32,0.1) 0%, rgba(12,18,32,0.8) 75%, #0C1220 100%)",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 opacity-[0.18] pointer-events-none z-1"
+        style={{
+          backgroundImage:
+            "linear-gradient(#1B2436 1px, transparent 1px), linear-gradient(90deg, #1B2436 1px, transparent 1px)",
+          backgroundSize: "72px 72px",
+          maskImage: "radial-gradient(ellipse 75% 65% at 50% 50%, black 15%, transparent 72%)",
+        }}
+      />
 
-        <h1 className="font-display-lg font-bold text-4xl sm:text-5xl md:text-6xl leading-[1.08] text-[#E7EBF3] m-0 tracking-tight">
-          Autonomous traffic control
-          <br />
-          for everything in orbit.
+      <motion.div
+        style={{ y: heroY, opacity: heroOpacity }}
+        className="relative z-10 max-w-[800px] text-center flex flex-col items-center pt-12"
+      >
+        <h1
+          ref={titleRef}
+          className="font-necosmic font-bold text-4xl sm:text-5xl md:text-6.5xl leading-[1.1] text-[#E7EBF3] m-0 tracking-tighter"
+        >
+          Autonomous traffic control <br />
+          for <span className="text-[#00e5ff] drop-shadow-[0_0_15px_rgba(0,229,255,0.25)]">orbit</span>.
         </h1>
 
-        <p className="font-body-ui text-[1.05rem] leading-relaxed text-[#8892A6] mt-6 mb-9 max-w-[560px]">
-          Kepler predicts conjunctions, resolves them autonomously, and hands
-          operators a clean, explainable record — before a near-miss ever
-          becomes a headline.
-        </p>
-
-        <div className="flex gap-3 justify-center flex-wrap">
-          <button
-            type="button"
+        <div ref={buttonsRef} className="flex gap-4 justify-center flex-wrap mt-8">
+          <MagneticButton
             onClick={onLaunchDashboard}
-            className="font-body-ui font-semibold text-[15px] text-[#060A14] bg-[#FFB020] hover:bg-[#e59b15] border-none rounded-lg px-6.5 py-3 cursor-pointer transition-colors duration-150"
+            className="font-body-ui font-semibold text-[15px] text-[#060A14] bg-[#00e5ff] hover:bg-[#00daf3] border-none rounded-lg px-8 py-4 cursor-pointer shadow-[0_0_20px_rgba(0,229,255,0.35)] transition-all duration-200"
           >
             Launch Dashboard
-          </button>
+          </MagneticButton>
           <a
             href="#how-it-works"
-            className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-transparent border border-[#1B2436] hover:bg-[#1B2436]/30 rounded-lg px-6.5 py-3 text-none transition-colors duration-150"
+            className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-[#0C1220]/60 backdrop-blur-sm border border-[#1B2436] hover:border-[#00e5ff]/50 hover:bg-[#1B2436]/40 rounded-lg px-8 py-4 text-none transition-all duration-200"
           >
             See how it works
           </a>
         </div>
+      </motion.div>
+
+      <div
+        ref={globeContainerRef}
+        className="relative w-[500px] h-[500px] sm:w-[900px] sm:h-[900px] md:w-[1400px] md:h-[1400px] -mt-12 sm:-mt-20 md:-mt-28 -mb-[250px] sm:-mb-[450px] md:-mb-[700px] z-20 flex justify-center items-center"
+      >
+        <GlobeBackground />
       </div>
     </section>
   );
 }
 
-/* How it works */
+/* ─── How It Works ────────────────────────────────────────────── */
 
 function HowItWorks() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+
   const steps = [
     {
       title: "Ingest",
       body: "Kepler pulls tracking data from public and partner catalogs, normalizing ephemerides in real time.",
+      Icon: Database,
     },
     {
       title: "Predict",
       body: "A conjunction model flags close approaches days out, ranked by probability and consequence.",
+      Icon: LineChart,
     },
     {
       title: "Resolve",
       body: "Autonomous maneuver planning proposes — or executes — the smallest safe correction.",
+      Icon: Zap,
     },
     {
       title: "Record",
       body: "Every decision is logged with the telemetry and reasoning behind it, for operators and regulators alike.",
+      Icon: History,
     },
   ];
+
+  useLayoutEffect(() => {
+    if (reduce) return;
+
+    const ctx = gsap.context(() => {
+      gsap.from(".hiw-head", {
+        y: 40,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 80%",
+        },
+      });
+
+      gsap.from(".hiw-card", {
+        y: 50,
+        opacity: 0,
+        duration: 0.7,
+        stagger: 0.1,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: ".hiw-grid",
+          start: "top 85%",
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [reduce]);
 
   return (
     <section
       id="how-it-works"
-      className="py-24 px-6 section-rule bg-[#0C1220]"
+      ref={sectionRef}
+      className="py-28 px-6 section-rule bg-[#0C1220] relative overflow-hidden"
     >
-      <div className="max-w-[1180px] mx-auto">
-        <h2 className="font-display-lg font-semibold text-3xl text-[#E7EBF3] mb-3">
-          From tracked object to resolved conflict
-        </h2>
-        <p className="font-body-ui text-[#8892A6] max-w-[560px] mb-14 leading-relaxed">
-          A closed loop that runs continuously, not a dashboard you have to
-          babysit.
-        </p>
+      {/* Background glow */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none opacity-40"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 10% 20%, rgba(79,224,200,0.06), transparent 50%)",
+        }}
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((s, i) => (
-            <div
-              key={s.title}
-              className="bg-[#0C1220] border border-[#1B2436] rounded-xl p-6 flex flex-col"
-            >
-              <div className="font-technical-data text-xs text-[#4FE0C8] mb-3">
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              <h3 className="font-display-lg font-semibold text-lg text-[#E7EBF3] mb-2">
-                {s.title}
-              </h3>
-              <p className="font-body-ui text-sm text-[#8892A6] leading-relaxed m-0">
-                {s.body}
-              </p>
-            </div>
-          ))}
+      <div className="max-w-[1180px] mx-auto relative z-10">
+        <div className="hiw-head mb-16 max-w-[600px]">
+          <div className="font-technical-data text-xs text-[#4FE0C8] tracking-[0.18em] mb-4">
+            01 · WORKFLOW LOOP
+          </div>
+          <h2 className="font-necosmic font-semibold text-3xl sm:text-4xl md:text-5xl text-[#E7EBF3] m-0 mb-5 leading-[1.08]">
+            From tracked object to resolved conflict
+          </h2>
+          <p className="font-body-ui text-[1.05rem] text-[#8892A6] leading-relaxed m-0">
+            A closed loop that runs continuously, not a dashboard you have to babysit.
+          </p>
+        </div>
+
+        <div className="hiw-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {steps.map((s, i) => {
+            const { Icon } = s;
+            return (
+              <motion.div
+                key={s.title}
+                className="hiw-card relative overflow-hidden bg-[#0C1220] border border-[#1B2436] rounded-xl p-8 flex flex-col min-h-[200px]"
+                whileHover={reduce ? undefined : { y: -5, borderColor: "rgba(79,224,200,0.35)" }}
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              >
+                <Icon
+                  aria-hidden="true"
+                  strokeWidth={1.15}
+                  className="pointer-events-none absolute -right-6 -bottom-6 h-28 w-28 text-[#4FE0C8] opacity-[0.06] select-none"
+                />
+                <div className="relative z-10 flex flex-col flex-1">
+                  <div className="font-technical-data text-xs text-[#4FE0C8] mb-5">
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <h3 className="font-necosmic font-semibold text-xl text-[#E7EBF3] mb-3">
+                    {s.title}
+                  </h3>
+                  <p className="font-body-ui text-sm text-[#8892A6] leading-relaxed m-0">
+                    {s.body}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
 
-/* Reliability strip */
+/* ─── Reliability (Stats) Section ─────────────────────────────── */
 
 function Reliability() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+
   const stats = [
     { value: "12,400+", label: "objects tracked" },
     { value: "99.982%", label: "conjunction recall" },
@@ -216,18 +329,39 @@ function Reliability() {
     { value: "0", label: "unresolved conflicts, to date" },
   ];
 
+  useLayoutEffect(() => {
+    if (reduce) return;
+
+    const ctx = gsap.context(() => {
+      gsap.from(".stat-box", {
+        y: 32,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.08,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 88%",
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [reduce]);
+
   return (
     <section
       id="reliability"
-      className="py-20 px-6 section-rule bg-[#0C1220]"
+      ref={sectionRef}
+      className="py-24 px-6 section-rule bg-[#0C1220]"
     >
       <div className="max-w-[1180px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8">
         {stats.map((s) => (
-          <div key={s.label}>
-            <div className="font-display-lg font-bold text-3xl text-[#4FE0C8]">
+          <div key={s.label} className="stat-box">
+            <div className="font-display-lg font-bold text-3xl sm:text-4xl md:text-5xl text-[#4FE0C8] tracking-tight">
               {s.value}
             </div>
-            <div className="font-body-ui text-xs text-[#8892A6] mt-1.5">
+            <div className="font-technical-data text-xs text-[#8892A6] mt-3 uppercase tracking-wider">
               {s.label}
             </div>
           </div>
@@ -237,18 +371,92 @@ function Reliability() {
   );
 }
 
-/* Page */
+/* ─── CTA Section ─────────────────────────────────────────────── */
+
+function ClosingCta({ onLaunchDashboard }: { onLaunchDashboard: () => void }) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+
+  useLayoutEffect(() => {
+    if (reduce) return;
+
+    const ctx = gsap.context(() => {
+      gsap.from(".cta-box", {
+        y: 40,
+        opacity: 0,
+        scale: 0.98,
+        duration: 0.85,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 80%",
+        },
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [reduce]);
+
+  return (
+    <section
+      ref={sectionRef}
+      className="py-28 px-6 section-rule bg-[#0C1220]"
+    >
+      <div className="cta-box max-w-[1180px] mx-auto relative overflow-hidden rounded-3xl border border-[#1B2436] px-8 py-16 sm:px-16 sm:py-20 text-center">
+        {/* Atmosphere */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 80% at 50% 120%, rgba(79,224,200,0.14), transparent 55%), radial-gradient(ellipse 50% 40% at 85% 0%, rgba(255,176,32,0.08), transparent 50%), #0C1220",
+          }}
+        />
+
+        <div className="relative z-10 flex flex-col items-center">
+          <h2 className="font-necosmic font-semibold text-3xl sm:text-4xl md:text-5xl text-[#E7EBF3] m-0 mb-6 leading-[1.05]">
+            Secure the skies with Kepler.
+          </h2>
+          <p className="font-body-ui text-[#8892A6] leading-relaxed max-w-[460px] mb-10 text-[1.05rem]">
+            Deploy our autonomous space traffic management suite to track assets, predict risks, and resolve conflicts.
+          </p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <MagneticButton
+              onClick={onLaunchDashboard}
+              className="font-body-ui font-semibold text-[15px] text-[#060A14] bg-[#FFB020] hover:bg-[#e59b15] border-none rounded-lg px-7 py-3.5 cursor-pointer shadow-lg shadow-orange-500/10"
+            >
+              Launch Dashboard
+            </MagneticButton>
+            <Link
+              to="/about"
+              className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-transparent border border-[#1B2436] hover:border-[#4FE0C8]/50 hover:bg-[#1B2436]/20 rounded-lg px-7 py-3.5 no-underline transition-all duration-200"
+            >
+              Learn about us
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Page ──────────────────────────────────────────────────────── */
+
+function GlobeSpacer() {
+  return (
+    <div className="relative h-[250px] sm:h-[450px] md:h-[700px] bg-[#0C1220] pointer-events-none" />
+  );
+}
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mediaQuery.matches);
-    const listener = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mediaQuery.addEventListener("change", listener);
-    return () => mediaQuery.removeEventListener("change", listener);
+    ScrollTrigger.refresh();
+    return () => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
   }, []);
 
   const handleLaunch = () => {
@@ -256,10 +464,13 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="select-none">
-      <Hero onLaunchDashboard={handleLaunch} prefersReducedMotion={prefersReducedMotion} />
+    <div className="bg-[#0C1220] select-none">
+      {!reduce && <ScrollProgress />}
+      <Hero onLaunchDashboard={handleLaunch} prefersReducedMotion={!!reduce} />
+      <GlobeSpacer />
       <HowItWorks />
       <Reliability />
+      <ClosingCta onLaunchDashboard={handleLaunch} />
     </div>
   );
 };

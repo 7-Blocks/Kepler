@@ -71,8 +71,7 @@ function MarketingNavBar() {
   }, [location.pathname, location.hash]);
 
   const linkClass = (active?: boolean) =>
-    `font-body-ui text-[13px] sm:text-sm transition-colors duration-150 no-underline px-1 ${
-      active ? "text-white" : "text-white/65 hover:text-white"
+    `font-body-ui text-[13px] sm:text-sm transition-colors duration-150 no-underline px-1 ${active ? "text-white" : "text-white/65 hover:text-white"
     }`;
 
   return (
@@ -123,14 +122,12 @@ function MarketingNavBar() {
               <span className="sr-only">Menu</span>
               <span className="flex flex-col gap-1.5" aria-hidden="true">
                 <span
-                  className={`block h-px w-3.5 bg-white transition-transform ${
-                    menuOpen ? "translate-y-[3.5px] rotate-45" : ""
-                  }`}
+                  className={`block h-px w-3.5 bg-white transition-transform ${menuOpen ? "translate-y-[3.5px] rotate-45" : ""
+                    }`}
                 />
                 <span
-                  className={`block h-px w-3.5 bg-white transition-transform ${
-                    menuOpen ? "-translate-y-[3.5px] -rotate-45" : ""
-                  }`}
+                  className={`block h-px w-3.5 bg-white transition-transform ${menuOpen ? "-translate-y-[3.5px] -rotate-45" : ""
+                    }`}
                 />
               </span>
             </button>
@@ -283,7 +280,7 @@ function MarketingFooter() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-6 section-rule section-rule-full">
           <p className="font-technical-data text-[11px] text-[#8892A6] m-0">
-            © {new Date().getFullYear()} Kepler. Orbital intelligence platform.
+            © {new Date().getFullYear()} 7Blocks. We Make Software That Solves Pain Points
           </p>
           <p className="font-technical-data text-[11px] text-[#8892A6]/70 m-0">
             Built for the crowded sky.
