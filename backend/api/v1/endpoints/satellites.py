@@ -113,11 +113,12 @@ def get_satellite_by_norad_id(norad_id: str, db: MongoSession = Depends(get_db))
 def get_satellite_telemetry(satellite_id: str, db: MongoSession = Depends(get_db)):
     """Return telemetry records for a satellite (looked up by noradId or int id)."""
     # Try numeric id first, then treat as noradId string
-    flt = {}
-    try:
-        flt = {"id": int(satellite_id)}
-    except ValueError:
-        flt = {"noradId": satellite_id}
+    flt = {"$or": [{"noradId": satellite_id}]}
+    if satellite_id.isdecimal():
+        flt["$or"].extend([
+            {"id": int(satellite_id)},
+            {"noradId": str(int(satellite_id))}
+        ])
 
     sat = db.db["satellites"].find_one(flt, {"_id": 0})
     if not sat:

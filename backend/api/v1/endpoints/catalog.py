@@ -142,6 +142,9 @@ def list_space_objects(
 @router.get("/objects/{catalog_number}", response_model=APIResponse[Dict[str, Any]])
 def get_space_object(catalog_number: str, db: MongoSession = Depends(get_db)):
     """Get a single space object by NORAD catalog number."""
+    if catalog_number.isdecimal():
+        catalog_number = str(int(catalog_number))
+        
     doc = db.db["satellites"].find_one({"noradId": catalog_number}, {"_id": 0})
     if not doc:
         doc = db.db["debris"].find_one({"noradId": catalog_number}, {"_id": 0})
