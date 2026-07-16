@@ -115,7 +115,7 @@ export const AIAgents: React.FC = () => {
               return (
                 <div
                   key={run.id}
-                  className={`glass-panel p-3 border-l-2 hover:bg-surface-variant/20 transition-all cursor-pointer ${
+                  className={`glass-panel p-3 border-l-2 hover:bg-surface-variant/20 transition-ui cursor-pointer ${
                     run.status === 'RUNNING'   ? 'border-l-primary-container' :
                     run.status === 'COMPLETED' ? 'border-l-status-success' :
                     'border-l-status-emergency'
@@ -261,13 +261,13 @@ export const AIAgents: React.FC = () => {
             <button
               onClick={exportLogs}
               disabled={allDecisions.length === 0}
-              className="flex-1 py-2 bg-primary-container text-bg-deep-space text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-all cursor-pointer disabled:opacity-50"
+              className="flex-1 py-2 bg-primary-container text-bg-deep-space text-[10px] font-bold uppercase tracking-widest hover:brightness-110 transition-ui cursor-pointer disabled:opacity-50"
             >
               Export Logs
             </button>
             <button
               onClick={clearTerminal}
-              className="px-3 py-2 border border-border-panel text-on-surface-variant hover:bg-white/5 cursor-pointer transition-colors"
+              className="px-3 py-2 border border-border-panel text-on-surface-variant hover:bg-white/5 cursor-pointer transition-ui"
             >
               <MaterialIcon name="delete" className="text-sm" />
             </button>

@@ -91,7 +91,7 @@ export const MainLayout: React.FC = () => {
 
         {/* Left Navigation Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 flex flex-col h-full bg-bg-deep-space border-r border-border-panel transition-all duration-300 z-50 md:relative ${
+          className={`fixed inset-y-0 left-0 flex flex-col h-full bg-bg-deep-space border-r border-border-panel transition-ui z-50 md:relative ${
             mobileSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
           } ${!mobileSidebarOpen && sidebarCollapsed ? 'md:w-20' : 'md:w-64'}`}
         >
@@ -115,7 +115,7 @@ export const MainLayout: React.FC = () => {
                   toggleSidebar();
                 }
               }}
-              className="p-1.5 rounded border border-border-panel hover:bg-surface-variant/50 transition-colors text-primary-container"
+              className="p-1.5 rounded border border-border-panel hover:bg-surface-variant/50 transition-ui text-primary-container"
             >
               <MaterialIcon name={!mobileSidebarOpen && sidebarCollapsed ? 'chevron_right' : 'chevron_left'} className="text-sm" />
             </button>
@@ -129,7 +129,7 @@ export const MainLayout: React.FC = () => {
                 to={item.path}
                 end={item.path === '/dashboard'}
                 className={({ isActive }) =>
-                  `flex items-center px-3 py-3 min-h-[44px] transition-all duration-200 group border-r-2 ${isActive
+                  `flex items-center px-3 py-3 min-h-[44px] transition-ui group border-r-2 ${isActive
                     ? 'text-primary-container bg-primary-fixed-dim/10 border-primary-container'
                     : 'text-on-surface-variant hover:text-primary hover:bg-surface-variant/40 border-transparent'
                   }`
@@ -137,11 +137,11 @@ export const MainLayout: React.FC = () => {
               >
                 <MaterialIcon
                   name={item.icon}
-                  className={`mr-4 transition-all ${location.pathname === item.path ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-on-surface-variant group-hover:text-primary'
+                  className={`mr-4 transition-ui ${location.pathname === item.path ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-on-surface-variant group-hover:text-primary'
                     }`}
                 />
                 {(mobileSidebarOpen || !sidebarCollapsed) && (
-                  <span className="font-technical-data text-technical-data font-medium transition-opacity duration-300">
+                  <span className="font-technical-data text-technical-data font-medium transition-ui">
                     {item.name}
                   </span>
                 )}
@@ -174,7 +174,7 @@ export const MainLayout: React.FC = () => {
             <div className="flex items-center gap-2 sm:gap-4 flex-1">
               <button
                 onClick={() => setMobileSidebarOpen(true)}
-                className="md:hidden p-1 text-primary hover:text-primary-container transition-colors cursor-pointer mr-2 shrink-0"
+                className="md:hidden p-1 text-primary hover:text-primary-container transition-ui cursor-pointer mr-2 shrink-0"
               >
                 <MaterialIcon name="menu" className="text-xl" />
               </button>
@@ -184,7 +184,7 @@ export const MainLayout: React.FC = () => {
                 <input
                   type="text"
                   placeholder="ID / TLE SEARCH"
-                  className="bg-surface-container-low w-full border-b border-primary/30 text-primary font-technical-data text-[12px] pl-8 pr-2 sm:pr-16 py-1 focus:outline-none focus:border-primary-container transition-all placeholder:text-primary/30"
+                  className="bg-surface-container-low w-full border-b border-primary/30 text-primary font-technical-data text-[12px] pl-8 pr-2 sm:pr-16 py-1 focus:outline-none focus:border-primary-container transition-ui placeholder:text-primary/30"
                 />
                 <span className="hidden sm:block absolute right-2 text-[9px] text-primary/40 font-mono">CMD+K</span>
               </div>
@@ -204,14 +204,14 @@ export const MainLayout: React.FC = () => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleRightDrawer}
-                  className={`transition-colors cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
+                  className={`transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
                 >
                   <MaterialIcon name="monitor_heart" />
                 </button>
-                <button className="text-primary hover:text-primary-fixed cursor-pointer transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                   <MaterialIcon name="schedule" />
                 </button>
-                <button className="text-primary hover:text-primary-fixed cursor-pointer transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                   <MaterialIcon name="account_circle" />
                 </button>
               </div>
@@ -246,7 +246,7 @@ export const MainLayout: React.FC = () => {
                     </div>
                     <button
                       onClick={toggleRightDrawer}
-                      className="text-on-surface-variant hover:text-primary transition-colors"
+                      className="text-on-surface-variant hover:text-primary transition-ui"
                     >
                       <MaterialIcon name="close" />
                     </button>
@@ -258,7 +258,7 @@ export const MainLayout: React.FC = () => {
                       <button
                         key={tab}
                         onClick={() => setActiveDrawerTab(tab)}
-                        className={`flex-1 py-3 text-[10px] font-label-caps font-bold transition-all flex flex-col items-center gap-1 border-b ${activeDrawerTab === tab
+                        className={`flex-1 py-3 text-[10px] font-label-caps font-bold transition-ui flex flex-col items-center gap-1 border-b ${activeDrawerTab === tab
                             ? 'text-primary-container border-primary-container'
                             : 'text-on-surface-variant hover:bg-surface-container-high/40 border-transparent'
                           }`}
@@ -288,10 +288,10 @@ export const MainLayout: React.FC = () => {
                             Orbital probability mapping is complete for sector 7G. New conjunction threat window detected in 4.2 hours.
                           </p>
                           <div className="mt-3 flex gap-2">
-                            <button className="bg-primary-container/20 border border-primary-container text-primary-container text-[10px] px-2.5 py-1 hover:bg-primary-container hover:text-bg-deep-space transition-all font-technical-data">
+                            <button className="bg-primary-container/20 border border-primary-container text-primary-container text-[10px] px-2.5 py-1 hover:bg-primary-container hover:text-bg-deep-space transition-ui font-technical-data">
                               DISMISS
                             </button>
-                            <button className="bg-primary-container text-bg-deep-space text-[10px] px-2.5 py-1 font-bold font-technical-data hover:bg-primary-fixed-dim transition-all">
+                            <button className="bg-primary-container text-bg-deep-space text-[10px] px-2.5 py-1 font-bold font-technical-data hover:bg-primary-fixed-dim transition-ui">
                               VIEW DETAILS
                             </button>
                           </div>
@@ -359,9 +359,9 @@ export const MainLayout: React.FC = () => {
                         value={assistantInput}
                         onChange={(e) => setAssistantInput(e.target.value)}
                         placeholder="ASK AI COMMAND..."
-                        className="w-full bg-surface-container-low border border-border-panel text-[11px] font-technical-data px-3 py-3 focus:outline-none focus:border-primary-container transition-all pr-10"
+                        className="w-full bg-surface-container-low border border-border-panel text-[11px] font-technical-data px-3 py-3 focus:outline-none focus:border-primary-container transition-ui pr-10"
                       />
-                      <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-primary-container hover:text-primary transition-colors">
+                      <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-primary-container hover:text-primary transition-ui">
                         <MaterialIcon name="send" className="text-lg" />
                       </button>
                     </div>

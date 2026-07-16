@@ -384,7 +384,7 @@ function WhyKepler() {
               <span className="font-technical-data text-xs sm:text-sm text-[#4FE0C8] pt-1 sm:pt-0">
                 {r.n}
               </span>
-              <h3 className="font-necosmic font-semibold text-xl sm:text-2xl text-[#E7EBF3] m-0 group-hover:text-[#4FE0C8] transition-colors duration-200">
+              <h3 className="font-necosmic font-semibold text-xl sm:text-2xl text-[#E7EBF3] m-0 group-hover:text-[#4FE0C8] transition-ui">
                 {r.label}
               </h3>
               <p className="col-span-2 sm:col-span-1 sm:col-start-3 font-body-ui text-[#8892A6] leading-relaxed m-0 text-sm sm:text-[0.98rem] max-w-none sm:max-w-[48ch]">
@@ -761,7 +761,7 @@ function ClosingCta({ onLaunchDashboard }: { onLaunchDashboard: () => void }) {
             </MagneticButton>
             <Link
               to="/"
-              className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-transparent border border-[#1B2436] hover:border-[#4FE0C8]/50 hover:bg-[#1B2436]/30 rounded-lg px-7 py-3.5 no-underline transition-colors duration-150"
+              className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-transparent border border-[#1B2436] hover:border-[#4FE0C8]/50 hover:bg-[#1B2436]/30 rounded-lg px-7 py-3.5 no-underline transition-ui"
             >
               Back to home
             </Link>

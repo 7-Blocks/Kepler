@@ -4,6 +4,7 @@ import { Particles } from "@/components/ui/particles";
 import { Globe } from "@/components/ui/globe";
 import { OrbitSatellites } from "@/components/ui/OrbitSatellites";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { Link } from "react-router-dom";
 
 const TELEMETRY = [
   { label: "OBJECTS TRACKED", value: "34,900+" },
@@ -81,12 +82,14 @@ export function Hero() {
             variants={fadeUp}
             className="mt-8 flex flex-wrap items-center gap-4"
           >
-            <ShimmerButton shimmerColor="#4CDfF0">
-              <span className="inline-flex items-center gap-2">
-                Continue to dashboard
-                <ArrowRight size={15} />
-              </span>
-            </ShimmerButton>
+            <Link to="/dashboard">
+              <ShimmerButton shimmerColor="#4CDfF0">
+                <span className="inline-flex items-center gap-2">
+                  Continue to dashboard
+                  <ArrowRight size={15} />
+                </span>
+              </ShimmerButton>
+        </Link>
             <a
               href="https://github.com/7-Blocks/Kepler"
               target="_blank"

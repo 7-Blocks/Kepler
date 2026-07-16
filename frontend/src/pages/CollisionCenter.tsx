@@ -123,7 +123,7 @@ export const CollisionCenter: React.FC = () => {
           <button
             onClick={() => evaluate.mutate()}
             disabled={evaluate.isPending}
-            className="bg-primary-container text-on-primary font-label-caps text-label-caps px-4 md:px-6 py-2.5 border-b-2 border-primary hover:brightness-110 transition-all flex items-center gap-2 font-bold cursor-pointer drop-shadow-[0_0_10px_rgba(0,229,255,0.4)] disabled:opacity-50 min-h-[44px]"
+            className="bg-primary-container text-on-primary font-label-caps text-label-caps px-4 md:px-6 py-2.5 border-b-2 border-primary hover:brightness-110 transition-ui flex items-center gap-2 font-bold cursor-pointer drop-shadow-[0_0_10px_rgba(0,229,255,0.4)] disabled:opacity-50 min-h-[44px]"
           >
             <MaterialIcon name={evaluate.isPending ? 'sync' : 'bolt'} className={`text-sm ${evaluate.isPending ? 'animate-spin' : ''}`} />
             {evaluate.isPending ? 'SCANNING…' : 'RUN CONJUNCTION SCAN'}
@@ -189,7 +189,7 @@ export const CollisionCenter: React.FC = () => {
                       <tr
                         key={conj.id}
                         onClick={() => setSelectedId(conj.id)}
-                        className={`hover:bg-surface-variant/40 transition-all cursor-pointer ${isSelected ? 'bg-status-emergency/5' : ''}`}
+                        className={`hover:bg-surface-variant/40 transition-ui cursor-pointer ${isSelected ? 'bg-status-emergency/5' : ''}`}
                       >
                         <td className="py-3 px-3 font-semibold text-on-surface text-xs">{conj.object_a?.name ?? '—'}</td>
                         <td className="py-3 px-3 text-on-surface-variant text-xs">{conj.object_b?.name ?? '—'}</td>
@@ -299,14 +299,14 @@ export const CollisionCenter: React.FC = () => {
                 <button
                   onClick={() => updateStatus.mutate({ id: selected.id, status: 'ASSESSED' })}
                   disabled={updateStatus.isPending}
-                  className="flex-1 text-[10px] font-bold text-bg-deep-space bg-primary-container px-4 py-2 hover:bg-primary-fixed-dim transition-all cursor-pointer disabled:opacity-50"
+                  className="flex-1 text-[10px] font-bold text-bg-deep-space bg-primary-container px-4 py-2 hover:bg-primary-fixed-dim transition-ui cursor-pointer disabled:opacity-50"
                 >
                   MARK ASSESSED
                 </button>
                 <button
                   onClick={() => updateStatus.mutate({ id: selected.id, status: 'MITIGATED' })}
                   disabled={updateStatus.isPending}
-                  className="flex-1 text-[10px] font-bold text-primary-container border border-primary-container px-4 py-2 hover:bg-primary-container/10 transition-all cursor-pointer disabled:opacity-50"
+                  className="flex-1 text-[10px] font-bold text-primary-container border border-primary-container px-4 py-2 hover:bg-primary-container/10 transition-ui cursor-pointer disabled:opacity-50"
                 >
                   MARK MITIGATED
                 </button>
@@ -343,7 +343,7 @@ export const CollisionCenter: React.FC = () => {
               {selected && (
                 <button
                   onClick={() => (latestRun ? null : null)}
-                  className="mt-3 text-[10px] font-bold text-primary-container border border-primary-container px-4 py-1.5 hover:bg-primary-container/10 transition-all cursor-pointer"
+                  className="mt-3 text-[10px] font-bold text-primary-container border border-primary-container px-4 py-1.5 hover:bg-primary-container/10 transition-ui cursor-pointer"
                 >
                   TRIGGER AGENT FOR CONJUNCTION {selected.id}
                 </button>

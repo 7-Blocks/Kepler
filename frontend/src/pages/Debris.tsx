@@ -95,7 +95,7 @@ export const Debris: React.FC = () => {
           <button
             onClick={() => syncM.mutate('analyst')}
             disabled={syncM.isPending}
-            className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 cursor-pointer transition-all disabled:opacity-50 min-h-[44px]"
+            className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 cursor-pointer transition-ui disabled:opacity-50 min-h-[44px]"
           >
             <MaterialIcon name={syncM.isPending ? 'sync' : 'cloud_download'} className={`text-sm mr-2 ${syncM.isPending ? 'animate-spin' : ''}`} />
             <span className="font-label-caps text-label-caps">
@@ -138,7 +138,7 @@ export const Debris: React.FC = () => {
           <button
             key={opt.value}
             onClick={() => { setClassFilter(opt.value as Classification | ''); setPage(1); }}
-            className={`px-4 py-2 font-label-caps text-label-caps transition-all cursor-pointer ${
+            className={`px-4 py-2 font-label-caps text-label-caps transition-ui cursor-pointer ${
               classFilter === opt.value
                 ? 'bg-primary-container text-on-primary'
                 : 'border border-border-panel hover:bg-surface-variant/50'
@@ -155,13 +155,13 @@ export const Debris: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-surface-container-high border-b border-border-panel">
               <tr>
-                <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">NAME / NORAD ID</th>
-                <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">TYPE</th>
-                <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">ALTITUDE</th>
-                <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">INCLINATION</th>
-                <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">MEAN MOTION</th>
-                <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">RISK</th>
-                <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">EPOCH</th>
+                <th className="table-head">NAME / NORAD ID</th>
+                <th className="table-head">TYPE</th>
+                <th className="table-head">ALTITUDE</th>
+                <th className="table-head">INCLINATION</th>
+                <th className="table-head">MEAN MOTION</th>
+                <th className="table-head">RISK</th>
+                <th className="table-head">EPOCH</th>
               </tr>
             </thead>
             {catalogQ.isLoading ? (
@@ -187,7 +187,7 @@ export const Debris: React.FC = () => {
                         <button
                           onClick={() => syncM.mutate('analyst')}
                           disabled={syncM.isPending}
-                          className="font-label-caps text-label-caps text-primary-container border border-primary-container px-4 py-1.5 hover:bg-primary-container/10 transition-all cursor-pointer disabled:opacity-50"
+                          className="font-label-caps text-label-caps text-primary-container border border-primary-container px-4 py-1.5 hover:bg-primary-container/10 transition-ui cursor-pointer disabled:opacity-50"
                         >
                           {syncM.isPending ? 'SYNCING FROM SPACE-TRACK…' : 'SYNC ANALYST DEBRIS FROM SPACE-TRACK'}
                         </button>
@@ -202,12 +202,12 @@ export const Debris: React.FC = () => {
                   const alt  = altFromSMA(obj.semimajor_axis);
                   const risk = riskFromOrbit(obj);
                   return (
-                    <tr key={obj.id} className="hover:bg-primary-container/5 transition-colors">
-                      <td className="p-4">
-                        <div className="font-technical-data font-semibold text-on-surface text-sm">{obj.name}</div>
+                    <tr key={obj.id} className="hover:bg-primary-container/5 transition-ui">
+                      <td>
+                        <div className="table-data-technical font-semibold text-on-surface text-sm">{obj.name}</div>
                         <div className="text-[10px] text-on-surface-variant">NORAD: {obj.catalog_number}</div>
                       </td>
-                      <td className="p-4">
+                      <td>
                         <span className={`font-label-caps text-[9px] px-2 py-0.5 border ${
                           obj.classification === 'DEBRIS'
                             ? 'border-status-emergency/40 text-status-emergency bg-status-emergency/10'
@@ -216,16 +216,16 @@ export const Debris: React.FC = () => {
                           {obj.classification === 'ROCKET_BODY' ? 'ROCKET BODY' : obj.classification}
                         </span>
                       </td>
-                      <td className="p-4 font-technical-data text-[11px] text-on-surface-variant">
+                      <td className="table-data-technical">
                         {alt > 0 ? `${alt.toLocaleString()} km` : '—'}
                       </td>
-                      <td className="p-4 font-technical-data text-[11px] text-on-surface-variant">
+                      <td className="table-data-technical">
                         {obj.inclination != null ? `${obj.inclination.toFixed(2)}°` : '—'}
                       </td>
-                      <td className="p-4 font-technical-data text-[11px] text-on-surface-variant">
+                      <td className="table-data-technical">
                         {obj.mean_motion != null ? `${obj.mean_motion.toFixed(4)} rev/day` : '—'}
                       </td>
-                      <td className="p-4">
+                      <td>
                         <span className={`text-[9px] px-2 py-0.5 font-bold ${
                           risk === 'HIGH'   ? 'bg-status-emergency text-white' :
                           risk === 'MEDIUM' ? 'bg-status-warning text-black' :
@@ -234,7 +234,7 @@ export const Debris: React.FC = () => {
                           {risk}
                         </span>
                       </td>
-                      <td className="p-4 font-technical-data text-[10px] text-on-surface-variant">
+                      <td className="table-data-technical">
                         {obj.epoch ? new Date(obj.epoch).toISOString().substring(0, 10) : '—'}
                       </td>
                     </tr>
@@ -255,14 +255,14 @@ export const Debris: React.FC = () => {
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 border border-border-panel font-label-caps text-[10px] hover:bg-surface-variant/50 disabled:opacity-40 cursor-pointer"
+                className="pn-btn"
               >
                 ← PREV
               </button>
               <button
                 onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
                 disabled={page === pagination.pages}
-                className="px-3 py-1 border border-border-panel font-label-caps text-[10px] hover:bg-surface-variant/50 disabled:opacity-40 cursor-pointer"
+                className="pn-btn"
               >
                 NEXT →
               </button>

@@ -488,7 +488,7 @@ export const EarthTwin: React.FC = () => {
             <div className="w-full h-4 bg-surface-container/80 animate-pulse" />
             </>
           ) }
-            <p className={`font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block transition-opacity duration-500 ${dataLoaded ? 'opacity-100' : 'opacity-0'}`}>
+            <p className={`font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block transition-ui ${dataLoaded ? 'opacity-100' : 'opacity-0'}`}>
               WEATHER: {stats.weatherIndex} · DATA SOURCE: SPACE-TRACK / NASA DONKI
             </p>
 
@@ -529,7 +529,7 @@ export const EarthTwin: React.FC = () => {
           <div className="flex gap-1.5 md:gap-2 pointer-events-auto">
             <button
               onClick={() => setShowLegend(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-all active:scale-95 cursor-pointer border ${
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${
                 showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
               }`}
             >
@@ -537,7 +537,7 @@ export const EarthTwin: React.FC = () => {
             </button>
             <button
               onClick={() => setShowDensity(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-all active:scale-95 cursor-pointer border ${
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${
                 showDensity ? 'bg-status-warning text-bg-deep-space border-status-warning' : 'border-status-warning/50 text-status-warning hover:bg-status-warning/10'
               }`}
             >
@@ -545,7 +545,7 @@ export const EarthTwin: React.FC = () => {
             </button>
             <button
               onClick={() => setShowRiskOverlay(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-all active:scale-95 cursor-pointer border ${
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${
                 showRiskOverlay ? 'bg-status-emergency text-white border-status-emergency' : 'border-status-emergency/50 text-status-emergency hover:bg-status-emergency/10'
               }`}
             >

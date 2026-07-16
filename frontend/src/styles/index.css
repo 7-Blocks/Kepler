@@ -13,6 +13,7 @@
   font-display: swap;
 }
 
+
 @theme {
   --color-on-primary: #00363d;
   --color-status-emergency: #FF3B30;
@@ -98,18 +99,27 @@
     background-color: #0C1220;
     color: #dfe2eb;
     overflow: hidden;
-    @apply bg-background text-foreground;
-  }
-  * {
-    @apply border-border outline-ring/50;
-  }
-  html {
-    @apply font-sans;
   }
 }
 
 .transition-ui {
-  transition: all 0.30s cubic-bezier(0.2, 0.8, 0.2, 1);
+  @apply transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)];
+}
+
+.table-head {
+  @apply p-4 font-label-caps text-on-surface-variant;
+}
+
+.table-data {
+  @apply p-4;
+}
+
+.table-data-technical {
+  @apply p-4 font-technical-data text-on-surface-variant;
+}
+
+.pn-btn {
+  @apply px-3 py-1 border border-border-panel font-label-caps text-[10px] hover:bg-surface-variant/50 disabled:opacity-40 cursor-pointer;
 }
 
 .scanlines {

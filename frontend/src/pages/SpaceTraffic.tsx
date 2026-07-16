@@ -14,7 +14,7 @@ export const SpaceTraffic: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-all cursor-pointer min-h-[44px]">
+          <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-ui cursor-pointer min-h-[44px]">
             <MaterialIcon name="filter_alt" className="text-sm mr-2" />
             REGISTRY FILTER
           </button>

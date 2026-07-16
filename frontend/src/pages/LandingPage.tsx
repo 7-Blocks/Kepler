@@ -2,34 +2,6 @@ import Hero from "@/components/Hero";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-/**
- * Kepler — Landing Page
- * -----------------------------------------------------------------------
- * Design tokens
- *   bg          #060A14  deep orbital black
- *   bg-panel    #0C1220  raised panel / nav / footer
- *   line        #1B2436  hairline borders
- *   text        #E7EBF3  primary text
- *   text-dim    #8892A6  secondary text
- *   accent      #4FE0C8  "tracked" telemetry teal (signature color)
- *   warn        #FFB020  "conflict" amber (used sparingly, for CTA + alerts)
- *
- * Type
- *   display: "Space Grotesk" (headlines — geometric, technical, a little cold)
- *   body:    "Inter" (paragraphs, nav, footer)
- *   mono:    "JetBrains Mono" (telemetry labels, coordinates, small data)
- *
- * Signature element
- *   A live orbital field in the hero: thin elliptical paths with small
- *   telemetry dots drifting along them, each carrying a coordinate-style
- *   label. It's the literal subject — space traffic — rendered as the
- *   backdrop rather than an abstract gradient blob.
- *
- * Chrome (nav / footer) lives in MarketingLayout.
- * -----------------------------------------------------------------------
- */
-
-/* Orbital field */
 
 interface OrbitalFieldProps {
   prefersReducedMotion: boolean;
@@ -102,50 +74,6 @@ interface HeroProps {
   prefersReducedMotion: boolean;
 }
 
-function Hero({ onLaunchDashboard, prefersReducedMotion }: HeroProps) {
-  return (
-    <section
-      id="product"
-      className="relative min-h-svh flex items-center justify-center px-6 pt-0 mt-0 pb-16 overflow-hidden"
-    >
-      <OrbitalField prefersReducedMotion={prefersReducedMotion} />
-
-      <div className="relative z-10 max-w-[720px] text-center flex flex-col items-center">
-        <div className="inline-flex items-center font-technical-data text-xs text-[#4FE0C8] border border-[#1B2436] rounded-full px-3.5 py-1.5 mb-7 bg-[#0C1220]">
-          TRACKING 12,400+ OBJECTS · LIVE
-        </div>
-
-        <h1 className="font-display-lg font-bold text-4xl sm:text-5xl md:text-6xl leading-[1.08] text-[#E7EBF3] m-0 tracking-tight">
-          Autonomous traffic control
-          <br />
-          for everything in orbit.
-        </h1>
-
-        <p className="font-body-ui text-[1.05rem] leading-relaxed text-[#8892A6] mt-6 mb-9 max-w-[560px]">
-          Kepler predicts conjunctions, resolves them autonomously, and hands
-          operators a clean, explainable record — before a near-miss ever
-          becomes a headline.
-        </p>
-
-        <div className="flex gap-3 justify-center flex-wrap">
-          <button
-            type="button"
-            onClick={onLaunchDashboard}
-            className="font-body-ui font-semibold text-[15px] text-[#060A14] bg-[#FFB020] hover:bg-[#e59b15] border-none rounded-lg px-6.5 py-3 cursor-pointer transition-colors duration-150"
-          >
-            Launch Dashboard
-          </button>
-          <a
-            href="#how-it-works"
-            className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-transparent border border-[#1B2436] hover:bg-[#1B2436]/30 rounded-lg px-6.5 py-3 text-none transition-colors duration-150"
-          >
-            See how it works
-          </a>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* How it works */
 
@@ -257,7 +185,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="select-none">
-      <Hero onLaunchDashboard={handleLaunch} prefersReducedMotion={prefersReducedMotion} />
+      <Hero />
       <HowItWorks />
       <Reliability />
     </div>

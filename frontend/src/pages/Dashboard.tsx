@@ -199,9 +199,9 @@ export const Dashboard: React.FC = () => {
                 {conjunctions.map((conj: Collision) => (
                   <div
                     key={conj.id}
-                    className={`w-64 sm:w-72 shrink-0 glass-panel p-4 border-l-4 ${riskColor(conj.risk_level)} relative overflow-hidden group hover:bg-surface-variant/30 transition-all cursor-pointer`}
+                    className={`w-64 sm:w-72 shrink-0 glass-panel p-4 border-l-4 ${riskColor(conj.risk_level)} relative overflow-hidden group hover:bg-surface-variant/30 transition-ui cursor-pointer`}
                   >
-                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-ui">
                       <MaterialIcon name="crisis_alert" className={`text-6xl ${riskBarColor(conj.risk_level)}`} />
                     </div>
                     <div className="flex justify-between items-start mb-4">

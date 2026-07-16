@@ -2,15 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MaterialIcon } from "@/components/MaterialIcon";
 
-/**
- * Kepler — 404 Not Found Page
- * -----------------------------------------------------------------------
- * Matches the app's dashboard design system (designSystem.ts / index.css
- * theme tokens): deep space background, technical grid, glass panels,
- * Space Grotesk / IBM Plex Sans type, cyan glow accents.
- * -----------------------------------------------------------------------
- */
-
 interface DebrisFieldProps {
   prefersReducedMotion: boolean;
 }
@@ -109,7 +100,7 @@ export const NotFound: React.FC = () => {
 
           <button
             onClick={() => navigate("/dashboard")}
-            className="mt-9 inline-flex items-center gap-2 font-body-ui font-semibold text-sm text-on-primary bg-primary-container hover:opacity-90 rounded-lg px-6 py-3 cursor-pointer transition-opacity duration-150"
+            className="mt-9 inline-flex items-center gap-2 font-body-ui font-semibold text-sm text-on-primary bg-primary-container hover:opacity-90 rounded-lg px-6 py-3 cursor-pointer transition-ui"
           >
             <MaterialIcon name="dashboard" className="text-base" />
             Return to Dashboard

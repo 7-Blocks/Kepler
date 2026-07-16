@@ -113,14 +113,14 @@ export const Satellites: React.FC = () => {
             <button
               onClick={() => syncM.mutate(undefined)}
               disabled={syncM.isPending}
-              className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
+              className="flex items-center px-4 py-2 border border-border-panel bg-surface-container hover:bg-surface-variant/50 transition-ui cursor-pointer disabled:opacity-50 min-h-[44px]"
             >
               <MaterialIcon name={syncM.isPending ? 'sync' : 'cloud_download'} className={`text-sm mr-2 ${syncM.isPending ? 'animate-spin' : ''}`} />
               <span className="font-label-caps text-label-caps">
                 {syncM.isPending ? 'SYNCING…' : 'SYNC SPACE-TRACK'}
               </span>
             </button>
-            <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-all glow-cyan cursor-pointer min-h-[44px]">
+            <button className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-ui glow-cyan cursor-pointer min-h-[44px]">
               <MaterialIcon name="filter_alt" className="text-sm mr-2" />
               FILTERS
             </button>
@@ -182,7 +182,7 @@ export const Satellites: React.FC = () => {
                           <button
                             onClick={() => syncM.mutate(undefined)}
                             disabled={syncM.isPending}
-                            className="font-label-caps text-label-caps text-primary-container border border-primary-container px-4 py-1.5 hover:bg-primary-container/10 transition-all cursor-pointer disabled:opacity-50"
+                            className="font-label-caps text-label-caps text-primary-container border border-primary-container px-4 py-1.5 hover:bg-primary-container/10 transition-ui cursor-pointer disabled:opacity-50"
                           >
                             {syncM.isPending ? 'SYNCING FROM SPACE-TRACK…' : 'SYNC FROM SPACE-TRACK NOW'}
                           </button>
@@ -201,11 +201,11 @@ export const Satellites: React.FC = () => {
                       <tr
                         key={obj.id}
                         onClick={() => setSelectedSatelliteId(obj.catalog_number)}
-                        className={`hover:bg-primary-container/5 transition-colors group cursor-pointer ${
+                        className={`hover:bg-primary-container/5 transition-ui group cursor-pointer ${
                           isSelected ? 'bg-primary-fixed-dim/5 border-l-2 border-primary-container' : 'opacity-85'
                         }`}
                       >
-                        <td className="p-4">
+                        <td className="table-data">
                           <div className="flex items-center">
                             <span className="w-2 h-2 rounded-full mr-3 bg-status-success" />
                             <div>
@@ -216,7 +216,7 @@ export const Satellites: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="p-4">
+                        <td className="table-data">
                           <span className="font-label-caps text-[10px] px-1.5 py-0.5 border border-border-panel text-on-surface-variant bg-surface-container-low">
                             {orbit}
                           </span>
@@ -224,22 +224,22 @@ export const Satellites: React.FC = () => {
                             {alt > 0 ? `${alt.toLocaleString()} km` : '—'}
                           </span>
                         </td>
-                        <td className="p-4 font-technical-data text-[11px] text-on-surface-variant">
+                        <td className="table-data-technical">
                           {obj.inclination != null ? `${obj.inclination.toFixed(2)}°` : '—'}
                         </td>
-                        <td className="p-4 font-technical-data text-[11px] text-on-surface-variant">
+                        <td className="table-data-technical">
                           {obj.eccentricity != null ? obj.eccentricity.toFixed(6) : '—'}
                         </td>
-                        <td className="p-4 font-technical-data text-[11px] text-on-surface-variant">
+                        <td className="table-data-technical">
                           {obj.mean_motion != null ? `${obj.mean_motion.toFixed(4)} rev/day` : '—'}
                         </td>
-                        <td className="p-4 font-technical-data text-[11px] text-on-surface-variant">
+                        <td className="table-data-technical">
                           {obj.period != null ? `${obj.period.toFixed(1)} min` : '—'}
                         </td>
-                        <td className="p-4 text-right">
+                        <td className="table-data text-right">
                           <MaterialIcon
                             name="arrow_forward_ios"
-                            className={`text-on-surface-variant group-hover:text-primary-container transition-all ${isSelected ? 'text-primary-container translate-x-1' : ''}`}
+                            className={`text-on-surface-variant group-hover:text-primary-container transition-ui ${isSelected ? 'text-primary-container translate-x-1' : ''}`}
                           />
                         </td>
                       </tr>
@@ -313,7 +313,7 @@ export const Satellites: React.FC = () => {
               <button
                 onClick={() => syncM.mutate('active')}
                 disabled={syncM.isPending}
-                className="mt-4 w-full py-1.5 bg-bg-deep-space/10 hover:bg-bg-deep-space/20 transition-all font-label-caps text-[10px] border border-bg-deep-space/20 font-bold cursor-pointer disabled:opacity-50"
+                className="mt-4 w-full py-1.5 bg-bg-deep-space/10 hover:bg-bg-deep-space/20 transition-ui font-label-caps text-[10px] border border-bg-deep-space/20 font-bold cursor-pointer disabled:opacity-50"
               >
                 {syncM.isPending ? 'SYNCING…' : 'FORCE SYNC NOW'}
               </button>
@@ -344,7 +344,7 @@ export const Satellites: React.FC = () => {
               </div>
               <button
                 onClick={() => setSelectedSatelliteId(null)}
-                className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                className="text-on-surface-variant hover:text-primary transition-ui cursor-pointer"
               >
                 <MaterialIcon name="close" />
               </button>
@@ -358,7 +358,7 @@ export const Satellites: React.FC = () => {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-3 text-[10px] font-label-caps font-bold transition-all text-center border-b ${
+                    className={`flex-1 py-3 text-[10px] font-label-caps font-bold transition-ui text-center border-b ${
                       activeTab === tab
                         ? 'text-primary-container border-primary-container'
                         : 'text-on-surface-variant hover:text-on-surface border-transparent'
@@ -453,14 +453,14 @@ export const Satellites: React.FC = () => {
             <div className="p-6 border-t border-border-panel bg-surface-container-low grid grid-cols-2 gap-3 mt-auto">
               <button
                 onClick={() => window.open('https://www.space-track.org', '_blank')}
-                className="py-3 border border-border-panel font-label-caps text-[10px] font-bold hover:bg-surface-variant transition-all cursor-pointer"
+                className="py-3 border border-border-panel font-label-caps text-[10px] font-bold hover:bg-surface-variant transition-ui cursor-pointer"
               >
                 VIEW ON SPACE-TRACK ↗
               </button>
               <button
                 onClick={() => syncM.mutate(undefined)}
                 disabled={syncM.isPending}
-                className="py-3 bg-primary-container text-on-primary font-label-caps text-[10px] font-bold hover:bg-primary transition-all glow-cyan cursor-pointer disabled:opacity-50"
+                className="py-3 bg-primary-container text-on-primary font-label-caps text-[10px] font-bold hover:bg-primary transition-ui glow-cyan cursor-pointer disabled:opacity-50"
               >
                 {syncM.isPending ? 'SYNCING…' : 'REFRESH ORBIT DATA'}
               </button>

@@ -34,7 +34,7 @@ function useScrollToHash() {
 }
 
 const footerLinkClass =
-  "font-body-ui text-[13px] text-[#8892A6] hover:text-[#E7EBF3] no-underline transition-colors duration-150";
+  "font-body-ui text-[13px] text-[#8892A6] hover:text-[#E7EBF3] no-underline transition-ui";
 
 const navLinks = [
   { label: "Product", to: "/#product" },
@@ -71,7 +71,7 @@ function MarketingNavBar() {
   }, [location.pathname, location.hash]);
 
   const linkClass = (active?: boolean) =>
-    `font-body-ui text-[13px] sm:text-sm transition-colors duration-150 no-underline px-1 ${
+    `font-body-ui text-[13px] sm:text-sm transition-ui no-underline px-1 ${
       active ? "text-white" : "text-white/65 hover:text-white"
     }`;
 
@@ -108,7 +108,7 @@ function MarketingNavBar() {
             <button
               type="button"
               onClick={() => navigate("/dashboard")}
-              className="font-body-ui font-semibold text-[13px] text-black bg-white hover:bg-white/90 border-none rounded-full px-4 sm:px-5 py-2 cursor-pointer transition-colors duration-150 whitespace-nowrap"
+              className="font-body-ui font-semibold text-[13px] text-black bg-white hover:bg-white/90 border-none rounded-full px-4 sm:px-5 py-2 cursor-pointer transition-ui whitespace-nowrap"
             >
               Launch
             </button>
@@ -123,12 +123,12 @@ function MarketingNavBar() {
               <span className="sr-only">Menu</span>
               <span className="flex flex-col gap-1.5" aria-hidden="true">
                 <span
-                  className={`block h-px w-3.5 bg-white transition-transform ${
+                  className={`block h-px w-3.5 bg-white transition-ui ${
                     menuOpen ? "translate-y-[3.5px] rotate-45" : ""
                   }`}
                 />
                 <span
-                  className={`block h-px w-3.5 bg-white transition-transform ${
+                  className={`block h-px w-3.5 bg-white transition-ui ${
                     menuOpen ? "-translate-y-[3.5px] -rotate-45" : ""
                   }`}
                 />
@@ -227,7 +227,7 @@ function MarketingFooter() {
             </p>
             <Link
               to="/dashboard"
-              className="inline-flex items-center font-body-ui font-semibold text-[13px] text-black bg-white hover:bg-white/90 no-underline rounded-full px-5 py-2.5 transition-colors duration-150"
+              className="inline-flex items-center font-body-ui font-semibold text-[13px] text-black bg-white hover:bg-white/90 no-underline rounded-full px-5 py-2.5 transition-ui"
             >
               Launch Dashboard
             </Link>
