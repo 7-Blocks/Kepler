@@ -39,7 +39,7 @@ export function Hero() {
 
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#05070C_0%,rgba(5,7,12,0.85)_38%,rgba(5,7,12,0.25)_62%,transparent_85%)] sm:bg-[linear-gradient(90deg,#05070C_0%,rgba(5,7,12,0.85)_38%,rgba(5,7,12,0.25)_62%,transparent_85%)]" />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1280px] px-6 sm:px-8 lg:px-10">
+      <div className="relative z-10 mx-auto w-full max-w-[1280px] px-6 sm:px-8 lg:px-10 pt-[120px] sm:pt-[160px] pb-12">
         <div className="max-w-[620px]">
           <motion.div
             initial="hidden"

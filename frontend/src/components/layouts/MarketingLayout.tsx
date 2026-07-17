@@ -37,23 +37,26 @@ const footerLinkClass =
   "font-body-ui text-[13px] text-[#8892A6] hover:text-[#E7EBF3] no-underline transition-ui";
 
 const navLinks = [
-  { label: "Product", to: "/#product" },
-  { label: "How it works", to: "/#how-it-works" },
-  { label: "About", to: "/about" },
-  { label: "Contact", to: "/#contact" },
+  { label: "Product", to: "/product" },
+  { label: "Solutions", to: "/solutions" },
+  { label: "Developers", to: "/developers" },
+  { label: "Docs", to: "/docs" },
+  { label: "Dashboard", to: "/dashboard" },
 ];
 
 function BrandMark() {
   return (
-    <Link to="/" className="flex items-center gap-2.5 no-underline shrink-0">
-      <img
-        src="/Logo.svg"
-        alt=""
-        width={28}
-        height={28}
-        className="h-7 w-7 object-contain"
-      />
-      <span className="font-necosmic text-[15px] text-white tracking-wide">
+    <Link to="/" className="flex items-center gap-2.5 no-underline shrink-0 group">
+      <div className="relative flex items-center justify-center h-8 w-8 rounded-xl bg-black transition-transform group-hover:scale-105 shadow-sm">
+        <img
+          src="/Logo.svg"
+          alt=""
+          width={20}
+          height={20}
+          className="h-5 w-5 object-contain"
+        />
+      </div>
+      <span className="font-necosmic text-[16px] text-[#0C1220] tracking-wide font-medium">
         Kepler
       </span>
     </Link>
@@ -71,46 +74,42 @@ function MarketingNavBar() {
   }, [location.pathname, location.hash]);
 
   const linkClass = (active?: boolean) =>
-    `font-body-ui text-[13px] sm:text-sm transition-ui no-underline px-1 ${
-      active ? "text-white" : "text-white/65 hover:text-white"
+    `relative font-body-ui text-[14px] font-medium transition-all no-underline px-3 py-2 rounded-full ${
+      active 
+        ? "text-[#0C1220] bg-gray-100" 
+        : "text-[#5F6A80] hover:text-[#0C1220] hover:bg-gray-50"
     }`;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none">
+    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center pointer-events-none pt-4 sm:pt-6">
       <motion.div
         initial={reduce ? false : { y: -28, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="marketing-nav-notch pointer-events-auto w-[min(100%,720px)] sm:w-[min(92%,760px)]"
+        className="pointer-events-auto w-[calc(100%-32px)] max-w-[1100px] mx-auto bg-white/95 backdrop-blur-md rounded-full border border-black/[0.04] shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
       >
-        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-3.5">
+        <div className="flex items-center justify-between gap-3 px-3 py-2 sm:py-2.5 sm:px-4">
           <BrandMark />
 
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
-            {navLinks.map((l) =>
-              l.to === "/about" ? (
-                <NavLink
-                  key={l.label}
-                  to={l.to}
-                  className={({ isActive }) => linkClass(isActive)}
-                >
-                  {l.label}
-                </NavLink>
-              ) : (
-                <Link key={l.label} to={l.to} className={linkClass()}>
-                  {l.label}
-                </Link>
-              )
-            )}
+          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+            {navLinks.map((l) => (
+              <NavLink
+                key={l.label}
+                to={l.to}
+                className={({ isActive }) => linkClass(isActive)}
+              >
+                {l.label}
+              </NavLink>
+            ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate("/dashboard")}
-              className="font-body-ui font-semibold text-[13px] text-black bg-white hover:bg-white/90 border-none rounded-full px-4 sm:px-5 py-2 cursor-pointer transition-ui whitespace-nowrap"
+              onClick={() => navigate("/signin")}
+              className="hidden sm:inline-flex font-body-ui font-medium text-[14px] text-white bg-[#7E56D9] hover:bg-[#6941C6] border border-transparent rounded-full px-5 py-2 cursor-pointer transition-all shadow-[0_2px_8px_rgba(126,86,217,0.3)] hover:shadow-[0_4px_12px_rgba(126,86,217,0.4)] hover:-translate-y-0.5 active:translate-y-0"
             >
-              Launch
+              Sign In
             </button>
 
             <button
@@ -118,61 +117,82 @@ function MarketingNavBar() {
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
-              className="md:hidden flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white cursor-pointer"
+              className="md:hidden flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-[#0C1220] cursor-pointer hover:bg-gray-100 transition-colors"
             >
               <span className="sr-only">Menu</span>
-              <span className="flex flex-col gap-1.5" aria-hidden="true">
+              <span className="flex flex-col gap-[5px]" aria-hidden="true">
                 <span
-                  className={`block h-px w-3.5 bg-white transition-ui ${
-                    menuOpen ? "translate-y-[3.5px] rotate-45" : ""
+                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${
+                    menuOpen ? "translate-y-[6.5px] rotate-45" : ""
                   }`}
                 />
                 <span
-                  className={`block h-px w-3.5 bg-white transition-ui ${
-                    menuOpen ? "-translate-y-[3.5px] -rotate-45" : ""
+                  className={`block h-[1.5px] w-[18px] bg-current transition-opacity duration-300 ${
+                    menuOpen ? "opacity-0" : ""
+                  }`}
+                />
+                <span
+                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${
+                    menuOpen ? "-translate-y-[6.5px] -rotate-45" : ""
                   }`}
                 />
               </span>
             </button>
           </div>
         </div>
+      </motion.div>
 
-        <AnimatePresence>
-          {menuOpen && (
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-[#0C1220]/40 backdrop-blur-sm z-[-1] pointer-events-auto md:hidden"
+              onClick={() => setMenuOpen(false)}
+            />
             <motion.nav
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="md:hidden overflow-hidden border-t border-white/10"
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute top-full mt-3 left-4 right-4 bg-white rounded-3xl p-4 shadow-xl border border-black/[0.04] md:hidden pointer-events-auto z-10"
             >
-              <div className="flex flex-col gap-1 px-5 py-3 pb-4">
-                {navLinks.map((l) =>
-                  l.to === "/about" ? (
-                    <NavLink
-                      key={l.label}
-                      to={l.to}
-                      className={({ isActive }) =>
-                        `${linkClass(isActive)} py-2`
-                      }
-                    >
-                      {l.label}
-                    </NavLink>
-                  ) : (
-                    <Link
-                      key={l.label}
-                      to={l.to}
-                      className={`${linkClass()} py-2`}
-                    >
-                      {l.label}
-                    </Link>
-                  )
-                )}
+              <div className="flex flex-col gap-1">
+                {navLinks.map((l) => (
+                  <NavLink
+                    key={l.label}
+                    to={l.to}
+                    className={({ isActive }) =>
+                      `font-body-ui text-[15px] font-medium transition-all px-4 py-3 rounded-2xl ${
+                        isActive
+                          ? "text-[#0C1220] bg-gray-50"
+                          : "text-[#5F6A80] hover:text-[#0C1220] hover:bg-gray-50"
+                      }`
+                    }
+                  >
+                    {l.label}
+                  </NavLink>
+                ))}
+                <div className="mt-2 pt-3 border-t border-gray-100 px-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate("/signin");
+                    }}
+                    className="w-full font-body-ui font-medium text-[15px] text-white bg-[#7E56D9] hover:bg-[#6941C6] rounded-2xl px-5 py-3.5 transition-colors text-center"
+                  >
+                    Sign In
+                  </button>
+                </div>
               </div>
             </motion.nav>
-          )}
-        </AnimatePresence>
-      </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

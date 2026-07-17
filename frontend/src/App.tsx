@@ -3,6 +3,7 @@ import { MainLayout } from '@/components/layouts/MainLayout';
 import { MarketingLayout } from '@/components/layouts/MarketingLayout';
 import { LandingPage } from '@/pages/LandingPage';
 import { AboutPage } from '@/pages/AboutPage';
+import { ProductPage, SolutionsPage, DevelopersPage, DocsPage, SignInPage } from '@/pages/PlaceholderPage';
 import { Dashboard } from '@/pages/Dashboard';
 import { SpaceTraffic } from '@/pages/SpaceTraffic';
 import { Satellites } from '@/pages/Satellites';
@@ -29,6 +30,11 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="tech" element={<Technologies />} />
+          <Route path="/product" element={<ProductPage />} />
+          <Route path="/solutions" element={<SolutionsPage />} />
+          <Route path="/developers" element={<DevelopersPage />} />
+          <Route path="/docs" element={<DocsPage />} />
+          <Route path="/signin" element={<SignInPage />} />
         </Route>
         <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
