@@ -10,7 +10,6 @@ from app.core.config import settings
 from app.core.error_handlers import register_exception_handlers
 from api.router import api_router
 from websocket.manager import manager
-from models.db_models import Organization, Role
 from schemas.api_schemas import ErrorResponse
 
 
@@ -24,7 +23,6 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
     redoc_url=f"{settings.API_V1_STR}/redoc",
-    # Documents the single error shape on every operation in /docs and /redoc.
     responses={
         400: {"model": ErrorResponse, "description": "Bad Request"},
         401: {"model": ErrorResponse, "description": "Unauthorized"},
@@ -36,13 +34,8 @@ app = FastAPI(
     },
 )
 
-
-# Must be registered before the routers so every route inherits the same error contract.
 register_exception_handlers(app)
 
-
-# CORS: origins are driven by the ALLOWED_ORIGINS env var.
-# In production this should be set to https://keplerai.vercel.app
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.get_allowed_origins(),
@@ -50,7 +43,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
@@ -96,40 +88,33 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.on_event("startup")
 async def on_startup():
-    
-    logger.info("Initializing MongoDB database schemas...")
+    logger.info("Initializing PostgreSQL database schema...")
     try:
-        from database.session import get_mongo_client, uri_db_name, SessionLocal
-        client = get_mongo_client()
-        db_name = uri_db_name(settings.MONGODB_URI)
-        mongo_db = client[db_name]
-        
-        logger.info("Creating MongoDB indexes...")
-        mongo_db["satellites"].create_index("noradId", unique=True)
-        mongo_db["debris"].create_index("noradId", unique=True)
-        mongo_db["orbitalElements"].create_index("noradId", unique=True)
-        mongo_db["conjunctions"].create_index("riskScore")
-        mongo_db["alerts"].create_index("createdAt")
-        mongo_db["spaceWeather"].create_index("eventTime")
-        logger.info("✅ MongoDB indexes verified.")
+        from database.session import engine, Base, SessionLocal
+        # Import all models so Base.metadata is populated
+        import models.db_models  # noqa: F401
+        Base.metadata.create_all(bind=engine)
+        logger.info("✅ PostgreSQL tables created / verified.")
 
         db = SessionLocal()
-        org = db.query(Organization).first()
-        if not org:
-            db.add(Organization(name="Global Space Command", description="Lead Space Avoidance Agency"))
-            db.commit()
+        try:
+            from models.db_models import Organization, Role
+            org = db.query(Organization).first()
+            if not org:
+                db.add(Organization(name="Global Space Command", description="Lead Space Avoidance Agency"))
+                db.commit()
 
-        role = db.query(Role).first()
-        if not role:
-            db.add(Role(name="Operator", description="Mission Control Operator"))
-            db.commit()
-        db.close()
-        logger.info("✅ MongoDB seed data verified.")
+            role = db.query(Role).first()
+            if not role:
+                db.add(Role(name="Operator", description="Mission Control Operator"))
+                db.commit()
+            logger.info("✅ PostgreSQL seed data verified.")
+        finally:
+            db.close()
     except Exception as e:
-        logger.error(f"⚠️  MongoDB init failed: {e}")
-        logger.warning("Continuing without MongoDB — some features unavailable.")
+        logger.error(f"⚠️  PostgreSQL init failed: {e}")
+        logger.warning("Continuing without DB — some features unavailable.")
 
-    
     try:
         from app.core.scheduler import scheduler
         scheduler.start_all()

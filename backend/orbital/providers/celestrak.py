@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 from app.core.config import settings
-from database.session import MongoSession
+from sqlalchemy.orm import Session
 from orbital.providers.base import ProviderError, SatelliteDataProvider
 
 logger = logging.getLogger("app")
@@ -49,7 +49,7 @@ class CelesTrakProvider(SatelliteDataProvider):
         )
 
     def fetch_group(
-        self, group: str, limit: int, db: Optional[MongoSession] = None
+        self, group: str, limit: int, db: Optional[Session] = None
     ) -> List[Dict[str, Any]]:
         celestrak_groups = _GROUP_MAP.get(group)
         if not celestrak_groups:

@@ -1,15 +1,11 @@
 """
 /api/v1/dashboard — Live Dashboard KPI Endpoints
-
-Bug Fixes Applied:
-  - All DB queries now use db.db[collection].count_documents() directly against
-    MongoDB instead of the broken ORM wrapper that used wrong collection names.
-  - Counts satellites from "satellites" collection, debris from "debris" collection.
-  - Returns space_weather_severity so the frontend Dashboard works correctly.
 """
 
 from fastapi import APIRouter, Depends
-from database.session import get_db, MongoSession
+from sqlalchemy.orm import Session
+from database.session import get_db
+from models.db_models import Satellite, Debris, Alert, CollisionPrediction, AgentRun, SpaceWeather
 from schemas.api_schemas import APIResponse
 from services.weather_service import weather_service
 from typing import Dict, Any
@@ -20,25 +16,22 @@ router = APIRouter()
 
 
 @router.get("/summary", response_model=APIResponse[Dict[str, Any]])
-def get_dashboard_summary(db: MongoSession = Depends(get_db)):
-    """
-    Live dashboard KPI summary — ALL values come directly from MongoDB collections.
-    Returns real zeros when no data has been synced yet.
-    """
+def get_dashboard_summary(db: Session = Depends(get_db)):
     try:
-        sat_count   = db.db["satellites"].count_documents({})
-        debris_count = db.db["debris"].count_documents({})
-        alerts_count = db.db["alerts"].count_documents({"is_acknowledged": False})
-        collisions   = db.db["conjunctions"].count_documents({"status": "PENDING"})
-        agent_runs   = db.db["agent_runs"].count_documents({"status": "RUNNING"})
+        sat_count    = db.query(Satellite).count()
+        debris_count = db.query(Debris).count()
+        alerts_count = db.query(Alert).filter(Alert.is_acknowledged == False).count()
+        collisions   = db.query(CollisionPrediction).filter(CollisionPrediction.status == "PENDING").count()
+        agent_runs   = db.query(AgentRun).filter(AgentRun.status == "RUNNING").count()
 
-        # Space weather from DB, fallback to NOAA
-        latest_weather = db.db["spaceWeather"].find_one(
-            {}, {"_id": 0}, sort=[("recorded_at", -1)]
+        latest_weather = (
+            db.query(SpaceWeather)
+            .order_by(SpaceWeather.recorded_at.desc())
+            .first()
         )
-        if latest_weather and latest_weather.get("k_index") is not None:
-            weather_index    = f"K{latest_weather['k_index']}"
-            weather_severity = latest_weather.get("severity", "NORMAL")
+        if latest_weather and latest_weather.k_index is not None:
+            weather_index    = f"K{latest_weather.k_index}"
+            weather_severity = latest_weather.severity or "NORMAL"
         else:
             try:
                 live = weather_service._noaa_fallback()

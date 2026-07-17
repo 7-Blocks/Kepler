@@ -15,7 +15,7 @@ through to the next source rather than persisting nothing and calling it a succe
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from database.session import MongoSession
+from sqlalchemy.orm import Session
 
 
 class ProviderError(Exception):
@@ -54,7 +54,7 @@ class SatelliteDataProvider(ABC):
 
     @abstractmethod
     def fetch_group(
-        self, group: str, limit: int, db: Optional[MongoSession] = None
+        self, group: str, limit: int, db: Optional[Session] = None
     ) -> List[Dict[str, Any]]:
         """
         Return GP/OMM records for `group`, or raise `ProviderError`.

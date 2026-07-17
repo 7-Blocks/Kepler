@@ -10,7 +10,7 @@ stays where it already lives.
 import logging
 from typing import Any, Dict, List, Optional
 
-from database.session import MongoSession
+from sqlalchemy.orm import Session
 from orbital.providers.base import ProviderError, SatelliteDataProvider
 
 logger = logging.getLogger("app")
@@ -28,7 +28,7 @@ class SpaceTrackProvider(SatelliteDataProvider):
         return bool(self.service.username and self.service.password)
 
     def fetch_group(
-        self, group: str, limit: int, db: Optional[MongoSession] = None
+        self, group: str, limit: int, db: Optional[Session] = None
     ) -> List[Dict[str, Any]]:
         if not self.service.authenticate():
             raise ProviderError(self.name, "authentication failed")

@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     # Example: ALLOWED_ORIGINS=https://keplerai.vercel.app,https://staging.keplerai.vercel.app
     ALLOWED_ORIGINS: str = "https://keplerai.vercel.app,http://localhost:5173,http://localhost:3000"
 
-    # MongoDB
-    MONGODB_URI: str = "mongodb://localhost:27017/orbital_guardian"
+    # PostgreSQL
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/orbital_guardian"
 
     # Celery broker/backend (only needed if running Celery workers separately)
     REDIS_URL: str = "redis://localhost:6379/0"

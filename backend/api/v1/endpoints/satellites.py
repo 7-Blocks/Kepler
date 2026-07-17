@@ -1,147 +1,118 @@
 """
 /api/v1/satellites — Satellite Fleet Endpoints
-
-Bug Fixes Applied:
-  - Removed broken SatelliteResponse.from_attributes() call (Pydantic v2 schema has
-    no such method on non-ORM objects — caused every request to 500).
-  - Now queries MongoDB directly using db.db["satellites"] with correct camelCase fields.
-  - Serialisation is done inline — no Pydantic model needed for raw Mongo docs.
 """
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
-import datetime
 
-from database.session import get_db, MongoSession
+from database.session import get_db
+from models.db_models import Satellite, Telemetry
 from app.core.exceptions import NotFoundError, BadRequestError
 from schemas.api_schemas import APIResponse, PaginationSchema
 
 router = APIRouter()
 
 
-# ---------------------------------------------------------------------------
-# Serialiser helpers
-# ---------------------------------------------------------------------------
-
-def _serialize_space_object_from_sat(doc: dict) -> dict:
-    epoch = doc.get("epoch")
+def _serialize_space_object_from_sat(sat: Satellite) -> dict:
+    epoch = sat.epoch
     return {
-        "id":             str(doc.get("id") or doc.get("noradId", "")),
-        "name":           doc.get("objectName", ""),
-        "catalog_number": doc.get("noradId", ""),
-        "cospar_id":      doc.get("cospar_id"),
-        "classification": doc.get("objectType", "PAYLOAD"),
+        "id":             str(sat.id),
+        "name":           sat.objectName or "",
+        "catalog_number": sat.noradId or "",
+        "cospar_id":      None,
+        "classification": sat.objectType or "PAYLOAD",
         "epoch":          epoch if isinstance(epoch, str) else (epoch.isoformat() if epoch else None),
-        "inclination":    doc.get("inclination"),
-        "eccentricity":   doc.get("eccentricity"),
-        "semimajor_axis": doc.get("semimajor_axis"),
-        "period":         doc.get("period"),
-        "mean_motion":    doc.get("meanMotion"),
-        "has_tle":        bool(doc.get("tle_line1") and doc.get("tle_line2")),
+        "inclination":    sat.inclination,
+        "eccentricity":   sat.eccentricity,
+        "semimajor_axis": sat.semimajor_axis,
+        "period":         sat.period,
+        "mean_motion":    sat.meanMotion,
+        "has_tle":        bool(sat.tle_line1 and sat.tle_line2),
     }
 
 
-def _serialize_satellite(doc: dict) -> dict:
+def _serialize_satellite(sat: Satellite) -> dict:
     return {
-        "id":               str(doc.get("id") or doc.get("noradId", "")),
-        "status":           doc.get("status", "ACTIVE"),
-        "fuel_percentage":  doc.get("fuel_percentage", 100.0),
-        "operational_mode": doc.get("operational_mode", "NORMAL"),
-        "space_object":     _serialize_space_object_from_sat(doc),
+        "id":               str(sat.id),
+        "status":           sat.status or "ACTIVE",
+        "fuel_percentage":  sat.fuel_percentage or 100.0,
+        "operational_mode": sat.operational_mode or "NORMAL",
+        "space_object":     _serialize_space_object_from_sat(sat),
     }
 
-
-# ---------------------------------------------------------------------------
-# GET /satellites
-# ---------------------------------------------------------------------------
 
 @router.get("", response_model=APIResponse[List[Dict[str, Any]]])
 def get_satellites(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=200),
     search: Optional[str] = Query(None),
-    db: MongoSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
-    """Return paginated satellite list from MongoDB."""
-    import re
-    flt: dict = {}
+    query = db.query(Satellite)
     if search:
-        pattern = re.compile(re.escape(search), re.IGNORECASE)
-        flt["$or"] = [{"objectName": pattern}, {"noradId": pattern}]
+        pattern = f"%{search}%"
+        query = query.filter(
+            Satellite.objectName.ilike(pattern) | Satellite.noradId.ilike(pattern)
+        )
 
-    col = db.db["satellites"]
-    total  = col.count_documents(flt)
+    total = query.count()
     offset = (page - 1) * size
-    docs   = list(col.find(flt, {"_id": 0}).skip(offset).limit(size))
-    pages  = (total + size - 1) // size if total else 1
+    sats = query.offset(offset).limit(size).all()
+    pages = (total + size - 1) // size if total else 1
 
-    data = [_serialize_satellite(d) for d in docs]
     return APIResponse(
         success=True,
         message=f"Satellite fleet records retrieved — {total} total",
-        data=data,
+        data=[_serialize_satellite(s) for s in sats],
         pagination=PaginationSchema(page=page, size=size, total=total, pages=pages),
     )
 
 
-# ---------------------------------------------------------------------------
-# GET /satellites/norad/{norad_id}
-# ---------------------------------------------------------------------------
-
 @router.get("/norad/{norad_id}", response_model=APIResponse[dict])
-def get_satellite_by_norad_id(norad_id: str, db: MongoSession = Depends(get_db)):
-    """Search for a satellite using its NORAD Catalog ID."""
+def get_satellite_by_norad_id(norad_id: str, db: Session = Depends(get_db)):
     if not norad_id.isdecimal() or int(norad_id) <= 0:
         raise BadRequestError(message="NORAD ID must be a positive integer")
 
-    sat = db.db["satellites"].find_one({"noradId": str(int(norad_id))}, {"_id": 0})
+    sat = db.query(Satellite).filter(Satellite.noradId == str(int(norad_id))).first()
     if not sat:
         raise NotFoundError(resource="Satellite", identifier=norad_id)
 
-    return APIResponse(
-        success=True,
-        message="Satellite found",
-        data=_serialize_satellite(sat),
-    )
+    return APIResponse(success=True, message="Satellite found", data=_serialize_satellite(sat))
 
-
-# ---------------------------------------------------------------------------
-# GET /satellites/{satellite_id}/telemetry
-# ---------------------------------------------------------------------------
 
 @router.get("/{satellite_id}/telemetry", response_model=APIResponse[List[dict]])
-def get_satellite_telemetry(satellite_id: str, db: MongoSession = Depends(get_db)):
-    """Return telemetry records for a satellite (looked up by noradId or int id)."""
-    # Try numeric id first, then treat as noradId string
-    flt = {"$or": [{"noradId": satellite_id}]}
+def get_satellite_telemetry(satellite_id: str, db: Session = Depends(get_db)):
+    # Resolve satellite by numeric id or noradId
+    sat = None
     if satellite_id.isdecimal():
-        flt["$or"].extend([
-            {"id": int(satellite_id)},
-            {"noradId": str(int(satellite_id))}
-        ])
-
-    sat = db.db["satellites"].find_one(flt, {"_id": 0})
+        sat = db.query(Satellite).filter(
+            (Satellite.id == int(satellite_id)) | (Satellite.noradId == satellite_id)
+        ).first()
+    if not sat:
+        sat = db.query(Satellite).filter(Satellite.noradId == satellite_id).first()
     if not sat:
         raise NotFoundError(resource="Satellite", identifier=satellite_id)
 
-    records = list(
-        db.db["telemetry"]
-        .find({"satellite_id": str(sat.get("id") or sat.get("noradId"))}, {"_id": 0})
-        .sort("timestamp", -1)
+    records = (
+        db.query(Telemetry)
+        .filter(Telemetry.satellite_id == sat.id)
+        .order_by(Telemetry.timestamp.desc())
         .limit(50)
+        .all()
     )
 
-    data = []
-    for r in records:
-        ts = r.get("timestamp")
-        data.append({
-            "timestamp":    ts.isoformat() if hasattr(ts, "isoformat") else str(ts),
-            "altitude_km":  r.get("altitude_km"),
-            "velocity_kms": r.get("velocity_kms"),
-            "temperature_c": r.get("temperature_c"),
-            "battery_charge": r.get("battery_charge"),
-            "neural_load":  r.get("neural_load"),
-        })
+    data = [
+        {
+            "timestamp":      r.timestamp.isoformat() if r.timestamp else None,
+            "altitude_km":    r.altitude_km,
+            "velocity_kms":   r.velocity_kms,
+            "temperature_c":  r.temperature_c,
+            "battery_charge": r.battery_charge,
+            "neural_load":    r.neural_load,
+        }
+        for r in records
+    ]
 
     return APIResponse(
         success=True,

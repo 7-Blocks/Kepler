@@ -12,7 +12,7 @@ remote source is down.
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from database.session import MongoSession
+from sqlalchemy.orm import Session
 from orbital.providers.base import (
     AllProvidersFailedError,
     ProviderError,
@@ -39,7 +39,7 @@ class ProviderChain:
         return [p.name for p in self.providers]
 
     def fetch_group(
-        self, group: str, limit: int, db: Optional[MongoSession] = None
+        self, group: str, limit: int, db: Optional[Session] = None
     ) -> Tuple[List[Dict[str, Any]], str]:
         """
         Return `(records, provider_name)` from the first provider that can serve `group`.
@@ -84,7 +84,7 @@ class ProviderChain:
         group: str,
         provider: SatelliteDataProvider,
         records: List[Dict[str, Any]],
-        db: Optional[MongoSession],
+        db: Optional[Session],
     ) -> None:
         """Refresh the local cache from a remote provider's answer, never from itself."""
         if self.cache is None or db is None or provider is self.cache:

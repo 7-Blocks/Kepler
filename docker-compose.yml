@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: orbital_guardian
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/orbital_guardian
+      SECRET_KEY: ${SECRET_KEY:-change_me_in_production}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      NASA_DONKI_API_KEY: ${NASA_DONKI_API_KEY:-DEMO_KEY}
+      SPACETRACK_USERNAME: ${SPACETRACK_USERNAME:-}
+      SPACETRACK_PASSWORD: ${SPACETRACK_PASSWORD:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

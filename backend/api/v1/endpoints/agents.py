@@ -1,16 +1,13 @@
 """
 /api/v1/agents — AI Agent Workflow Endpoints
-
-Bug Fixes Applied:
-  - Removed AgentRunResponse.from_attributes() which crashed on Python 3.12 /
-    Pydantic v2 since our custom BaseModel is not a Pydantic ORM model.
-  - Now queries MongoDB directly and serialises manually.
 """
 
 from fastapi import APIRouter, Depends, Query
-from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import Session
+from typing import List, Dict, Any
 
-from database.session import get_db, MongoSession
+from database.session import get_db
+from models.db_models import AgentRun, CollisionPrediction
 from app.core.exceptions import NotFoundError
 from schemas.api_schemas import APIResponse, PaginationSchema
 from ai.workflow import run_agent_workflow
@@ -18,37 +15,36 @@ from ai.workflow import run_agent_workflow
 router = APIRouter()
 
 
-def _serialize_run(r: dict) -> dict:
+def _serialize_run(run: AgentRun) -> dict:
     def _dt(v):
-        return v.isoformat() if hasattr(v, "isoformat") else str(v) if v else None
+        return v.isoformat() if v else None
 
-    decisions = []
-    for d in (r.get("decisions") or []):
-        decisions.append({
-            "id":                d.get("id"),
-            "agent_name":        d.get("agent_name", ""),
-            "action_taken":      d.get("action_taken", ""),
-            "reasoning":         d.get("reasoning", ""),
-            "decision_metadata": d.get("decision_metadata"),
-            "created_at":        _dt(d.get("created_at")),
-        })
+    decisions = [
+        {
+            "id":                d.id,
+            "agent_name":        d.agent_name,
+            "action_taken":      d.action_taken,
+            "reasoning":         d.reasoning,
+            "decision_metadata": d.decision_metadata,
+            "created_at":        _dt(d.created_at),
+        }
+        for d in (run.decisions or [])
+    ]
 
     return {
-        "id":            r.get("id"),
-        "workflow_name": r.get("workflow_name", ""),
-        "status":        r.get("status", "UNKNOWN"),
-        "current_step":  r.get("current_step"),
-        "started_at":    _dt(r.get("started_at")),
-        "completed_at":  _dt(r.get("completed_at")),
+        "id":            run.id,
+        "workflow_name": run.workflow_name,
+        "status":        run.status,
+        "current_step":  run.current_step,
+        "started_at":    _dt(run.started_at),
+        "completed_at":  _dt(run.completed_at),
         "decisions":     decisions,
     }
 
 
 @router.post("/trigger/{collision_id}", response_model=APIResponse[dict])
-def trigger_agent_mitigation_workflow(
-    collision_id: int, db: MongoSession = Depends(get_db)
-):
-    collision = db.db["conjunctions"].find_one({"id": collision_id})
+def trigger_agent_mitigation_workflow(collision_id: int, db: Session = Depends(get_db)):
+    collision = db.query(CollisionPrediction).filter(CollisionPrediction.id == collision_id).first()
     if not collision:
         raise NotFoundError(resource="Collision conjunction", identifier=collision_id)
 
@@ -64,29 +60,28 @@ def trigger_agent_mitigation_workflow(
 def get_agent_runs(
     page: int = Query(1, ge=1),
     size: int = Query(10, ge=1),
-    db: MongoSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
-    col    = db.db["agent_runs"]
-    total  = col.count_documents({})
+    total  = db.query(AgentRun).count()
     offset = (page - 1) * size
-    docs   = list(col.find({}, {"_id": 0}).sort("started_at", -1).skip(offset).limit(size))
+    runs   = db.query(AgentRun).order_by(AgentRun.started_at.desc()).offset(offset).limit(size).all()
     pages  = (total + size - 1) // size if total else 1
 
     return APIResponse(
         success=True,
         message="Agent run registry logs fetched",
-        data=[_serialize_run(d) for d in docs],
+        data=[_serialize_run(r) for r in runs],
         pagination=PaginationSchema(page=page, size=size, total=total, pages=pages),
     )
 
 
 @router.get("/runs/{run_id}", response_model=APIResponse[Dict[str, Any]])
-def get_agent_run_details(run_id: int, db: MongoSession = Depends(get_db)):
-    doc = db.db["agent_runs"].find_one({"id": run_id}, {"_id": 0})
-    if not doc:
+def get_agent_run_details(run_id: int, db: Session = Depends(get_db)):
+    run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
+    if not run:
         raise NotFoundError(resource="Agent run", identifier=run_id)
     return APIResponse(
         success=True,
         message="Agent run telemetry retrieved",
-        data=_serialize_run(doc),
+        data=_serialize_run(run),
     )
