@@ -14,6 +14,7 @@ import { Settings } from '@/pages/Settings';
 import { Toaster } from 'sonner';
 import { toastOptions } from './constants/toast';
 import { NotFound } from '@/pages/NotFound';
+import { Technologies } from './pages/Technologies';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="tech" element={<Technologies />} />
         </Route>
         <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
