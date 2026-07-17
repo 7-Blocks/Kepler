@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { exportCsv } from "@/utils/exportCsv";
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
 import { useUIStore } from '@/store/uiStore';
 import { useCatalogObjects, useCatalogStats, useCatalogSync, useSatelliteTelemetry } from '@/hooks/useApi';
 import type { SpaceObject } from '@/services/api';
-
 
 
 function orbitTypeFromSMA(sma: number | null): 'LEO' | 'MEO' | 'GEO' | 'HEO' {
@@ -20,7 +20,6 @@ function altFromSMA(sma: number | null): number {
   if (!sma) return 0;
   return Math.round(sma - 6371);
 }
-
 
 
 const TableSkeleton = () => (
@@ -46,12 +45,15 @@ export const Satellites: React.FC = () => {
   const [activeTab, setActiveTab]       = useState<'STATUS' | 'ORBITAL' | 'TLE'>('STATUS');
   const [page, setPage]                 = useState(1);
   const PAGE_SIZE = 20;
-
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const onSearchChange = (val: string) => {
     setSearchQuery(val);
-    clearTimeout((window as any)._satSearchTimer);
-    (window as any)._satSearchTimer = setTimeout(() => {
+    if (searchTimer.current) {
+  clearTimeout(searchTimer.current);
+}
+
+searchTimer.current = setTimeout(() => {
       setDebounced(val);
       setPage(1);
     }, 400);
@@ -78,7 +80,46 @@ export const Satellites: React.FC = () => {
   
   const telemetryQ  = useSatelliteTelemetry(selectedId);
   const telemetry   = telemetryQ.data?.data ?? [];
+  const handleExport = () => {
+  if (objects.length === 0) {
+    alert("No data available to export.");
+    return;
+  }
 
+  const headers = [
+    "Satellite Name",
+    "NORAD Catalog ID",
+    "Object Type",
+    "Altitude (km)",
+    "Velocity",
+    "Inclination",
+    "Eccentricity",
+    "Orbit Type",
+    "Risk Score",
+    "Operational Status",
+    "Last Updated",
+  ];
+
+  const rows = objects.map((obj) => [
+    obj.name,
+    obj.catalog_number,
+    obj.classification,
+    altFromSMA(obj.semimajor_axis),
+    "",
+    obj.inclination ?? "",
+    obj.eccentricity ?? "",
+    orbitTypeFromSMA(obj.semimajor_axis),
+    "",
+    "",
+    obj.updated_at ?? "",
+  ]);
+
+  exportCsv(
+    `kepler_satellites_${new Date().toISOString().slice(0, 10)}.csv`,
+    headers,
+    rows
+  );
+};
   return (
     <div className="flex h-full min-w-0 relative">
 
@@ -124,6 +165,14 @@ export const Satellites: React.FC = () => {
               <MaterialIcon name="filter_alt" className="text-sm mr-2" />
               FILTERS
             </button>
+            <button
+               onClick={handleExport}
+               disabled={objects.length === 0}
+               className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-ui glow-cyan cursor-pointer min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+               <MaterialIcon name="download" className="text-sm mr-2" />
+               EXPORT
+             </button>
           </div>
         </div>
 
