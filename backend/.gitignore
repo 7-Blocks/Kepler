@@ -4,7 +4,7 @@
 
 # ──── Environment ────────────────────────────
 .env
-.env.example
+# .env.example is intentionally tracked — it documents required variables.
 .env.local
 .env.development
 .env.production

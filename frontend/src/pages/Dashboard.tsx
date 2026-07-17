@@ -133,7 +133,7 @@ export const Dashboard: React.FC = () => {
           : summary.isError
           ? (
             <div className="col-span-6 text-center text-status-emergency font-technical-data text-sm py-4">
-              ⚠ Failed to connect to backend — ensure server is running at localhost:8000
+              ⚠ Failed to connect to backend — please refresh or contact support if the issue persists.
             </div>
           )
           : kpis?.map((kpi, idx) => (

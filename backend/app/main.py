@@ -41,9 +41,11 @@ app = FastAPI(
 register_exception_handlers(app)
 
 
+# CORS: origins are driven by the ALLOWED_ORIGINS env var.
+# In production this should be set to https://keplerai.vercel.app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
