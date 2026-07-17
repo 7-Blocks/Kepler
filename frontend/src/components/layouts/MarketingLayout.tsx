@@ -85,7 +85,7 @@ function MarketingNavBar() {
         initial={reduce ? false : { y: -28, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="pointer-events-auto w-[calc(100%-32px)] max-w-[1100px] mx-auto bg-black/40 backdrop-blur-lg rounded-full border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        className="pointer-events-auto w-[calc(100%-32px)] max-w-[900px] mx-auto bg-black/40 backdrop-blur-lg rounded-full border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       >
         <div className="flex items-center justify-between gap-3 px-3 py-2 sm:py-2.5 sm:px-4">
           <BrandMark />
