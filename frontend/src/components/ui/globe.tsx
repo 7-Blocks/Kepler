@@ -9,7 +9,7 @@ const MOVEMENT_DAMPING = 1400
 const GLOBE_CONFIG: COBEOptions = {
   width: 800,
   height: 800,
-  onRender: () => {},
+  onRender: () => { },
   devicePixelRatio: 2,
   phi: 0,
   theta: 0.3,
@@ -80,6 +80,7 @@ export function Globe({
     onResize()
 
     const globe = createGlobe(canvasRef.current!, {
+      ...GLOBE_CONFIG,
       ...config,
       width: widthRef.current * 2,
       height: widthRef.current * 2,
