@@ -96,8 +96,9 @@ The platform combines modern AI systems, orbital mechanics, data visualization, 
 
 * FastAPI
 * Python
-* MongoDB
-* Motor / PyMongo
+* PostgreSQL
+* SQLAlchemy (async) / asyncpg
+* Alembic (migrations)
 
 ### AI & Data Processing
 
@@ -149,6 +150,7 @@ Kepler/
 │   ├── models/
 │   ├── schemas/
 │   ├── middleware/
+│   ├── migrations/
 │   └── utils/
 │
 ├── docs/
@@ -230,8 +232,13 @@ Create a `.env` file in the project root.
 Example:
 
 ```env
-MONGODB_URI=your_mongodb_uri
-DATABASE_NAME=kepler
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=kepler
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost:5432/kepler
 
 SPACETRACK_USERNAME=your_username
 SPACETRACK_PASSWORD=your_password
@@ -241,13 +248,34 @@ OPENAI_API_KEY=your_api_key
 
 ---
 
-## 8. Start MongoDB
+## 8. Start PostgreSQL
 
-Run your local MongoDB instance or connect to MongoDB Atlas.
+Run a local PostgreSQL instance, or use Docker:
+
+```bash
+docker run --name kepler-postgres \
+  -e POSTGRES_USER=your_username \
+  -e POSTGRES_PASSWORD=your_password \
+  -e POSTGRES_DB=kepler \
+  -p 5432:5432 \
+  -d postgres:16
+```
+
+Alternatively, connect to a managed PostgreSQL instance (e.g. Supabase, Neon, RDS) by pointing `DATABASE_URL` at it.
 
 ---
 
-## 9. Run the Backend
+## 9. Run Database Migrations
+
+```bash
+cd backend
+
+alembic upgrade head
+```
+
+---
+
+## 10. Run the Backend
 
 ```bash
 cd backend
@@ -269,7 +297,7 @@ http://localhost:8000/docs
 
 ---
 
-## 10. Run the Frontend
+## 11. Run the Frontend
 
 ```bash
 cd frontend
@@ -285,9 +313,9 @@ http://localhost:5173
 
 ---
 
-## 11. Database Seeding
+## 12. Database Seeding
 
-To quickly populate the local MongoDB database with realistic sample satellite, telemetry, and conjunction records for development, testing, and demonstration, use the seeding script:
+To quickly populate the local PostgreSQL database with realistic sample satellite, telemetry, and conjunction records for development, testing, and demonstration, use the seeding script:
 
 ```bash
 cd backend
@@ -296,13 +324,13 @@ PYTHONPATH=. python scripts/seed_db.py --count 50 --clear
 
 ### Seeding Options
 - `--count` / `-c` (default `50`): Number of satellite records to generate.
-- `--clear` / `-x`: Drops existing satellite, debris, telemetry, and conjunction records from MongoDB before seeding.
+- `--clear` / `-x`: Drops existing satellite, debris, telemetry, and conjunction records from PostgreSQL before seeding.
 
 ### Configuration
-By default, the script connects to the URI specified in the `.env` file or defaults to `mongodb://localhost:27017/orbital_guardian`. You can configure a custom MongoDB connection string by setting the `MONGODB_URI` environment variable:
+By default, the script connects to the database specified by `DATABASE_URL` in the `.env` file, defaulting to `postgresql+asyncpg://postgres:postgres@localhost:5432/orbital_guardian` if unset. You can configure a custom PostgreSQL connection string by setting the `DATABASE_URL` environment variable:
 
 ```bash
-MONGODB_URI=mongodb://localhost:27017/custom_db PYTHONPATH=. python scripts/seed_db.py --count 100 --clear
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/custom_db PYTHONPATH=. python scripts/seed_db.py --count 100 --clear
 ```
 
 ---
@@ -353,7 +381,7 @@ Examples:
 
 ```
 feature/add-authentication
-bugfix/fix-mongodb-sync
+bugfix/fix-postgres-sync
 docs/update-readme
 refactor/improve-api
 ```
@@ -520,7 +548,7 @@ The workflow (`.github/workflows/auto-labeler.yml`) triggers on various GitHub e
   - Changes in `.github/workflows/**` -> `github-actions`
   - Changes in `tests/**` -> `testing`
   - Docker changes -> `docker`
-  - Database-related files -> `database`
+  - Database-related files (models, migrations, schemas) -> `database`
 - **Documentation-Only Changes:** If a pull request modifies *only* documentation paths (e.g., `docs/**`, `README.md`, `*.md`), it will receive the `documentation` label, and other code/scope labels will be bypassed.
 - **PR Size Calculation:** Measures the total lines changed (additions + deletions) and applies a size label:
   - `size:XS` (≤ 10 lines)
