@@ -75,10 +75,9 @@ function MarketingNavBar() {
   }, [location.pathname, location.hash]);
 
   const linkClass = (active?: boolean) =>
-    `relative font-body-ui text-[14px] font-medium transition-all duration-300 no-underline px-4 py-2 rounded-full ${
-      active
-        ? "text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
-        : "text-neutral-400 hover:text-white hover:bg-white/5"
+    `relative font-body-ui text-[14px] font-medium transition-all duration-300 no-underline px-4 py-2 rounded-full ${active
+      ? "text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] after:content-[''] after:absolute after:-bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-white after:rounded-full after:shadow-[0_0_5px_rgba(255,255,255,0.8)]"
+      : "text-neutral-400 hover:text-white hover:bg-white/5"
     }`;
 
   return (
@@ -123,19 +122,16 @@ function MarketingNavBar() {
               <span className="sr-only">Menu</span>
               <span className="flex flex-col gap-[5px]" aria-hidden="true">
                 <span
-                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${
-                    menuOpen ? "translate-y-[6.5px] rotate-45" : ""
-                  }`}
+                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${menuOpen ? "translate-y-[6.5px] rotate-45" : ""
+                    }`}
                 />
                 <span
-                  className={`block h-[1.5px] w-[18px] bg-current transition-opacity duration-300 ${
-                    menuOpen ? "opacity-0" : ""
-                  }`}
+                  className={`block h-[1.5px] w-[18px] bg-current transition-opacity duration-300 ${menuOpen ? "opacity-0" : ""
+                    }`}
                 />
                 <span
-                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${
-                    menuOpen ? "-translate-y-[6.5px] -rotate-45" : ""
-                  }`}
+                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${menuOpen ? "-translate-y-[6.5px] -rotate-45" : ""
+                    }`}
                 />
               </span>
             </button>
@@ -167,10 +163,8 @@ function MarketingNavBar() {
                     key={l.label}
                     to={l.to}
                     className={({ isActive }) =>
-                      `font-body-ui text-[15px] font-medium transition-all px-4 py-3 rounded-2xl ${
-                        isActive
-                          ? "text-white bg-white/10"
-                          : "text-neutral-400 hover:text-white hover:bg-white/5"
+                      `relative font-body-ui text-[15px] font-medium transition-all px-4 py-3 rounded-2xl ${isActive
+? "text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:right-6 after:w-1 after:h-1 after:bg-white after:rounded-full after:shadow-[0_0_5px_rgba(255,255,255,0.8)]"                        : "text-neutral-400 hover:text-white hover:bg-white/5"
                       }`
                     }
                   >
@@ -202,13 +196,13 @@ type FooterLink =
   | { label: string; to: string; disabled?: false }
   | { label: string; to?: undefined; disabled: true };
 
- function MarketingFooter() {
+function MarketingFooter() {
   return (
     <footer className="relative overflow-hidden bg-[#050811]">
 
       <FooterHero />
 
-      
+
 
       <FooterLinks />
       <FooterSocials />
