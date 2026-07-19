@@ -16,6 +16,7 @@ import { Toaster } from 'sonner';
 import { toastOptions } from './constants/toast';
 import { NotFound } from '@/pages/NotFound';
 import { Technologies } from './pages/Technologies';
+import ButtonBackToTop from './components/ui/ButtonBackToTop';
 
 function App() {
   return (
@@ -24,7 +25,7 @@ function App() {
       toastOptions={toastOptions} 
       position="top-right" 
       offset={{ top: '4em', right: "16px", left: "16px" }} 
-       />
+    />
       <Routes>
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<LandingPage />} />
@@ -59,6 +60,7 @@ function App() {
         {/* Catch-all 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <ButtonBackToTop />
     </BrowserRouter>
   );
 }
