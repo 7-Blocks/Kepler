@@ -1,8 +1,6 @@
-"use client";
-
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { HiOutlineArrowUp } from "react-icons/hi";
+import { ArrowUp } from "lucide-react";
 
 export default function ButtonBackToTop() {
   const [showButton, setShowButton] = useState(false);
@@ -51,7 +49,7 @@ export default function ButtonBackToTop() {
           border-white/10 bg-white/5 backdrop-blur-lg transition-all duration-300 hover:-translate-y-1 
           hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-400 hover:shadow-[0_0_30px_rgba(34,211,238,0.45)]"
         >
-          <HiOutlineArrowUp size={16} />
+          <ArrowUp size={16} />
         </motion.button>
       )}
     </AnimatePresence>
