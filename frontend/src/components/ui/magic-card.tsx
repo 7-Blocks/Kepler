@@ -47,7 +47,21 @@ interface MagicCardOrbProps extends MagicCardBaseProps {
   gradientOpacity?: never
 }
 
-type MagicCardProps = MagicCardGradientProps | MagicCardOrbProps
+interface MagicCardMixedProps extends MagicCardBaseProps {
+  mode: "orb" | "gradient"
+
+  gradientColor?: string
+  gradientOpacity?: number
+
+  glowFrom?: string
+  glowTo?: string
+  glowAngle?: number
+  glowSize?: number
+  glowBlur?: number
+  glowOpacity?: number
+}
+
+type MagicCardProps = MagicCardGradientProps | MagicCardOrbProps | MagicCardMixedProps
 type ResetReason = "enter" | "leave" | "global" | "init"
 
 function isOrbMode(props: MagicCardProps): props is MagicCardOrbProps {

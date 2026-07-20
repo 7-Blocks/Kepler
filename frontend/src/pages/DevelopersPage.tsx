@@ -8,7 +8,7 @@ import { MaterialIcon } from "@/components/MaterialIcon";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 };
 
 const stagger = {
@@ -123,7 +123,7 @@ function DevelopersHero() {
       <motion.div
         initial={reduce ? undefined : { opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
         className="relative z-10 max-w-4xl mx-auto text-center"
       >
         <div className="inline-flex items-center gap-2 rounded-full border border-[#7c3aed]/20 bg-[#7c3aed]/10 px-5 py-2 text-xs uppercase tracking-[0.22em] text-[#a855f7] mb-8">
