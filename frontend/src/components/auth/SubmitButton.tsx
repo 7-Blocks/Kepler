@@ -30,7 +30,7 @@ export function SubmitButton({
       aria-busy={loading}
       className={cn(
         'w-full py-3 font-body-ui text-[15px] font-semibold text-[#04121F] border-transparent',
-        'shadow-[0_8px_30px_rgba(79,125,255,0.35)] hover:shadow-[0_10px_40px_rgba(94,231,255,0.45)]',
+        'shadow-[0_4px_16px_rgba(79,125,255,0.18)] hover:shadow-[0_6px_20px_rgba(94,231,255,0.22)]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5EE7FF]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0F1A]',
         'disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none',
         className

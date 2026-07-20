@@ -3,41 +3,13 @@ import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Particles } from '@/components/ui/particles';
 import { MagicCard } from '@/components/ui/magic-card';
+import { OrbitSatellites } from '../ui/OrbitSatellites';
 
 interface AuthShellProps {
   title: string;
   subtitle: string;
   children: React.ReactNode;
   footer: React.ReactNode;
-}
-
-/** Faint concentric orbital rings that give the backdrop depth. */
-function OrbitalRings() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[160vmin] w-[160vmin] -translate-x-1/2 -translate-y-1/2 opacity-[0.28]"
-      viewBox="0 0 800 800"
-      fill="none"
-    >
-      <defs>
-        <radialGradient id="auth-ring-fade" cx="50%" cy="50%" r="50%">
-          <stop offset="55%" stopColor="#5EE7FF" stopOpacity="0" />
-          <stop offset="100%" stopColor="#5EE7FF" stopOpacity="0.5" />
-        </radialGradient>
-      </defs>
-      {[120, 200, 290, 380].map((r) => (
-        <circle
-          key={r}
-          cx="400"
-          cy="400"
-          r={r}
-          stroke="url(#auth-ring-fade)"
-          strokeWidth="1"
-        />
-      ))}
-    </svg>
-  );
 }
 
 /**
@@ -62,15 +34,15 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
       />
 
       {/* Star field (Magic UI) */}
-      {/* <Particles
-        className="absolute inset-0 -z-20"
+      <Particles
+        className="absolute inset-0"
         quantity={90}
         ease={70}
         color="#8FB4FF"
         refresh={false}
-      /> */}
+      />
 
-      {/* <OrbitalRings /> */}
+      <OrbitSatellites />
 
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 24 }}
@@ -84,7 +56,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
           gradientColor="rgba(94, 231, 255, 0.14)"
           gradientOpacity={0.55}
           gradientSize={280}
-          fillClassName="bg-[rgba(10,15,26,0.72)] backdrop-blur-xl"
+          fillClassName="bg-[rgba(255,255,255,0.04)] backdrop-blur-xl"
           className="rounded-[24px] border-white/8 p-7 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.7)] sm:p-9 [--color-background:#0A0F1A] [--color-border:rgba(255,255,255,0.08)]"
         >
           <div className="mb-7 flex flex-col items-center text-center">
