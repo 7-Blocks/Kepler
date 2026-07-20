@@ -10,7 +10,7 @@ httpx==0.28.1
 numpy==2.5.1
 sgp4==2.23
 langgraph==0.2.60
-langchain-core==0.3.25
+langchain-core==1.3.3
 langchain-openai==1.1.14
 websockets==14.1
 python-multipart==0.0.18
