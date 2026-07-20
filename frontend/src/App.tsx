@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { MarketingLayout } from '@/components/layouts/MarketingLayout';
+import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { LandingPage } from '@/pages/LandingPage';
 import { AboutPage } from '@/pages/AboutPage';
-import { ProductPage, SolutionsPage, DevelopersPage, DocsPage, SignInPage } from '@/pages/PlaceholderPage';
+import { ProductPage, SolutionsPage, DevelopersPage, DocsPage } from '@/pages/PlaceholderPage';
 import { Dashboard } from '@/pages/Dashboard';
 import { SpaceTraffic } from '@/pages/SpaceTraffic';
 import { Satellites } from '@/pages/Satellites';
@@ -17,6 +18,8 @@ import { toastOptions } from './constants/toast';
 import { NotFound } from '@/pages/NotFound';
 import { Technologies } from './pages/Technologies';
 import ButtonBackToTop from './components/ui/ButtonBackToTop';
+import SignIn from './pages/SignIn';
+import SignUp from './pages/SignUp';
 
 function App() {
   return (
@@ -35,7 +38,10 @@ function App() {
           <Route path="/solutions" element={<SolutionsPage />} />
           <Route path="/developers" element={<DevelopersPage />} />
           <Route path="/docs" element={<DocsPage />} />
-          <Route path="/signin" element={<SignInPage />} />
+        </Route>
+        <Route element={<AuthLayout />}>
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
         </Route>
         <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Dashboard />} />

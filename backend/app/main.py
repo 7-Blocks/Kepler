@@ -86,6 +86,35 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
+def _ensure_user_auth_columns(engine):
+    """Add auth-related `users` columns if an older schema is missing them."""
+    from sqlalchemy import inspect, text
+
+    wanted = {
+        "full_name": "VARCHAR(255)",
+        "auth_provider": "VARCHAR(20) NOT NULL DEFAULT 'local'",
+        "google_sub": "VARCHAR(255)",
+        "avatar_url": "VARCHAR(512)",
+    }
+    try:
+        inspector = inspect(engine)
+        existing = {c["name"] for c in inspector.get_columns("users")}
+    except Exception:
+        return  # users table not created yet / inspection unsupported
+
+    missing = {name: ddl for name, ddl in wanted.items() if name not in existing}
+    if not missing:
+        return
+
+    with engine.begin() as conn:
+        for name, ddl in missing.items():
+            try:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {name} {ddl}"))
+                logger.info("Added missing users.%s column.", name)
+            except Exception as exc:
+                logger.warning("Could not add users.%s column: %s", name, exc)
+
+
 @app.on_event("startup")
 async def on_startup():
     logger.info("Initializing PostgreSQL database schema...")
@@ -95,6 +124,11 @@ async def on_startup():
         import models.db_models  # noqa: F401
         Base.metadata.create_all(bind=engine)
         logger.info("✅ PostgreSQL tables created / verified.")
+
+        # Lightweight, idempotent backfill for columns added after a database was
+        # first created (create_all never ALTERs existing tables). Keeps older
+        # dev/prod databases working without a full migration tool.
+        _ensure_user_auth_columns(engine)
 
         db = SessionLocal()
         try:

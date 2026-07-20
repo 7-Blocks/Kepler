@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils"
 interface MagicCardBaseProps {
   children?: React.ReactNode
   className?: string
+  /** Overrides the solid fill layer (e.g. glassmorphism on auth cards). */
+  fillClassName?: string
   gradientSize?: number
   gradientFrom?: string
   gradientTo?: string
@@ -56,6 +58,7 @@ export function MagicCard(props: MagicCardProps) {
   const {
     children,
     className,
+    fillClassName,
     gradientSize = 200,
     gradientColor = "#262626",
     gradientOpacity = 0.8,
@@ -174,7 +177,12 @@ export function MagicCard(props: MagicCardProps) {
         `,
       }}
     >
-      <div className="bg-background absolute inset-px z-20 rounded-[inherit]" />
+      <div
+        className={cn(
+          "bg-background absolute inset-px z-20 rounded-[inherit]",
+          fillClassName
+        )}
+      />
 
       {mode === "gradient" && (
         <motion.div
