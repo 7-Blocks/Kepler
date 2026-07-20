@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useUIStore } from '@/store/uiStore';
 import { MaterialIcon } from './MaterialIcon';
 import * as Cesium from 'cesium';
+import { isSatelliteSunlit } from '../utils/illumination';
 
 interface CatalogObject {
   id: number;
@@ -171,7 +172,7 @@ export const EarthTwin: React.FC = () => {
 
       
       viewer.entities.removeAll();
-
+const nowJulian = Cesium.JulianDate.now();
       objects.forEach(obj => {
         const pos = keplerToLatLonAlt(obj);
         if (!pos) return;
@@ -191,8 +192,7 @@ export const EarthTwin: React.FC = () => {
         const outlineWidth = isCollisionRisk ? 3 : getOutlineWidth(obj.classification);
 
         const cartPos = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000);
-        const nowJulian = Cesium.JulianDate.now();
-        const sunlit = isSatelliteSunlit(cartPos, nowJulian, viewer.scene.globe);
+                const sunlit = isSatelliteSunlit(cartPos, nowJulian, viewer.scene.globe);
 
         const entity = viewer.entities.add({
           position: cartPos,

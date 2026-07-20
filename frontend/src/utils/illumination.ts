@@ -19,7 +19,8 @@ export function isSatelliteSunlit(
 
   // Convert Sun position to Earth‑Fixed frame.
   const temeToFixed = Cesium.Transforms.computeTemeToPseudoFixedMatrix(julianDate);
-  const sunPosFixed = Cesium.Matrix4.multiplyByPoint(temeToFixed, sunPosInertial, new Cesium.Cartesian3());
+  if (!temeToFixed) return false;
+  const sunPosFixed = Cesium.Matrix3.multiplyByVector(temeToFixed, sunPosInertial, new Cesium.Cartesian3());
 
   // Vector from satellite to Sun.
   const satToSun = Cesium.Cartesian3.subtract(sunPosFixed, position, new Cesium.Cartesian3());
@@ -29,7 +30,7 @@ export function isSatelliteSunlit(
   const ray = new Cesium.Ray(position, direction);
 
   // Test intersection with Earth's ellipsoid (WGS84).
-  const intersection = Cesium.IntersectionTests.rayEllipsoid(ray, Cesium.Ellipsoid.WGS84);
+  const intersection = Cesium.IntersectionTests.rayEllipsoid(ray, globe.ellipsoid);
 
   // If there is no intersection, the satellite is sunlit.
   if (!intersection) return true;
