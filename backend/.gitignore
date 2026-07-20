@@ -39,14 +39,9 @@ logs/
 .DS_Store
 Thumbs.db
 
-# ── Python ──────────────────────────────
+# --- Python ---
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.egg-info/
-.venv/
-venv/
-env/
 
