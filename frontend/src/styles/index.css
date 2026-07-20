@@ -98,10 +98,9 @@
     background-color: #0C1220;
     color: #dfe2eb;
     overflow: hidden;
-    @apply bg-background text-foreground;
   }
   * {
-    @apply border-border outline-ring/50;
+    border-color: #1B2436;
   }
   html {
     @apply font-sans;

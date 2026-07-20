@@ -1,0 +1,23 @@
+/* animated-counter.css
+   Import once at the app root (e.g. in index.css or App.tsx). */
+
+@keyframes animated-counter-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-counter--highlight {
+  will-change: color, transform;
+}
+
+/* Belt-and-suspenders: even if a consumer bypasses the hook's JS check,
+   CSS-level reduced motion still kills the shimmer animation. */
+@media (prefers-reduced-motion: reduce) {
+  .animated-counter--skeleton {
+    animation: none !important;
+  }
+}

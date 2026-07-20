@@ -2,12 +2,12 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { EarthTwin } from '@/components/EarthTwin';
 import { MaterialIcon } from '@/components/MaterialIcon';
+import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { useSpaceSummary } from '@/hooks/useApi';
 import { useCollisions } from '@/hooks/useApi';
 import { useAgentRuns } from '@/hooks/useApi';
 import { useWeatherStatus } from '@/hooks/useApi';
 import type { Collision, AgentDecision } from '@/services/api';
-import { toast } from 'sonner';
 
 
 const riskColor = (level: string) => {
@@ -59,32 +59,37 @@ export const Dashboard: React.FC = () => {
   const s = summary.data?.data;
   const w = weather.data?.data;
 
+  // Each KPI now carries a raw numeric `value` for AnimatedCounter to animate,
+  // plus an optional `fallback` string for cases that aren't a plain number
+  // (e.g. "—" for zero debris, "IDLE" for zero agent load). When `fallback`
+  // is set, we render it as static text instead of animating.
   const kpis = s
     ? [
         {
           title: 'Tracked Satellites',
-          value: s.tracked_satellites.toLocaleString(),
+          value: s.tracked_satellites,
           icon: 'satellite_alt',
           border: 'border-b-primary-container/40',
           text: 'text-on-surface',
         },
         {
           title: 'Debris Objects',
-          value: s.debris_objects > 0 ? s.debris_objects.toLocaleString() : '—',
+          value: s.debris_objects,
+          fallback: s.debris_objects > 0 ? undefined : '—',
           icon: 'delete_sweep',
           border: 'border-b-on-surface-variant/40',
           text: 'text-on-surface',
         },
         {
           title: 'Active Alerts',
-          value: s.active_alerts_count.toLocaleString(),
+          value: s.active_alerts_count,
           icon: 'dangerous',
           border: s.active_alerts_count > 0 ? 'border-b-status-emergency glow-red' : 'border-b-on-surface-variant/40',
           text: s.active_alerts_count > 0 ? 'text-status-emergency' : 'text-on-surface',
         },
         {
           title: 'Pred. Collisions',
-          value: s.predicted_collisions_count.toLocaleString(),
+          value: s.predicted_collisions_count,
           icon: 'cognition',
           border: 'border-b-status-emergency/60',
           text: 'text-on-surface',
@@ -99,7 +104,8 @@ export const Dashboard: React.FC = () => {
         },
         {
           title: 'Agent Runs',
-          value: s.active_agents_load > 0 ? s.active_agents_load.toLocaleString() : 'IDLE',
+          value: s.active_agents_load,
+          fallback: s.active_agents_load > 0 ? undefined : 'IDLE',
           icon: 'bolt',
           border: 'border-b-status-success/40',
           text: 'text-status-success',
@@ -148,7 +154,9 @@ export const Dashboard: React.FC = () => {
               <div className="flex justify-between items-end">
                 <div className="flex items-baseline gap-1">
                   <span className={`font-headline-lg text-lg md:text-2xl font-bold font-technical-data ${kpi.text}`}>
-                    {kpi.value}
+                    {kpi.fallback !== undefined || typeof kpi.value !== 'number' || !Number.isFinite(kpi.value)
+                      ? (kpi.fallback ?? kpi.value)
+                      : <AnimatedCounter value={kpi.value} />}
                   </span>
                   {kpi.subValue && (
                     <span className="text-[10px] text-status-warning/60 font-technical-data">{kpi.subValue}</span>
