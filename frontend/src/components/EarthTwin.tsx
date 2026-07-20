@@ -190,12 +190,16 @@ export const EarthTwin: React.FC = () => {
         const pixelSize = isCollisionRisk ? 8 : getPointSize(obj.classification);
         const outlineWidth = isCollisionRisk ? 3 : getOutlineWidth(obj.classification);
 
+        const cartPos = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000);
+        const nowJulian = Cesium.JulianDate.now();
+        const sunlit = isSatelliteSunlit(cartPos, nowJulian, viewer.scene.globe);
+
         const entity = viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000),
+          position: cartPos,
           point: {
             pixelSize,
-            color: colorConfig.cesium.withAlpha(0.85),
-            outlineColor: colorConfig.cesium.withAlpha(0.4),
+            color: sunlit ? colorConfig.cesium.withAlpha(0.85) : colorConfig.cesium.withAlpha(0.3),
+            outlineColor: sunlit ? colorConfig.cesium.withAlpha(0.4) : colorConfig.cesium.withAlpha(0.1),
             outlineWidth,
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
             scaleByDistance: new Cesium.NearFarScalar(1e6, 1.5, 5e7, 0.4),
@@ -287,7 +291,7 @@ export const EarthTwin: React.FC = () => {
       setUseFallback(false);
 
       
-      viewer.scene.globe.enableLighting = false;
+      viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
       viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050710');
       viewer.scene.fog.enabled = false;
       if (viewer.scene.skyAtmosphere) {
