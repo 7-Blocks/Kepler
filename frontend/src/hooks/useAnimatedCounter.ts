@@ -20,16 +20,29 @@ function easeOutExpo(t: number): number {
 }
 
 function usePrefersReducedMotion(): boolean {
+  const supportsMatchMedia = typeof window !== 'undefined' && typeof window.matchMedia === 'function';
+
   const [reduced, setReduced] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    () => supportsMatchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
 
   useEffect(() => {
+    if (!supportsMatchMedia) return;
+
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
     const listener = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mql.addEventListener('change', listener);
-    return () => mql.removeEventListener('change', listener);
-  }, []);
+
+    // Safari < 14 and a few other older engines only implement the
+    // deprecated addListener/removeListener pair, not addEventListener.
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', listener);
+      return () => mql.removeEventListener('change', listener);
+    }
+    if (typeof mql.addListener === 'function') {
+      mql.addListener(listener);
+      return () => mql.removeListener(listener);
+    }
+  }, [supportsMatchMedia]);
 
   return reduced;
 }
@@ -105,12 +118,15 @@ export function useAnimatedCounter(
     const tick = (now: number) => {
       if (!hasStarted) {
         hasStarted = true;
+        isFirstRun.current = false;
         setIsAnimating(true);
       }
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / clampedDuration, 1);
       const eased = easeOutExpo(progress);
-      setAnimatedValue(from + (target - from) * eased);
+      const next = from + (target - from) * eased;
+      setAnimatedValue(next);
+      fromRef.current = next;
 
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(tick);

@@ -154,9 +154,11 @@ export const Dashboard: React.FC = () => {
               <div className="flex justify-between items-end">
                 <div className="flex items-baseline gap-1">
                   <span className={`font-headline-lg text-lg md:text-2xl font-bold font-technical-data ${kpi.text}`}>
-                    {kpi.fallback !== undefined || typeof kpi.value !== 'number' || !Number.isFinite(kpi.value)
-                      ? (kpi.fallback ?? kpi.value)
-                      : <AnimatedCounter value={kpi.value} />}
+                    {kpi.fallback !== undefined
+                      ? kpi.fallback
+                      : typeof kpi.value === 'number' && Number.isFinite(kpi.value)
+                        ? <AnimatedCounter value={kpi.value} />
+                        : '—'}
                   </span>
                   {kpi.subValue && (
                     <span className="text-[10px] text-status-warning/60 font-technical-data">{kpi.subValue}</span>

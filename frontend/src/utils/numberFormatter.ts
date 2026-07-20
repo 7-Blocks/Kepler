@@ -25,12 +25,43 @@ export interface FormatOptions {
  * integers render with 0 decimals, floats keep their natural precision
  * (capped at 2) so 98.5 -> "98.5" and 7.823 -> "7.82".
  */
-function inferDecimals(value: number): number {
-  if (Number.isInteger(value)) return 0;
+export function inferDecimals(value: number): number {
+  if (!Number.isFinite(value) || Number.isInteger(value)) return 0;
+
   const str = value.toString();
+
+  // Very small/large floats stringify in exponential form (e.g. "1e-7"),
+  // which has no ".", so the plain dot-index approach below would return 0
+  // and silently round such values away. toExponential() gives an exact,
+  // always-parseable form to compute real decimal count from instead.
+  if (str.includes('e') || str.includes('E')) {
+    const [mantissa, exp] = value.toExponential().split('e');
+    const dot = mantissa.indexOf('.');
+    const mantissaDecimals = dot === -1 ? 0 : mantissa.length - dot - 1;
+    const decimals = mantissaDecimals - Number(exp);
+    return Math.min(Math.max(decimals, 0), 20); // 20 = Intl.NumberFormat's own max
+  }
+
   const dot = str.indexOf('.');
   if (dot === -1) return 0;
   return Math.min(str.length - dot - 1, 2);
+}
+
+const formatterCache = new Map<string, Intl.NumberFormat>();
+
+function getFormatter(locale: string, compact: boolean, useGrouping: boolean, decimals: number): Intl.NumberFormat {
+  const key = `${locale}|${compact}|${useGrouping}|${decimals}`;
+  let formatter = formatterCache.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, {
+      notation: compact ? 'compact' : 'standard',
+      minimumFractionDigits: compact ? 0 : decimals,
+      maximumFractionDigits: decimals,
+      useGrouping,
+    });
+    formatterCache.set(key, formatter);
+  }
+  return formatter;
 }
 
 /**
@@ -50,12 +81,7 @@ export function formatNumber(value: number, options: FormatOptions = {}): string
     locale = 'en-US',
   } = options;
 
-  const formatted = new Intl.NumberFormat(locale, {
-    notation: compact ? 'compact' : 'standard',
-    minimumFractionDigits: compact ? 0 : decimals,
-    maximumFractionDigits: decimals,
-    useGrouping,
-  }).format(value);
+  const formatted = getFormatter(locale, compact, useGrouping, decimals).format(value);
 
   return `${prefix}${formatted}${suffix}`;
 }

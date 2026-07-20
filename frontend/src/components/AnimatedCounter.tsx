@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
-import { formatNumber, formatForScreenReader } from '../utils/numberFormatter';
+import { formatNumber, formatForScreenReader, inferDecimals } from '../utils/numberFormatter';
 import type { FormatOptions } from '../utils/numberFormatter';
 
 export interface AnimatedCounterProps extends FormatOptions {
@@ -43,10 +43,11 @@ export function AnimatedCounter({
   React.useEffect(() => {
     if (highlightOnIncrease && value > prevValueRef.current) {
       setHighlight(true);
-      const t = setTimeout(() => setHighlight(false), 600);
       prevValueRef.current = value;
+      const t = setTimeout(() => setHighlight(false), 600);
       return () => clearTimeout(t);
     }
+    setHighlight(false);
     prevValueRef.current = value;
   }, [value, highlightOnIncrease]);
 
@@ -69,7 +70,8 @@ export function AnimatedCounter({
     );
   }
 
-  const displayText = formatNumber(displayValue, formatOptions);
+  const decimals = formatOptions.decimals ?? inferDecimals(value);
+  const displayText = formatNumber(displayValue, { ...formatOptions, decimals });
   const finalText = formatForScreenReader(value, formatOptions);
 
   return (
@@ -98,9 +100,9 @@ export function AnimatedCounter({
           whiteSpace: 'nowrap',
           border: 0,
         }}
-        aria-live={isAnimating ? 'off' : 'polite'}
+        aria-live="polite"
       >
-        {finalText}
+        {isAnimating ? '' : finalText}
       </span>
     </span>
   );
