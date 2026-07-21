@@ -12,10 +12,6 @@
   font-style: normal;
   font-display: swap;
 }
-button, 
-a{
-  cursor: pointer;
-}
 
 @theme {
   --color-on-primary: #00363d;
