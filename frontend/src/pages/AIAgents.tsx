@@ -223,8 +223,8 @@ export const AIAgents: React.FC = () => {
       </section>
 
       {/* ── Right: Execution Log Terminal ─────────────────────── */}
-      <section className="w-full xl:w-80 border-t xl:border-t-0 xl:border-l border-border-panel flex flex-col bg-bg-deep-space h-[400px] xl:h-full overflow-hidden shrink-0">
-        <div className="p-4 border-b border-border-panel flex justify-between items-center bg-bg-deep-space">
+      <section className="w-full xl:w-80 border-t xl:border-t-0 xl:border-l border-border-panel/60 flex flex-col backdrop-blur-sm bg-bg-deep-space/50 h-[400px] xl:h-full overflow-hidden shrink-0">
+        <div className="p-4 border-b border-border-panel/60 flex justify-between items-center">
           <h2 className="font-label-caps text-label-caps text-on-surface-variant font-bold">
             Live Execution Log
           </h2>
@@ -256,7 +256,7 @@ export const AIAgents: React.FC = () => {
           )}
         </div>
 
-        <div className="p-3 border-t border-border-panel bg-surface-container-low">
+        <div className="p-3 border-t border-border-panel/60 bg-surface-container-low/50">
           <div className="flex gap-2">
             <button
               onClick={exportLogs}

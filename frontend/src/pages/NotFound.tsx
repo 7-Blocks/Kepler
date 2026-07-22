@@ -75,7 +75,7 @@ export const NotFound: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full bg-background technical-grid text-on-surface overflow-hidden flex items-center justify-center px-6">
+    <div className="relative min-h-screen w-full technical-grid text-on-surface overflow-hidden flex items-center justify-center px-6">
       <DebrisField prefersReducedMotion={prefersReducedMotion} />
 
       <div className="relative z-10 max-w-lg w-full text-center">

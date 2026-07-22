@@ -283,6 +283,83 @@ body {
   );
 }
 
+/* ── Dynamic Background Animations ── */
+
+@keyframes bg-drift-slow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(20%); }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes solar-pulse {
+  0%, 100% { filter: brightness(1); transform: scale(1); }
+  50% { filter: brightness(1.3); transform: scale(1.03); }
+}
+
+@keyframes plasma-wave {
+  0% { transform: translateY(0) scaleX(1); }
+  50% { transform: translateY(5px) scaleX(1.02); }
+  100% { transform: translateY(0) scaleX(1); }
+}
+
+@keyframes particle-drift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(5px, -3px); }
+  50% { transform: translate(-2px, 5px); }
+  75% { transform: translate(3px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes haze-shift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}
+
+@keyframes aurora-wave {
+  0%, 100% {
+    transform: scaleX(1) scaleY(1) translateX(0);
+  }
+  25% {
+    transform: scaleX(1.05) scaleY(1.1) translateX(15px);
+  }
+  50% {
+    transform: scaleX(0.95) scaleY(0.9) translateX(-10px);
+  }
+  75% {
+    transform: scaleX(1.02) scaleY(1.05) translateX(8px);
+  }
+}
+
+@keyframes meteor-streak {
+  0% { opacity: 0; transform: rotate(-25deg) translateX(0); }
+  5% { opacity: 1; }
+  15% { opacity: 0.8; }
+  25% { opacity: 0; transform: rotate(-25deg) translateX(100%); }
+  100% { opacity: 0; transform: rotate(-25deg) translateX(100%); }
+}
+
+@keyframes collision-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+
+@keyframes orbit-rotate {
+  0% { transform: rotateX(70deg) rotateZ(0deg); }
+  100% { transform: rotateX(70deg) rotateZ(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [aria-hidden="true"] * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 

@@ -134,7 +134,7 @@ export const CollisionCenter: React.FC = () => {
       <div className="grid grid-cols-12 gap-6">
 
         {/* Conjunction Table — 8 cols */}
-        <div className="col-span-12 lg:col-span-8 bg-surface-container-lowest/90 backdrop-blur-xl border border-border-panel p-4 min-w-0">
+        <div className="col-span-12 lg:col-span-8 bg-surface-container-lowest/60 backdrop-blur-xl border border-border-panel p-4 min-w-0">
           <div className="flex justify-between items-center mb-4">
             <div className="font-label-caps text-label-caps text-primary-container font-bold tracking-wider">
               PROBABILITY MATRIX
@@ -233,7 +233,7 @@ export const CollisionCenter: React.FC = () => {
         </div>
 
         {/* Selected Conjunction Detail — 4 cols */}
-        <div className="col-span-12 lg:col-span-4 bg-surface-container-lowest/90 backdrop-blur-xl border border-border-panel p-4 flex flex-col justify-between">
+        <div className="col-span-12 lg:col-span-4 bg-surface-container-lowest/60 backdrop-blur-xl border border-border-panel p-4 flex flex-col justify-between">
           {selected ? (
             <>
               <div>
@@ -322,7 +322,7 @@ export const CollisionCenter: React.FC = () => {
         </div>
 
         {/* AI Mitigation Planner — full width bottom */}
-        <div className="col-span-12 bg-surface-container-lowest/90 backdrop-blur-xl border border-border-panel p-4">
+        <div className="col-span-12 bg-surface-container-lowest/60 backdrop-blur-xl border border-border-panel p-4">
           <div className="flex justify-between items-center mb-4">
             <div className="font-label-caps text-label-caps text-primary-container font-bold tracking-wider">
               AI MITIGATION PLANNER
