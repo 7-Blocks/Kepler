@@ -302,8 +302,11 @@ export const Particles: React.FC<ParticlesProps> = ({
     rafID.current = window.requestAnimationFrame(animateRef.current)
   }
 
+  // eslint-disable-next-line react-hooks/refs
   initCanvasRef.current = initCanvas
+  // eslint-disable-next-line react-hooks/refs
   onMouseMoveRef.current = onMouseMove
+  // eslint-disable-next-line react-hooks/refs
   animateRef.current = animate
 
   return (

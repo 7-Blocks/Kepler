@@ -1,5 +1,5 @@
 // Ignore missing type declarations for side-effect CSS import
-// @ts-ignore
+// @ts-expect-error - side-effect CSS import without type declarations
 import "../src/styles/index.css";
 import type { Preview } from '@storybook/react-vite'
 

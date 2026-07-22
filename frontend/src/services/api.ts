@@ -181,6 +181,7 @@ export const api = {
     apiFetch<{ synced_at: string }>('/weather/sync', { method: 'POST' }),
 
   triggerCollisionEvaluation: () =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     apiFetch<any>('/collisions/evaluate', { method: 'POST' }),
 };
 

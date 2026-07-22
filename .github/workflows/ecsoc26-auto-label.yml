@@ -60,7 +60,7 @@ jobs:
       # actions/github-script, which already provides the `github`, `context`,
       # and `core` objects – no extra setup needed.
       - name: Apply ECSoC26 Labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

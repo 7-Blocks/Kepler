@@ -54,7 +54,4 @@ export const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, descrip
 };
 
 export const ProductPage = () => <PlaceholderPage title="Product" description="Explore our orbital intelligence platform features and capabilities." />;
-export const SolutionsPage = () => <PlaceholderPage title="Solutions" description="Tailored solutions for satellite operators and space traffic management." />;
 export const DevelopersPage = () => <PlaceholderPage title="Developers" description="API documentation, SDKs, and resources for developers building with Kepler." />;
-export const DocsPage = () => <PlaceholderPage title="Documentation" description="Comprehensive guides and references for the Kepler platform." />;
-export const SignInPage = () => <PlaceholderPage title="Sign In" description="Sign in to your Kepler account to access the dashboard." />;

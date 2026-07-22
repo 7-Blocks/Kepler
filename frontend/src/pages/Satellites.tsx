@@ -5,6 +5,7 @@ import { MaterialIcon } from '@/components/MaterialIcon';
 import { useUIStore } from '@/store/uiStore';
 import { useCatalogObjects, useCatalogStats, useCatalogSync, useSatelliteTelemetry } from '@/hooks/useApi';
 import type { SpaceObject } from '@/services/api';
+import { SatelliteComparisonModal } from '@/components/SatelliteComparisonModal';
 
 
 function orbitTypeFromSMA(sma: number | null): 'LEO' | 'MEO' | 'GEO' | 'HEO' {
@@ -26,6 +27,7 @@ const TableSkeleton = () => (
   <tbody>
     {Array(8).fill(0).map((_, i) => (
       <tr key={i} className="border-b border-border-panel/30">
+        <td className="p-4"><div className="h-4 w-4 bg-surface-container-high rounded animate-pulse" /></td>
         {Array(6).fill(0).map((_, j) => (
           <td key={j} className="p-4">
             <div className="h-3 bg-surface-container-high rounded animate-pulse w-3/4" />
@@ -39,7 +41,8 @@ const TableSkeleton = () => (
 
 
 export const Satellites: React.FC = () => {
-  const { selectedSatelliteId, setSelectedSatelliteId } = useUIStore();
+  const { selectedSatelliteId, setSelectedSatelliteId, selectedSatelliteIds, toggleSatelliteSelection } = useUIStore();
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [searchQuery, setSearchQuery]   = useState('');
   const [debouncedSearch, setDebounced] = useState('');
   const [activeTab, setActiveTab]       = useState<'STATUS' | 'ORBITAL' | 'TLE'>('STATUS');
@@ -166,6 +169,14 @@ searchTimer.current = setTimeout(() => {
               FILTERS
             </button>
             <button
+              onClick={() => setIsCompareModalOpen(true)}
+              disabled={selectedSatelliteIds.length < 2}
+              className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-ui glow-cyan cursor-pointer min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <MaterialIcon name="compare_arrows" className="text-sm mr-2" />
+              COMPARE ({selectedSatelliteIds.length}/4)
+            </button>
+            <button
                onClick={handleExport}
                disabled={objects.length === 0}
                className="flex items-center px-4 py-2 bg-primary-container text-on-primary font-label-caps text-label-caps hover:bg-primary transition-ui glow-cyan cursor-pointer min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -199,6 +210,7 @@ searchTimer.current = setTimeout(() => {
             <table className="w-full text-left border-collapse">
               <thead className="bg-surface-container-high border-b border-border-panel">
                 <tr>
+                  <th className="p-4 font-label-caps text-label-caps text-on-surface-variant w-12" />
                   <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">NAME / NORAD ID</th>
                   <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">ORBIT / ALT</th>
                   <th className="p-4 font-label-caps text-label-caps text-on-surface-variant">INCLINATION</th>
@@ -213,7 +225,7 @@ searchTimer.current = setTimeout(() => {
               ) : catalogQ.isError ? (
                 <tbody>
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-status-emergency font-technical-data text-sm">
+                    <td colSpan={8} className="p-8 text-center text-status-emergency font-technical-data text-sm">
                       ⚠ Failed to load satellite catalog. Ensure the backend is running.
                     </td>
                   </tr>
@@ -221,7 +233,7 @@ searchTimer.current = setTimeout(() => {
               ) : objects.length === 0 ? (
                 <tbody>
                   <tr>
-                    <td colSpan={7} className="p-8 text-center">
+                    <td colSpan={8} className="p-8 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <MaterialIcon name="satellite_alt" className="text-primary/20 text-4xl" />
                         <p className="font-technical-data text-on-surface-variant text-sm">
@@ -254,6 +266,15 @@ searchTimer.current = setTimeout(() => {
                           isSelected ? 'bg-primary-fixed-dim/5 border-l-2 border-primary-container' : 'opacity-85'
                         }`}
                       >
+                        <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedSatelliteIds.includes(obj.catalog_number)}
+                            onChange={() => toggleSatelliteSelection(obj.catalog_number)}
+                            disabled={!selectedSatelliteIds.includes(obj.catalog_number) && selectedSatelliteIds.length >= 4}
+                            className="w-4 h-4 accent-primary cursor-pointer"
+                          />
+                        </td>
                         <td className="table-data">
                           <div className="flex items-center">
                             <span className="w-2 h-2 rounded-full mr-3 bg-status-success" />
@@ -517,7 +538,11 @@ searchTimer.current = setTimeout(() => {
           </motion.aside>
         )}
       </AnimatePresence>
-
+      <SatelliteComparisonModal 
+        isOpen={isCompareModalOpen} 
+        onClose={() => setIsCompareModalOpen(false)} 
+        satellites={objects.filter(o => selectedSatelliteIds.includes(o.catalog_number))}
+      />
     </div>
   );
 };

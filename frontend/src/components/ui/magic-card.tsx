@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils"
 interface MagicCardBaseProps {
   children?: React.ReactNode
   className?: string
+  /** Overrides the solid fill layer (e.g. glassmorphism on auth cards). */
+  fillClassName?: string
   gradientSize?: number
   gradientFrom?: string
   gradientTo?: string
@@ -45,7 +47,21 @@ interface MagicCardOrbProps extends MagicCardBaseProps {
   gradientOpacity?: never
 }
 
-type MagicCardProps = MagicCardGradientProps | MagicCardOrbProps
+interface MagicCardMixedProps extends MagicCardBaseProps {
+  mode: "orb" | "gradient"
+
+  gradientColor?: string
+  gradientOpacity?: number
+
+  glowFrom?: string
+  glowTo?: string
+  glowAngle?: number
+  glowSize?: number
+  glowBlur?: number
+  glowOpacity?: number
+}
+
+type MagicCardProps = MagicCardGradientProps | MagicCardOrbProps | MagicCardMixedProps
 type ResetReason = "enter" | "leave" | "global" | "init"
 
 function isOrbMode(props: MagicCardProps): props is MagicCardOrbProps {
@@ -56,6 +72,7 @@ export function MagicCard(props: MagicCardProps) {
   const {
     children,
     className,
+    fillClassName,
     gradientSize = 200,
     gradientColor = "#262626",
     gradientOpacity = 0.8,
@@ -73,6 +90,7 @@ export function MagicCard(props: MagicCardProps) {
   const { theme, systemTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
 
   const isDarkTheme = useMemo(() => {
@@ -174,7 +192,12 @@ export function MagicCard(props: MagicCardProps) {
         `,
       }}
     >
-      <div className="bg-background absolute inset-px z-20 rounded-[inherit]" />
+      <div
+        className={cn(
+          "bg-background absolute inset-px z-20 rounded-[inherit]",
+          fillClassName
+        )}
+      />
 
       {mode === "gradient" && (
         <motion.div

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
-import { useCollisions, useUpdateCollisionStatus, useCollisionEvaluate, useAgentRuns, useTriggerAgent } from '@/hooks/useApi';
+import { useCollisions, useUpdateCollisionStatus, useCollisionEvaluate, useAgentRuns } from '@/hooks/useApi';
 import type { Collision } from '@/services/api';
 
 
@@ -61,7 +61,6 @@ export const CollisionCenter: React.FC = () => {
 
   const selected = conjunctions.find(c => c.id === selectedId) ?? conjunctions[0] ?? null;
   const latestRun = agentRuns.data?.data?.[0];
-  const latestDecision = latestRun?.decisions?.[latestRun.decisions.length - 1];
 
   return (
     <div className="p-4 md:p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">

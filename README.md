@@ -3,7 +3,6 @@
 An AI-Powered Autonomous Space Traffic Management Platform
 </div>
 
-
 <p align="center">
   <img src="https://img.shields.io/badge/Space-Tech-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/AI-Powered-green?style=for-the-badge" />
@@ -37,6 +36,12 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/Parshant-12"><img src="https://github.com/Parshant-12.png" width="50px" style="border-radius:50%;margin:5px;" alt="Parshant-12" /></a>
 <a href="https://github.com/varshu55"><img src="https://github.com/varshu55.png" width="50px" style="border-radius:50%;margin:5px;" alt="varshu55" /></a>
 <a href="https://github.com/khedkaravani-rgb"><img src="https://github.com/khedkaravani-rgb.png" width="50px" style="border-radius:50%;margin:5px;" alt="khedkaravani-rgb" /></a>
+<a href="https://github.com/HaimiyaWasn"><img src="https://github.com/HaimiyaWasn.png" width="50px" style="border-radius:50%;margin:5px;" alt="HaimiyaWasn" /></a>
+<a href="https://github.com/littlegod20"><img src="https://github.com/littlegod20.png" width="50px" style="border-radius:50%;margin:5px;" alt="littlegod20" /></a>
+<a href="https://github.com/sumittiwari1302"><img src="https://github.com/sumittiwari1302.png" width="50px" style="border-radius:50%;margin:5px;" alt="sumittiwari1302" /></a>
+<a href="https://github.com/shahkhushi0307"><img src="https://github.com/shahkhushi0307.png" width="50px" style="border-radius:50%;margin:5px;" alt="shahkhushi0307" /></a>
+<a href="https://github.com/Ayush-0918"><img src="https://github.com/Ayush-0918.png" width="50px" style="border-radius:50%;margin:5px;" alt="Ayush-0918" /></a>
+<a href="https://github.com/Dependabot"><img src="https://github.com/Dependabot.png" width="50px" style="border-radius:50%;margin:5px;" alt="Dependabot" /></a>
 
 </div>
 <!-- CONTRIBUTORS_END -->

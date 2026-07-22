@@ -1,5 +1,4 @@
 import React from 'react';
-import { MaterialIcon } from '@/components/MaterialIcon';
 
 export const Settings: React.FC = () => {
   return (

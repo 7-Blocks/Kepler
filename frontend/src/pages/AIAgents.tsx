@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
-import { useAgentRuns, useTriggerAgent } from '@/hooks/useApi';
+import { useAgentRuns } from '@/hooks/useApi';
 import type { AgentRun, AgentDecision } from '@/services/api';
 
 
@@ -29,7 +29,7 @@ function logColor(agentName: string) {
   return 'text-on-surface-variant';
 }
 
-function formatLog(d: AgentDecision, runName: string): { tag: string; msg: string; colorClass: string; ts: string } {
+function formatLog(d: AgentDecision): { tag: string; msg: string; colorClass: string; ts: string } {
   return {
     tag:        `[${d.agent_name?.toUpperCase() ?? 'AGENT'}]`,
     msg:        d.reasoning,
@@ -42,7 +42,6 @@ function formatLog(d: AgentDecision, runName: string): { tag: string; msg: strin
 export const AIAgents: React.FC = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const agentRunsQ  = useAgentRuns({ size: 10 });
-  const triggerM    = useTriggerAgent();
 
   const runs: AgentRun[] = agentRunsQ.data?.data ?? [];
 
@@ -68,6 +67,7 @@ export const AIAgents: React.FC = () => {
 
   const clearTerminal = () => {
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any)._clearedAt = Date.now();
   };
 
@@ -244,7 +244,7 @@ export const AIAgents: React.FC = () => {
             </div>
           ) : (
             allDecisions.map((d, idx) => {
-              const log = formatLog(d, d.runName);
+              const log = formatLog(d);
               return (
                 <div key={`${d.id ?? idx}`} className="text-on-surface-variant mb-2">
                   <span className="text-on-surface-variant/40 mr-1 text-[9px]">{log.ts}</span>

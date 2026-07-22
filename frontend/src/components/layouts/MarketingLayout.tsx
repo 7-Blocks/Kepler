@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-
+import FooterHero from "./FooterHero";
+import FooterLinks from "./FooterLinks";
+import FooterSocials from "./FooterSocials";
 
 const FONT_LINK_ID = "kepler-landing-fonts";
 
@@ -32,9 +34,6 @@ function useScrollToHash() {
     return () => cancelAnimationFrame(frame);
   }, [pathname, hash]);
 }
-
-const footerLinkClass =
-  "font-body-ui text-[13px] text-[#8892A6] hover:text-[#E7EBF3] no-underline transition-ui";
 
 const navLinks = [
   { label: "Product", to: "/product" },
@@ -69,14 +68,14 @@ function MarketingNavBar() {
   const location = useLocation();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMenuOpen(false);
   }, [location.pathname, location.hash]);
 
   const linkClass = (active?: boolean) =>
-    `relative font-body-ui text-[14px] font-medium transition-all duration-300 no-underline px-4 py-2 rounded-full ${
-      active
-        ? "text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
-        : "text-neutral-400 hover:text-white hover:bg-white/5"
+    `relative font-body-ui text-[14px] font-medium transition-all duration-300 no-underline px-4 py-2 rounded-full ${active
+      ? "text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] after:content-[''] after:absolute after:-bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-white after:rounded-full after:shadow-[0_0_5px_rgba(255,255,255,0.8)]"
+      : "text-neutral-400 hover:text-white hover:bg-white/5"
     }`;
 
   return (
@@ -121,19 +120,16 @@ function MarketingNavBar() {
               <span className="sr-only">Menu</span>
               <span className="flex flex-col gap-[5px]" aria-hidden="true">
                 <span
-                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${
-                    menuOpen ? "translate-y-[6.5px] rotate-45" : ""
-                  }`}
+                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${menuOpen ? "translate-y-[6.5px] rotate-45" : ""
+                    }`}
                 />
                 <span
-                  className={`block h-[1.5px] w-[18px] bg-current transition-opacity duration-300 ${
-                    menuOpen ? "opacity-0" : ""
-                  }`}
+                  className={`block h-[1.5px] w-[18px] bg-current transition-opacity duration-300 ${menuOpen ? "opacity-0" : ""
+                    }`}
                 />
                 <span
-                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${
-                    menuOpen ? "-translate-y-[6.5px] -rotate-45" : ""
-                  }`}
+                  className={`block h-[1.5px] w-[18px] bg-current transition-transform duration-300 ${menuOpen ? "-translate-y-[6.5px] -rotate-45" : ""
+                    }`}
                 />
               </span>
             </button>
@@ -165,10 +161,8 @@ function MarketingNavBar() {
                     key={l.label}
                     to={l.to}
                     className={({ isActive }) =>
-                      `font-body-ui text-[15px] font-medium transition-all px-4 py-3 rounded-2xl ${
-                        isActive
-                          ? "text-white bg-white/10"
-                          : "text-neutral-400 hover:text-white hover:bg-white/5"
+                      `relative font-body-ui text-[15px] font-medium transition-all px-4 py-3 rounded-2xl ${isActive
+                        ? "text-white bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:right-6 after:w-1 after:h-1 after:bg-white after:rounded-full after:shadow-[0_0_5px_rgba(255,255,255,0.8)]" : "text-neutral-400 hover:text-white hover:bg-white/5"
                       }`
                     }
                   >
@@ -196,119 +190,17 @@ function MarketingNavBar() {
   );
 }
 
-type FooterLink =
-  | { label: string; to: string; disabled?: false }
-  | { label: string; to?: undefined; disabled: true };
 
 function MarketingFooter() {
-  const productLinks = [
-    { label: "Overview", to: "/#product" },
-    { label: "How it works", to: "/#how-it-works" },
-    { label: "Reliability", to: "/#reliability" },
-    { label: "Dashboard", to: "/dashboard" },
-  ];
-
-  const companyLinks: FooterLink[] = [
-    { label: "About", to: "/about" },
-    { label: "Careers", disabled: true },
-    { label: "Contact", to: "/#contact" },
-  ];
-
   return (
-    <footer id="contact" className="relative mt-auto bg-[#0C1220] section-rule section-rule-full">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-40 opacity-80"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 80% at 50% 0%, rgba(79,224,200,0.07), transparent 70%)",
-        }}
-      />
+    <footer className="relative overflow-hidden bg-[#050811]">
 
-      <div className="relative max-w-[1180px] mx-auto px-6 pt-16 pb-10">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 lg:gap-16 pb-12">
-          <div className="max-w-[420px]">
-            <div className="flex items-center gap-3 mb-4">
-              <img
-                src="/Logo.svg"
-                alt=""
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain"
-              />
-              <span className="font-necosmic text-xl text-[#E7EBF3] tracking-wide">
-                Kepler
-              </span>
-            </div>
-            <p className="font-body-ui text-[15px] text-[#8892A6] leading-relaxed m-0 mb-6">
-              Autonomous space traffic management for operators who can't
-              afford to guess.
-            </p>
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center font-body-ui font-semibold text-[13px] text-black bg-white hover:bg-white/90 no-underline rounded-full px-5 py-2.5 transition-ui"
-            >
-              Launch Dashboard
-            </Link>
-          </div>
+      <FooterHero />
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-10 sm:gap-14">
-            <div>
-              <div className="font-technical-data text-[11px] text-[#4FE0C8] tracking-[0.16em] mb-4">
-                PRODUCT
-              </div>
-              {productLinks.map((link) => (
-                <div key={link.label} className="mb-2.5">
-                  <Link to={link.to} className={footerLinkClass}>
-                    {link.label}
-                  </Link>
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="font-technical-data text-[11px] text-[#4FE0C8] tracking-[0.16em] mb-4">
-                COMPANY
-              </div>
-              {companyLinks.map((link) => (
-                <div key={link.label} className="mb-2.5">
-                  {link.disabled || !link.to ? (
-                    <span className="font-body-ui text-[13px] text-[#8892A6]/45 cursor-default select-none">
-                      {link.label}
-                    </span>
-                  ) : (
-                    <Link to={link.to} className={footerLinkClass}>
-                      {link.label}
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="col-span-2 sm:col-span-1">
-              <div className="font-technical-data text-[11px] text-[#4FE0C8] tracking-[0.16em] mb-4">
-                STATUS
-              </div>
-              <div className="flex items-center gap-2 mb-2.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#4FE0C8] shadow-[0_0_8px_rgba(79,224,200,0.8)]" />
-                <span className="font-body-ui text-[13px] text-[#E7EBF3]">
-                  All systems nominal
-                </span>
-              </div>
-              <p className="font-technical-data text-[11px] text-[#8892A6] m-0 leading-relaxed">
-                TRACKING · LIVE
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-6 section-rule section-rule-full">
-          <p className="font-technical-data text-[11px] text-[#8892A6] m-0">
-            © {new Date().getFullYear()} Kepler. Orbital intelligence platform.
-          </p>
-          <p className="font-technical-data text-[11px] text-[#8892A6]/70 m-0">
-            Built for the crowded sky.
-          </p>
-        </div>
-      </div>
+
+      <FooterLinks />
+      <FooterSocials />
     </footer>
   );
 }
