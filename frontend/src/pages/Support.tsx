@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { FAQSearch } from "@/components/FAQSearch";
 import { FAQAccordion } from "@/components/FAQAccordion";
 import { TroubleshootingCard } from "@/components/TroubleshootingCard";
@@ -16,7 +16,7 @@ export const SupportPage: React.FC = () => {
 
   const filteredFaqs = useMemo(() => {
     if (!searchTerm.trim()) return faqs;
-    const lowerSearch = searchTerm.toLowerCase();
+    const lowerSearch = searchTerm.trim().toLowerCase();
     return faqs.filter(
       (faq) =>
         faq.question.toLowerCase().includes(lowerSearch) ||
@@ -49,7 +49,7 @@ export const SupportPage: React.FC = () => {
               Frequently Asked Questions
             </h2>
           </div>
-          <FAQAccordion items={filteredFaqs} />
+          <FAQAccordion items={filteredFaqs} reduceMotion={reduce} />
         </section>
 
         {/* Troubleshooting Section */}
@@ -87,25 +87,25 @@ export const SupportPage: React.FC = () => {
               title="GitHub Issues"
               description="Report bugs or request new features on our public tracker."
               linkText="View Issues"
-              href="https://github.com/Ayush-0918/Kepler/issues"
+              href="https://github.com/7-Blocks/Kepler/issues"
             />
             <SupportCard
               title="Discussions"
               description="Join the community to discuss space traffic management."
               linkText="Join Discussion"
-              href="https://github.com/Ayush-0918/Kepler/discussions"
+              href="https://github.com/7-Blocks/Kepler/discussions"
             />
             <SupportCard
               title="Contribution Guide"
               description="Learn how to contribute to the Kepler open-source project."
               linkText="Start Contributing"
-              href="https://github.com/Ayush-0918/Kepler/blob/main/CONTRIBUTING.md"
+              href="https://github.com/7-Blocks/Kepler/blob/main/CONTRIBUTING.md"
             />
             <SupportCard
               title="Changelog"
               description="See what's new and track recent updates to the platform."
               linkText="View Changelog"
-              href="https://github.com/Ayush-0918/Kepler/releases"
+              href="https://github.com/7-Blocks/Kepler/releases"
             />
           </div>
         </section>
@@ -129,7 +129,7 @@ export const SupportPage: React.FC = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a
-                href="https://github.com/Ayush-0918/Kepler/issues/new"
+                href="https://github.com/7-Blocks/Kepler/issues/new"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-body-ui font-semibold text-[15px] text-[#060A14] bg-[#4FE0C8] hover:bg-[#3bc4b0] rounded-lg px-7 py-3.5 transition-colors no-underline inline-block shadow-[0_0_15px_rgba(79,224,200,0.2)] hover:shadow-[0_0_20px_rgba(79,224,200,0.4)]"
@@ -137,7 +137,7 @@ export const SupportPage: React.FC = () => {
                 Open Issue
               </a>
               <a
-                href="https://github.com/Ayush-0918/Kepler/discussions/new"
+                href="https://github.com/7-Blocks/Kepler/discussions/new"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-body-ui font-semibold text-[15px] text-[#E7EBF3] bg-transparent border border-[#1B2436] hover:border-[#4FE0C8]/50 hover:bg-[#1B2436]/50 rounded-lg px-7 py-3.5 transition-colors no-underline inline-block"
