@@ -24,6 +24,7 @@ import { Toaster } from 'sonner';
 import { toastOptions } from './constants/toast';
 import { NotFound } from '@/pages/NotFound';
 import { Technologies } from './pages/Technologies';
+import SpaceWeather from './pages/SpaceWeather';
 import ButtonBackToTop from './components/ui/ButtonBackToTop';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
@@ -89,6 +90,7 @@ function App() {
         <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="space-traffic" element={<SpaceTraffic />} />
+          <Route path="space-weather" element={<SpaceWeather />} />
           <Route path="satellites" element={<Satellites />} />
           <Route path="debris" element={<Debris />} />
           <Route path="collision-center" element={<CollisionCenter />} />
