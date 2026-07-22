@@ -1,4 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { ShortcutHelpModal } from '@/components/ShortcutHelpModal';
+import { useUIStore } from '@/store/uiStore';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { MarketingLayout } from '@/components/layouts/MarketingLayout';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
@@ -24,6 +28,41 @@ import ButtonBackToTop from './components/ui/ButtonBackToTop';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 
+// Lives inside BrowserRouter/QueryClientProvider so it can reach navigate(),
+// the shared uiStore, and React Query's cache. Centralized here per issue #83
+// so shortcuts don't get scattered across pages.
+function GlobalShortcuts() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toggleSidebar, setGlobalSearchOpen } = useUIStore();
+
+  const { isHelpOpen, closeHelp, isMac } = useKeyboardShortcuts({
+    // Navigation — routes that exist today. Telemetry / Space Weather /
+    // Risk Assessment / Prediction Analytics have no page yet, so those
+    // shortcuts are left unwired (safe no-ops) until those routes land.
+    openGlobeView: () => navigate('/dashboard'),
+    goToDashboard: () => navigate('/dashboard'),
+    goHome: () => navigate('/dashboard'),
+    openSatelliteManagement: () => navigate('/dashboard/satellites'),
+    openCollisionPrediction: () => navigate('/dashboard/collision-center'),
+    openAiAgentDashboard: () => navigate('/dashboard/ai-agents'),
+    openManeuverPlanning: () => navigate('/dashboard/mission-planner'),
+
+    // Search
+    openGlobalSearch: () => setGlobalSearchOpen(true),
+
+    // Data actions — generic refresh via React Query's cache.
+    refreshCurrentData: () => queryClient.invalidateQueries(),
+    forceRefreshAllData: () =>
+      queryClient.invalidateQueries({ refetchType: 'all' }),
+
+    // Dashboard controls
+    toggleSidebar: () => toggleSidebar(),
+  });
+
+  return <ShortcutHelpModal isOpen={isHelpOpen} onClose={closeHelp} isMac={isMac} />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -32,6 +71,7 @@ function App() {
       position="top-right" 
       offset={{ top: '4em', right: "16px", left: "16px" }} 
     />
+    <GlobalShortcuts />
       <Routes>
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<LandingPage />} />
