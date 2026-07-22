@@ -70,6 +70,17 @@ export function useAnimatedCounter(
   const [animatedValue, setAnimatedValue] = useState(shouldSkipAnimation ? target : 0);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Render-time sync (same idiom as the skip-animation branch below):
+  // mark isAnimating=true in the SAME render that receives a new target,
+  // so the aria-live region never shows the new finalText before the
+  // animation has visually begun (the effect below only flips this on
+  // the first rAF tick, which is one render too late for a11y purposes).
+  const [pendingTarget, setPendingTarget] = useState(target);
+  if (!shouldSkipAnimation && pendingTarget !== target) {
+    setPendingTarget(target);
+    if (!isAnimating) setIsAnimating(true);
+  }
+
   // fromRef / rafRef / isFirstRun are only ever read or written inside the
   // effect below (never during render), so they stay refs — the ref rule
   // only forbids touching .current synchronously in the render body.
@@ -103,6 +114,11 @@ export function useAnimatedCounter(
 
     // Nothing changed — spec explicitly says don't re-animate.
     if (!isFirstRun.current && fromRef.current === target) {
+      // Guard against a target reverting to the already-displayed value
+      // while isAnimating was optimistically set true above — otherwise
+      // it would get stuck true forever since we bail before the tick
+      // loop ever runs.
+      setIsAnimating(false);
       return;
     }
 
