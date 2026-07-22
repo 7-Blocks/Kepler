@@ -12,6 +12,7 @@ import { ProductPage } from '@/pages/ProductPage';
 import { SolutionsPage } from '@/pages/SolutionsPage';
 import { DocsPage } from '@/pages/DocsPage';
 import { DevelopersPage } from '@/pages/DevelopersPage';
+import SupportPage from '@/pages/Support';
 import { Dashboard } from '@/pages/Dashboard';
 import { SpaceTraffic } from '@/pages/SpaceTraffic';
 import { Satellites } from '@/pages/Satellites';
@@ -82,6 +83,7 @@ function App() {
           <Route path="/solutions" element={<SolutionsPage />} />
           <Route path="/developers" element={<DevelopersPage />} />
           <Route path="/docs" element={<DocsPage />} />
+          <Route path="/support" element={<SupportPage />} />
         </Route>
         <Route element={<AuthLayout />}>
           <Route path="/signin" element={<SignIn />} />
