@@ -12,24 +12,6 @@ export const BackgroundThemes = {
 export type BackgroundTheme =
   (typeof BackgroundThemes)[keyof typeof BackgroundThemes];
 
-export const THEME_LABELS: Record<BackgroundTheme, string> = {
-  [BackgroundThemes.DAY]: 'Day',
-  [BackgroundThemes.NIGHT]: 'Night',
-  [BackgroundThemes.SOLAR_STORM]: 'Solar Storm',
-  [BackgroundThemes.AURORA]: 'Aurora',
-  [BackgroundThemes.METEOR_SHOWER]: 'Meteor Shower',
-  [BackgroundThemes.COLLISION_ALERT]: 'Collision Alert',
-};
-
-export const THEME_ICONS: Record<BackgroundTheme, string> = {
-  [BackgroundThemes.DAY]: 'wb_sunny',
-  [BackgroundThemes.NIGHT]: 'dark_mode',
-  [BackgroundThemes.SOLAR_STORM]: 'local_fire_department',
-  [BackgroundThemes.AURORA]: 'nightlight',
-  [BackgroundThemes.METEOR_SHOWER]: 'comet',
-  [BackgroundThemes.COLLISION_ALERT]: 'warning',
-};
-
 interface ConditionInput {
   weatherStatus: WeatherStatus | null | undefined;
   collisions: Collision[] | null | undefined;
@@ -103,29 +85,4 @@ export function evaluateTheme(conditions: ConditionInput): BackgroundTheme {
 export function isDaytime(): boolean {
   const hour = new Date().getUTCHours();
   return hour >= 6 && hour < 18;
-}
-
-const STORAGE_KEY = 'kepler-bg-theme';
-
-export function loadSavedTheme(): BackgroundTheme | 'auto' {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (
-      saved === 'auto' ||
-      Object.values(BackgroundThemes).includes(saved as BackgroundTheme)
-    ) {
-      return saved as BackgroundTheme | 'auto';
-    }
-  } catch {
-    // localStorage unavailable
-  }
-  return 'auto';
-}
-
-export function saveThemePreference(theme: BackgroundTheme | 'auto'): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, theme);
-  } catch {
-    // localStorage unavailable
-  }
 }

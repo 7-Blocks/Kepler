@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
 import { useUIStore } from '@/store/uiStore';
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
-import { BackgroundThemeSelector } from '@/components/DynamicBackground/BackgroundThemeSelector';
 
 export const MainLayout: React.FC = () => {
   const {
@@ -73,7 +72,7 @@ export const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden font-body-ui bg-bg-deep-space text-on-surface select-none">
+    <div className="relative w-screen h-screen overflow-hidden font-body-ui text-on-surface select-none">
       {/* Dynamic animated background */}
       <DynamicBackground />
 
@@ -98,7 +97,7 @@ export const MainLayout: React.FC = () => {
 
         {/* Left Navigation Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 flex flex-col h-full bg-bg-deep-space border-r border-border-panel transition-ui z-50 md:relative ${
+          className={`fixed inset-y-0 left-0 flex flex-col h-full backdrop-blur-xl bg-bg-deep-space/70 border-r border-border-panel/60 transition-ui z-50 md:relative ${
             mobileSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
           } ${!mobileSidebarOpen && sidebarCollapsed ? 'md:w-20' : 'md:w-64'}`}
         >
@@ -157,7 +156,7 @@ export const MainLayout: React.FC = () => {
           </nav>
 
           {/* Footer User Profile Section */}
-          <div className="p-4 border-t border-border-panel bg-bg-deep-space mt-auto">
+          <div className="p-4 border-t border-border-panel/60 bg-bg-deep-space/40 mt-auto">
             <div className="flex items-center">
               <div className="w-8 h-8 rounded shrink-0 bg-primary-container/20 flex items-center justify-center border border-primary-container/40">
                 <MaterialIcon name="account_circle" className="text-primary-container text-lg" />
@@ -176,7 +175,7 @@ export const MainLayout: React.FC = () => {
         <div className="flex-1 flex flex-col h-full min-w-0 relative">
 
           {/* Top Command Bar */}
-          <header className="h-12 bg-bg-deep-space/95 border-b border-border-panel flex justify-between items-center px-4 md:px-6 w-full sticky top-0 z-30">
+          <header className="h-12 backdrop-blur-xl bg-bg-deep-space/70 border-b border-border-panel/60 flex justify-between items-center px-4 md:px-6 w-full sticky top-0 z-30">
             {/* Command Search & Mobile Toggle */}
             <div className="flex items-center gap-2 sm:gap-4 flex-1">
               <button
@@ -209,7 +208,6 @@ export const MainLayout: React.FC = () => {
                 {utcTime}
               </div>
               <div className="flex items-center gap-4">
-                <BackgroundThemeSelector />
                 <button
                   onClick={toggleRightDrawer}
                   className={`transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
@@ -228,7 +226,7 @@ export const MainLayout: React.FC = () => {
 
           {/* Main workspace frame */}
           <div className="flex-1 flex overflow-hidden relative">
-            <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-bg-deep-space">
+            <main className="flex-1 overflow-y-auto custom-scrollbar relative">
               <Outlet />
             </main>
 
@@ -240,7 +238,7 @@ export const MainLayout: React.FC = () => {
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: '100%', opacity: 0.8 }}
                   transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="w-full sm:w-80 h-full bg-surface-container-lowest border-l border-border-panel flex flex-col z-35 shadow-[-10px_0_30px_rgba(0,0,0,0.8)] absolute right-0 top-0 sm:relative"
+                  className="w-full sm:w-80 h-full backdrop-blur-xl bg-surface-container-lowest/80 border-l border-border-panel/60 flex flex-col z-35 shadow-[-10px_0_30px_rgba(0,0,0,0.8)] absolute right-0 top-0 sm:relative"
                 >
                   {/* Assistant Header */}
                   <div className="p-6 border-b border-border-panel flex justify-between items-center">
@@ -360,7 +358,7 @@ export const MainLayout: React.FC = () => {
                   </div>
 
                   {/* Chat Input */}
-                  <form onSubmit={handleSendQuery} className="p-4 bg-bg-deep-space/85 border-t border-border-panel">
+                  <form onSubmit={handleSendQuery} className="p-4 bg-bg-deep-space/50 backdrop-blur-sm border-t border-border-panel/60">
                     <div className="relative">
                       <input
                         type="text"

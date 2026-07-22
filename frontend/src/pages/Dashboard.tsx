@@ -117,7 +117,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* 3D Earth Twin Digital Hero */}
-      <section className="h-[250px] md:h-[409px] relative border-b border-border-panel bg-bg-deep-space">
+      <section className="h-[250px] md:h-[409px] relative border-b border-border-panel/60">
         <EarthTwin />
       </section>
 

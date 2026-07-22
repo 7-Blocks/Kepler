@@ -400,7 +400,7 @@ searchTimer.current = setTimeout(() => {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="w-full md:w-[420px] border-l border-border-panel bg-surface-container-lowest/95 backdrop-blur-xl h-full flex flex-col fixed right-0 top-12 bottom-0 z-40 shadow-[-10px_0_30px_rgba(0,0,0,0.6)]"
+            className="w-full md:w-[420px] border-l border-border-panel/60 bg-surface-container-lowest/60 backdrop-blur-xl h-full flex flex-col fixed right-0 top-12 bottom-0 z-40 shadow-[-10px_0_30px_rgba(0,0,0,0.6)]"
           >
             {/* Drawer Header */}
             <div className="p-6 border-b border-border-panel flex justify-between items-center">
