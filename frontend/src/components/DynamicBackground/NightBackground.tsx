@@ -11,97 +11,91 @@ export const NightBackground: React.FC<Props> = ({ animating }) => {
         className="absolute inset-0"
         style={{
           background:
-            'linear-gradient(180deg, #020408 0%, #060a12 40%, #0a0f1a 100%)',
+            'linear-gradient(180deg, #010204 0%, #050810 40%, #0a0f1a 100%)',
         }}
       />
 
-      {/* Stars layer 1 */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(1.5px 1.5px at 5% 8%, rgba(255,255,255,1) 0%, transparent 100%), ' +
-            'radial-gradient(1px 1px at 12% 35%, rgba(255,255,255,0.8) 0%, transparent 100%), ' +
-            'radial-gradient(1.5px 1.5px at 20% 15%, rgba(200,220,255,0.9) 0%, transparent 100%), ' +
-            'radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.7) 0%, transparent 100%), ' +
-            'radial-gradient(1.5px 1.5px at 35% 5%, rgba(255,255,255,0.9) 0%, transparent 100%), ' +
-            'radial-gradient(1px 1px at 45% 45%, rgba(200,200,255,0.8) 0%, transparent 100%), ' +
-            'radial-gradient(1.5px 1.5px at 55% 20%, rgba(255,255,255,1) 0%, transparent 100%), ' +
-            'radial-gradient(1px 1px at 60% 75%, rgba(255,255,255,0.6) 0%, transparent 100%), ' +
-            'radial-gradient(1.5px 1.5px at 70% 30%, rgba(255,255,255,0.8) 0%, transparent 100%), ' +
-            'radial-gradient(1px 1px at 78% 55%, rgba(200,220,255,0.9) 0%, transparent 100%), ' +
-            'radial-gradient(1.5px 1.5px at 85% 10%, rgba(255,255,255,0.7) 0%, transparent 100%), ' +
-            'radial-gradient(1px 1px at 92% 40%, rgba(255,255,255,0.8) 0%, transparent 100%)',
+            'radial-gradient(1.5px 1.5px at 5% 8%, #fff 0%, transparent 100%), ' +
+            'radial-gradient(1px 1px at 12% 35%, rgba(255,255,255,0.85) 0%, transparent 100%), ' +
+            'radial-gradient(1.5px 1.5px at 20% 15%, rgba(200,225,255,0.95) 0%, transparent 100%), ' +
+            'radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.75) 0%, transparent 100%), ' +
+            'radial-gradient(1.5px 1.5px at 35% 5%, #fff 0%, transparent 100%), ' +
+            'radial-gradient(1px 1px at 45% 45%, rgba(200,210,255,0.85) 0%, transparent 100%), ' +
+            'radial-gradient(1.5px 1.5px at 55% 20%, #fff 0%, transparent 100%), ' +
+            'radial-gradient(1px 1px at 60% 75%, rgba(255,255,255,0.65) 0%, transparent 100%), ' +
+            'radial-gradient(1.5px 1.5px at 70% 30%, rgba(255,255,255,0.85) 0%, transparent 100%), ' +
+            'radial-gradient(1px 1px at 78% 55%, rgba(200,225,255,0.9) 0%, transparent 100%), ' +
+            'radial-gradient(1.5px 1.5px at 85% 10%, rgba(255,255,255,0.75) 0%, transparent 100%), ' +
+            'radial-gradient(1px 1px at 92% 40%, rgba(255,255,255,0.85) 0%, transparent 100%)',
         }}
       />
 
-      {/* Stars layer 2 */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(2px 2px at 8% 22%, rgba(255,255,255,1) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 22% 68%, rgba(200,220,255,1) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 48% 12%, rgba(255,255,255,0.9) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 65% 48%, rgba(255,255,255,1) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 82% 72%, rgba(200,220,255,0.9) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 95% 18%, rgba(255,255,255,0.8) 0%, transparent 100%)',
+            'radial-gradient(2px 2px at 8% 22%, #fff 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 22% 68%, rgba(200,225,255,1) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 48% 12%, rgba(255,255,255,0.95) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 65% 48%, #fff 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 82% 72%, rgba(200,225,255,0.95) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 95% 18%, rgba(255,255,255,0.85) 0%, transparent 100%)',
         }}
       />
 
-      {/* Twinkling */}
       {animating && (
         <div
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(3px 3px at 15% 30%, rgba(200,220,255,1) 0%, transparent 100%), ' +
-              'radial-gradient(3px 3px at 42% 55%, rgba(255,255,255,0.9) 0%, transparent 100%), ' +
-              'radial-gradient(3px 3px at 73% 18%, rgba(200,220,255,1) 0%, transparent 100%), ' +
-              'radial-gradient(3px 3px at 88% 62%, rgba(255,255,255,0.8) 0%, transparent 100%)',
+              'radial-gradient(3px 3px at 15% 30%, rgba(200,225,255,1) 0%, transparent 100%), ' +
+              'radial-gradient(3px 3px at 42% 55%, #fff 0%, transparent 100%), ' +
+              'radial-gradient(3px 3px at 73% 18%, rgba(200,225,255,1) 0%, transparent 100%), ' +
+              'radial-gradient(3px 3px at 88% 62%, rgba(255,255,255,0.9) 0%, transparent 100%)',
             animation: 'star-twinkle 4s ease-in-out infinite alternate',
           }}
         />
       )}
 
-      {/* Moon */}
       <div
-        className="absolute top-[6%] right-[10%] w-48 h-48"
+        className="absolute top-[5%] right-[8%] w-56 h-56"
         style={{
           background:
-            'radial-gradient(circle at center, rgba(200, 215, 240, 0.4) 0%, rgba(150, 170, 200, 0.15) 40%, transparent 70%)',
+            'radial-gradient(circle at center, rgba(210, 220, 240, 0.45) 0%, rgba(160, 180, 210, 0.18) 40%, transparent 70%)',
         }}
       />
       <div
-        className="absolute top-[9%] right-[13%] w-12 h-12 rounded-full"
+        className="absolute top-[8%] right-[11%] w-14 h-14 rounded-full"
         style={{
           background:
-            'radial-gradient(circle at 40% 40%, rgba(220, 230, 245, 0.9) 0%, rgba(180, 195, 220, 0.5) 60%, transparent 100%)',
+            'radial-gradient(circle at 40% 40%, rgba(230, 235, 250, 0.95) 0%, rgba(190, 200, 225, 0.55) 60%, transparent 100%)',
           boxShadow:
-            '0 0 50px rgba(180, 200, 230, 0.3), 0 0 100px rgba(180, 200, 230, 0.15)',
+            '0 0 60px rgba(190, 210, 240, 0.35), 0 0 120px rgba(190, 210, 240, 0.18)',
         }}
       />
 
-      {/* City lights glow */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-[35%]"
+        className="absolute bottom-0 left-0 right-0 h-[30%]"
         style={{
           background:
-            'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(40, 90, 160, 0.25) 0%, rgba(20, 60, 120, 0.12) 50%, transparent 80%)',
+            'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(50, 100, 170, 0.3) 0%, rgba(25, 65, 130, 0.15) 50%, transparent 80%)',
         }}
       />
 
-      {/* City light dots */}
       <div
-        className="absolute bottom-[3%] left-[15%] right-[15%] h-[12%]"
+        className="absolute bottom-[2%] left-[15%] right-[15%] h-[10%]"
         style={{
           background:
-            'radial-gradient(2px 2px at 10% 50%, rgba(255, 210, 120, 1) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 25% 30%, rgba(255, 220, 140, 0.9) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 40% 60%, rgba(255, 200, 100, 0.8) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 55% 40%, rgba(255, 210, 120, 0.9) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 70% 55%, rgba(255, 200, 100, 0.7) 0%, transparent 100%), ' +
-            'radial-gradient(2px 2px at 85% 35%, rgba(255, 220, 140, 0.8) 0%, transparent 100%)',
+            'radial-gradient(2px 2px at 10% 50%, rgba(255, 215, 130, 1) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 25% 30%, rgba(255, 225, 150, 0.95) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 40% 60%, rgba(255, 205, 110, 0.85) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 55% 40%, rgba(255, 215, 130, 0.95) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 70% 55%, rgba(255, 205, 110, 0.75) 0%, transparent 100%), ' +
+            'radial-gradient(2px 2px at 85% 35%, rgba(255, 225, 150, 0.85) 0%, transparent 100%)',
         }}
       />
     </div>
