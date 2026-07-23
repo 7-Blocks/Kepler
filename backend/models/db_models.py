@@ -101,8 +101,8 @@ class SpaceObject(Base):
     mean_anomaly: Mapped[Optional[float]] = mapped_column(Float)
     mean_motion: Mapped[Optional[float]] = mapped_column(Float)
     period: Mapped[Optional[float]] = mapped_column(Float)
-    tle_line1: Mapped[Optional[str]] = mapped_column(String(100))
-    tle_line2: Mapped[Optional[str]] = mapped_column(String(100))
+    tle_line1: Mapped[Optional[str]] = mapped_column(String(200))
+    tle_line2: Mapped[Optional[str]] = mapped_column(String(200))
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -165,8 +165,8 @@ class Satellite(Base):
     operational_mode: Mapped[str] = mapped_column(String(20), default="NORMAL")
     semimajor_axis: Mapped[Optional[float]] = mapped_column(Float)
     period: Mapped[Optional[float]] = mapped_column(Float)
-    tle_line1: Mapped[Optional[str]] = mapped_column(String(100))
-    tle_line2: Mapped[Optional[str]] = mapped_column(String(100))
+    tle_line1: Mapped[Optional[str]] = mapped_column(String(200))
+    tle_line2: Mapped[Optional[str]] = mapped_column(String(200))
 
     organization: Mapped[Optional["Organization"]] = relationship("Organization", back_populates="satellites")
     space_object_rel: Mapped[Optional["SpaceObject"]] = relationship(
@@ -220,8 +220,8 @@ class Debris(Base):
     average_mass: Mapped[Optional[float]] = mapped_column(Float)
     semimajor_axis: Mapped[Optional[float]] = mapped_column(Float)
     period: Mapped[Optional[float]] = mapped_column(Float)
-    tle_line1: Mapped[Optional[str]] = mapped_column(String(100))
-    tle_line2: Mapped[Optional[str]] = mapped_column(String(100))
+    tle_line1: Mapped[Optional[str]] = mapped_column(String(200))
+    tle_line2: Mapped[Optional[str]] = mapped_column(String(200))
 
     space_object_rel: Mapped[Optional["SpaceObject"]] = relationship(
         "SpaceObject", back_populates="debris_details"
