@@ -5,7 +5,7 @@ import * as Cesium from 'cesium';
 import { isSatelliteSunlit } from '../utils/illumination';
 import { useBookmarks } from '../hooks/useBookmarks';
 import type { Bookmark } from '../hooks/useBookmarkStorage';
-import { BookmarkModal, type BookmarkFormValues, } from './GlobeBookmarks/BookMarkModal';
+import { BookmarkModal, type BookmarkFormValues } from './GlobeBookmarks/BookmarkModal';
 import { BookmarkSidebar } from './GlobeBookmarks/BookmarkSidebar';
 import {
   createBookmarkShareUrl,
