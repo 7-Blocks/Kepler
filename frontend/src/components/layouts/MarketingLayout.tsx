@@ -40,6 +40,7 @@ const navLinks = [
   { label: "Solutions", to: "/solutions" },
   { label: "Developers", to: "/developers" },
   { label: "Docs", to: "/docs" },
+  { label: "Support", to: "/support" },
   { label: "Dashboard", to: "/dashboard" },
 ];
 
