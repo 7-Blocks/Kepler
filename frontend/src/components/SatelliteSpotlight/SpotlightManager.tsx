@@ -62,6 +62,7 @@ export const SpotlightManager: React.FC<SpotlightManagerProps> = ({
     handler,
     toLatLonAlt,
     collisionSetRef,
+    containerEl,
     onSelect: onSelectionChange,
   });
 

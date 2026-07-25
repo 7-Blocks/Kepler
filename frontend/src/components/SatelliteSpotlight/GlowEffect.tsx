@@ -15,7 +15,7 @@ const HIGHLIGHT_SCALE = 1.7;
 const HIGHLIGHT_RISK_SCALE = 2.1;
 const TRANSITION_MS = 220;
 
-function prefersReducedMotion(): boolean {
+export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
@@ -101,6 +101,7 @@ export function applyDim(entity: Cesium.Entity, baseline: PointBaseline) {
   const point = entity.point;
   point.color = new Cesium.ConstantProperty(baseline.color.withAlpha(DIM_ALPHA));
   point.outlineColor = new Cesium.ConstantProperty(baseline.outlineColor.withAlpha(DIM_ALPHA * 0.6));
+  point.outlineWidth = new Cesium.ConstantProperty(baseline.outlineWidth);
 
   const currentSize = (point.pixelSize?.getValue(Cesium.JulianDate.now()) as number) ?? baseline.pixelSize;
   animate(

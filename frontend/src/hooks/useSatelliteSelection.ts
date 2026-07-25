@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import type { CatalogObject } from '@/types/satellite';
+import { prefersReducedMotion } from '@/components/SatelliteSpotlight/GlowEffect';
 
 interface UseSatelliteSelectionArgs {
   viewer: Cesium.Viewer | null;
@@ -9,6 +10,10 @@ interface UseSatelliteSelectionArgs {
   toLatLonAlt: (obj: CatalogObject) => { lat: number; lon: number; alt: number } | null;
   /** Read only inside event handlers, never during render. */
   collisionSetRef: React.RefObject<Set<string>>;
+  /** The keyboard-focusable globe container (not the Cesium canvas) that
+   *  SpotlightManager listens on for arrow-key navigation. Refocused after
+   *  mouse clicks so keyboard nav keeps working without requiring a Tab. */
+  containerEl: HTMLDivElement | null;
   onSelect?: (id: string | null) => void;
 }
 
@@ -31,6 +36,7 @@ export function useSatelliteSelection({
   handler,
   toLatLonAlt,
   collisionSetRef,
+  containerEl,
   onSelect,
 }: UseSatelliteSelectionArgs): UseSatelliteSelectionResult {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -75,6 +81,10 @@ export function useSatelliteSelection({
         // Clicked empty space — clear the lock.
         clearSelection();
       }
+      // Return focus to the keyboard-navigable globe container (not the
+      // Cesium canvas) so arrow-key navigation keeps working after a mouse
+      // interaction, without requiring the user to Tab in first.
+      containerEl?.focus({ preventScroll: true });
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
     handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
@@ -86,17 +96,21 @@ export function useSatelliteSelection({
           selectSatellite(obj);
           const pos = toLatLonAlt(obj);
           if (pos) {
-            viewer.camera.flyTo({
-              destination: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000),
-              duration: 1.5,
-            });
+            const destination = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000);
+            if (prefersReducedMotion()) {
+              // Jump directly to the destination instead of animating.
+              viewer.camera.flyTo({ destination, duration: 0 });
+            } else {
+              viewer.camera.flyTo({ destination, duration: 1.5 });
+            }
           }
         } catch {
           /* ignore malformed entity data */
         }
       }
+      containerEl?.focus({ preventScroll: true });
     }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
-  }, [viewer, handler, toLatLonAlt, selectSatellite, clearSelection]);
+  }, [viewer, handler, toLatLonAlt, selectSatellite, clearSelection, containerEl]);
 
   return { selectedId, selectedObject, selectedIsCollisionRisk, selectSatellite, clearSelection };
 }

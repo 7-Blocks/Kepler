@@ -332,7 +332,7 @@ export const EarthTwin: React.FC = () => {
         catalogMapRef={catalogMapRef}
         collisionSetRef={collisionSetRef}
         datasetVersion={datasetVersion}
-        toLatLonAlt={(obj) => keplerToLatLonAlt(obj)}
+        toLatLonAlt={keplerToLatLonAlt}
         onHoverChange={(obj, pos) => {
           setHoveredObject(obj);
           setTooltipPos(pos);

@@ -46,6 +46,12 @@ export function computeOrbitPositions(obj: CatalogObject): Cesium.Cartesian3[] |
     const trueAnomaly = meanAnomaly + 2 * ecc * Math.sin(meanAnomaly);
     const argLat = argPerigeeRad + trueAnomaly;
 
+    // Geocentric distance varies with true anomaly for eccentric orbits:
+    // r = a(1 - e^2) / (1 + e*cos(ν)). At ecc=0 this reduces to the
+    // constant-radius circular case.
+    const radiusKm = (obj.semimajor_axis * (1 - ecc * ecc)) / (1 + ecc * Math.cos(trueAnomaly));
+    const pointAlt = radiusKm - EARTH_RADIUS_KM;
+
     const lon =
       ((((Math.atan2(Math.cos(incRad) * Math.sin(argLat), Math.cos(argLat)) * 180) / Math.PI +
         (raanRad * 180) / Math.PI -
@@ -55,7 +61,7 @@ export function computeOrbitPositions(obj: CatalogObject): Cesium.Cartesian3[] |
         180);
     const lat = (Math.asin(Math.sin(incRad) * Math.sin(argLat)) * 180) / Math.PI;
 
-    positions.push(Cesium.Cartesian3.fromDegrees(lon, lat, alt * 1000));
+    positions.push(Cesium.Cartesian3.fromDegrees(lon, lat, pointAlt * 1000));
   }
 
   return positions;
