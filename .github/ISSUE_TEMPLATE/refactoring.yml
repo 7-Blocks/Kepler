@@ -1,0 +1,87 @@
+name: 🔧 Refactoring Proposal
+description: Suggest improvements to the codebase structure, maintainability, or technical quality
+title: "[Refactor]: "
+labels:
+  - "type:refactor"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping us improve the codebase!
+        Please provide enough context to explain why this refactoring is needed and how it could improve the project.
+
+  - type: textarea
+    id: current_implementation
+    attributes:
+      label: Current implementation
+      description: Describe the current code, architecture, or implementation that you believe should be refactored.
+      placeholder: |
+        Explain what currently exists and what could be improved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Explain why this refactoring is needed and what problems it would solve.
+      placeholder: |
+        Examples: improve maintainability, reduce duplication, simplify complex logic, improve performance, or improve code readability.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_changes
+    attributes:
+      label: Proposed changes
+      description: Describe the refactoring approach you are proposing.
+      placeholder: |
+        Explain how you would restructure or improve the existing implementation.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What part of the project does this refactoring affect?
+      options:
+        - Website
+        - Frontend
+        - Backend
+        - API
+        - Mobile
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternative approaches or solutions you have considered.
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: Describe the expected benefits and any potential risks or breaking changes.
+      placeholder: |
+        Explain how this refactoring would affect performance, maintainability, functionality, or other parts of the project.
+
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      description: How difficult do you think this refactoring would be to implement?
+      options:
+        - Beginner
+        - Intermediate
+        - Advanced
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Add any other context, references, code examples, or information that may help us evaluate this proposal.

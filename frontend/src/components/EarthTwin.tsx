@@ -6,6 +6,45 @@ import type { CatalogObject, CollisionRisk } from '@/types/satellite';
 import { CATEGORY_COLORS, getPointSize, getOutlineWidth } from '@/lib/satelliteVisuals';
 import '@/styles/spotlight.css';
 import * as Cesium from 'cesium';
+import { isSatelliteSunlit } from '../utils/illumination';
+import { useBookmarks } from '../hooks/useBookmarks';
+import type { Bookmark } from '../hooks/useBookmarkStorage';
+import { BookmarkModal, type BookmarkFormValues, } from './GlobeBookmarks/BookmarkModal';
+import { BookmarkSidebar } from './GlobeBookmarks/BookmarkSidebar';
+import {
+  createBookmarkShareUrl,
+  getSharedBookmarkFromUrl,
+} from '../utils/bookmarkHelpers';
+
+
+interface CatalogObject {
+  id: number;
+  name: string;
+  catalog_number: string;
+  classification: 'PAYLOAD' | 'DEBRIS' | 'ROCKET_BODY' | 'UNKNOWN';
+  epoch: string | null;
+  inclination: number | null;
+  eccentricity: number | null;
+  semimajor_axis: number | null;
+  raan: number | null;
+  arg_of_perigee: number | null;
+  mean_anomaly: number | null;
+  mean_motion: number | null;
+  period: number | null;
+  has_tle: boolean;
+  updated_at: string | null;
+}
+
+interface CollisionRisk {
+  id: number;
+  object_a: { name: string; catalog_number: string } | null;
+  object_b: { name: string; catalog_number: string } | null;
+  probability: number;
+  miss_distance_m: number;
+  relative_velocity_kms: number;
+  risk_level: string;
+  tca: string;
+}
 
 
 

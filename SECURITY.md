@@ -2,20 +2,29 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+We currently provide security updates for the latest version of Kepler.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| Latest  | :white_check_mark: |
+| Older versions | :x: |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Please **do not report security vulnerabilities publicly through GitHub Issues**.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+If you believe you have discovered a security vulnerability, please report it privately to the project maintainer:
+
+**Email:** [@krishkhinchi](mailto:krishhackz.in@gmail.com)
+
+Please include:
+
+- A clear description of the vulnerability
+- Steps to reproduce the issue
+- The potential impact
+- Any relevant screenshots, logs, or proof-of-concept details
+
+We will review the report and work to address the issue as soon as possible.
+
+Please avoid publicly disclosing the vulnerability until it has been reviewed and, where appropriate, resolved.
+

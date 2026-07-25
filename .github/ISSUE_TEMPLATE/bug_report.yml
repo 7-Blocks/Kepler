@@ -1,69 +1,117 @@
 name: Bug Report
-description: Create a report to help us improve
-labels: ["type:bug"]
+description: Report a bug or unexpected behavior to help us improve the project
+title: "[Bug]: "
+labels:
+  - "type:bug"
+
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for taking the time to report a bug!
+        Please provide as much detail as possible so we can investigate and reproduce the issue.
+
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: A clear and concise description of what the bug is.
+      label: Bug description
+      description: Provide a clear and concise description of the bug.
+      placeholder: |
+        Describe what went wrong and where you encountered the issue.
     validations:
       required: true
+
   - type: textarea
     id: reproduction
     attributes:
-      label: Reproduction steps
-      description: How do you trigger this bug?
+      label: Steps to reproduce
+      description: Provide clear steps that allow us to reproduce the issue.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Enter '...'
+        4. Observe the error
     validations:
       required: true
+
   - type: textarea
     id: expected
     attributes:
       label: Expected behavior
-      description: A clear and concise description of what you expected to happen.
+      description: Describe what you expected to happen.
+      placeholder: |
+        Explain what should have happened instead.
     validations:
       required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Describe what actually happened.
+      placeholder: |
+        Explain what happened instead of the expected behavior.
+    validations:
+      required: true
+
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain your problem.
+      label: Screenshots or recordings
+      description: If applicable, add screenshots, screen recordings, or other visual evidence.
+
   - type: dropdown
     id: platform
     attributes:
       label: Platform
-      description: What platform does this affect?
+      description: What part of the project does this issue affect?
       options:
         - Website
         - Backend
         - Frontend
         - API
         - Mobile
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Provide relevant environment details, such as OS, browser, or device.
+      placeholder: "e.g. Windows 11, Chrome 150"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error messages or logs
+      description: If applicable, paste any relevant error messages or logs.
+      render: shell
+
   - type: dropdown
     id: difficulty
     attributes:
       label: Difficulty
-      description: How difficult do you think this is to fix?
+      description: How difficult do you think this issue is to fix?
       options:
         - Beginner
         - Intermediate
         - Advanced
+
   - type: dropdown
     id: priority
     attributes:
       label: Priority
-      description: How critical is this issue?
+      description: How critical do you think this issue is?
       options:
         - Low
         - Medium
         - High
         - Critical
+
   - type: textarea
     id: additional
     attributes:
       label: Additional information
-      description: Any other context about the problem here.
+      description: Add any other context, references, or information that may help us investigate this issue.

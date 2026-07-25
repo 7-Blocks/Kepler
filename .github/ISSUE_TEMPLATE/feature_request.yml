@@ -1,60 +1,96 @@
 name: Feature Request
-description: Suggest an idea for this project
-labels: ["type:feature"]
+description: Suggest a new feature or improvement for this project
+title: "[Feature]: "
+labels:
+  - "type:feature"
+
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting a feature!
+        Thanks for taking the time to suggest a feature!
+        Please provide as much detail as possible to help us understand your idea.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem would this feature solve? Who would benefit from it?
+      placeholder: |
+        Describe the problem or use case this feature would address.
+    validations:
+      required: true
+
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: A clear and concise description of what you want to happen.
+      label: Proposed solution
+      description: Describe the feature or solution you would like to see.
+      placeholder: |
+        Clearly describe the feature you are proposing.
     validations:
       required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternative solutions or workarounds you have considered.
+      placeholder: |
+        Are there other ways to solve this problem?
+
   - type: textarea
     id: expected
     attributes:
       label: Expected behavior
-      description: A clear and concise description of what you expected to happen.
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots
-      description: If applicable, add screenshots or mockups.
+      description: Describe how you expect the feature to work once implemented.
+      placeholder: |
+        What should happen when this feature is implemented?
+
   - type: dropdown
     id: platform
     attributes:
       label: Platform
-      description: What platform does this affect?
+      description: What part of the project does this feature affect?
       options:
         - Website
         - Backend
         - Frontend
         - API
         - Mobile
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or mockups
+      description: If applicable, add screenshots, mockups, or other visual references.
+
   - type: dropdown
     id: difficulty
     attributes:
       label: Difficulty
-      description: How difficult do you think this is to implement?
+      description: How difficult do you think this feature is to implement?
       options:
         - Beginner
         - Intermediate
         - Advanced
+
   - type: dropdown
     id: priority
     attributes:
       label: Priority
-      description: How critical is this feature?
+      description: How important do you think this feature is?
       options:
         - Low
         - Medium
         - High
         - Critical
+
   - type: textarea
     id: additional
     attributes:
       label: Additional information
-      description: Any other context about the feature here.
+      description: Add any other context, references, or information about this feature.
