@@ -1,0 +1,69 @@
+/* Satellite Spotlight Effect — shared styles
+ * Used by SpotlightInfoCard and the Cesium container's focus ring.
+ * Keeps motion short (150–300ms) and fully respects prefers-reduced-motion.
+ */
+
+:root {
+  --spotlight-transition-duration: 200ms;
+  --spotlight-transition-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.spotlight-info-card {
+  animation: spotlight-card-in var(--spotlight-transition-duration) var(--spotlight-transition-ease);
+  transition: opacity var(--spotlight-transition-duration) var(--spotlight-transition-ease),
+    transform var(--spotlight-transition-duration) var(--spotlight-transition-ease);
+}
+
+.spotlight-info-card--risk {
+  animation: spotlight-card-in var(--spotlight-transition-duration) var(--spotlight-transition-ease),
+    spotlight-risk-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes spotlight-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spotlight-risk-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 59, 48, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(255, 59, 48, 0.55);
+  }
+}
+
+/* Cesium container gets a soft, visible focus ring for keyboard users */
+.spotlight-globe-container {
+  outline: none;
+  transition: box-shadow var(--spotlight-transition-duration) var(--spotlight-transition-ease);
+}
+
+.spotlight-globe-container:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(0, 229, 255, 0.85), inset 0 0 24px rgba(0, 229, 255, 0.25);
+}
+
+.spotlight-keyboard-hint {
+  animation: spotlight-card-in var(--spotlight-transition-duration) var(--spotlight-transition-ease);
+}
+
+/* Respect reduced-motion preferences: strip transitions/animations to instant */
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-info-card,
+  .spotlight-info-card--risk,
+  .spotlight-keyboard-hint {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .spotlight-globe-container {
+    transition: none !important;
+  }
+}
