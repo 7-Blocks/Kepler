@@ -144,6 +144,48 @@ def test_rerun_does_not_create_duplicates(sqlite_db):
     assert sqlite_db.query(Satellite).count() == 1
 
 
+def test_debris_records_are_persisted(sqlite_db):
+    """
+    Regression: debris ingestion wrote nothing at all.
+
+    `_gp_to_doc` emits one satellite-shaped dict for every provider, but `debris` is a
+    narrower table. Passing the extra keys through made every debris write fail —
+    CompileError ("Unconsumed column names") on PostgreSQL, TypeError on SQLite — so the
+    catalog silently gained no debris on either backend.
+    """
+    from models.db_models import Debris
+
+    records = [
+        _make_gp_record("50032", "COSMOS 1408 DEB", "DEBRIS"),
+        _make_gp_record("50033", "FENGYUN 1C DEB", "DEBRIS"),
+    ]
+    svc = _build_service({"analyst": records})
+
+    status = svc.sync_group(sqlite_db, "analyst", "DEBRIS", limit=500)
+
+    assert status["upserted"] == 2
+    assert status["failed"] == 0
+    assert sqlite_db.query(Debris).count() == 2
+
+    row = sqlite_db.query(Debris).filter(Debris.noradId == "50032").one()
+    assert row.objectName == "COSMOS 1408 DEB"
+
+
+def test_satellite_timestamps_are_datetimes_not_strings(sqlite_db):
+    """
+    Regression: `updatedAt` was written as an ISO *string* (a MongoDB-era leftover) into a
+    DateTime(timezone=True) column, which SQLAlchemy's SQLite DateTime rejects outright.
+    """
+    import datetime
+    from models.db_models import Satellite
+
+    svc = _build_service({"active": [_make_gp_record("25544", "ISS")]})
+    svc.sync_group(sqlite_db, "active", "PAYLOAD", limit=500)
+
+    sat = sqlite_db.query(Satellite).one()
+    assert isinstance(sat.updatedAt, datetime.datetime)
+
+
 def test_all_groups_sync_returns_meaningful_status(sqlite_db):
     from models.db_models import Satellite, Debris
     payloads = {

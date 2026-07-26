@@ -199,7 +199,9 @@ class SpaceTrackService:
         epoch        = _parse_epoch(rec.get("EPOCH", ""))
         tle1         = rec.get("TLE_LINE1") or rec.get("LINE1")
         tle2         = rec.get("TLE_LINE2") or rec.get("LINE2")
-        now          = datetime.datetime.utcnow().isoformat()
+        # A real, timezone-aware datetime: `updatedAt` is a DateTime(timezone=True)
+        # column, not the ISO string the MongoDB schema used to store.
+        now          = datetime.datetime.now(datetime.timezone.utc)
 
         return {
             "noradId":          norad_id,
@@ -237,6 +239,14 @@ class SpaceTrackService:
             return 0, []
 
         model = Debris if is_debris else Satellite
+
+        # `_gp_to_doc` emits one satellite-shaped dict for every provider, but `debris` is
+        # a narrower table (no objectType/status/updatedAt/…). Passing those through made
+        # every debris write fail — CompileError on PostgreSQL, TypeError on SQLite — so
+        # project each doc onto the columns the target model actually has.
+        columns = {c.name for c in model.__table__.columns}
+        docs = [{k: v for k, v in doc.items() if k in columns} for doc in docs]
+
         failed: List[str] = []
         written = 0
 
