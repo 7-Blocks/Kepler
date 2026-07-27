@@ -18,8 +18,8 @@ export function executeVoiceCommand(
   const command = transcript.toLowerCase().trim();
 
   if (
-    command.includes("track iss") ||
-    command.includes("track the iss")
+    command.includes("view iss") ||
+    command.includes("show iss")
   ) {
     actions.trackISS();
 
@@ -85,7 +85,7 @@ export function executeVoiceCommand(
   };
 }
 
-//For tracking ISS , use the command "track ISS" or "track the ISS"
+//For viewing ISS , use the command "view iss" or "show iss"
 //For showing debris , use the command "show debris", "show the debris" or "display debris"
 //For opening collision center , use the command "collision center" or "open collision center"
 //For zooming to India , use the command "zoom to India", "zoom into India" or "show India"
