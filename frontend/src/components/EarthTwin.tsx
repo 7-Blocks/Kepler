@@ -211,7 +211,7 @@ export const EarthTwin: React.FC = () => {
   }, []);
 
   const handleToggleSpaceWeather = useCallback(() => {
-    navigate('/space-weather')
+    navigate('/dashboard/space-weather')
   }, [navigate]);
   const [stats, setStats] = useState({
     totalObjects: 0,

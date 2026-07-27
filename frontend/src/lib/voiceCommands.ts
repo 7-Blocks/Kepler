@@ -84,3 +84,9 @@ export function executeVoiceCommand(
     message: `Command not recognized: "${transcript}"`,
   };
 }
+
+//For tracking ISS , use the command "track ISS" or "track the ISS"
+//For showing debris , use the command "show debris", "show the debris" or "display debris"
+//For opening collision center , use the command "collision center" or "open collision center"
+//For zooming to India , use the command "zoom to India", "zoom into India" or "show India"
+//For toggling space weather , use the command "space weather" or "toggle space weather"
