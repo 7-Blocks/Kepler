@@ -16,6 +16,8 @@ interface SpotlightManagerProps {
   toLatLonAlt: (obj: CatalogObject) => { lat: number; lon: number; alt: number } | null;
   onHoverChange?: (obj: CatalogObject | null, pos: { x: number; y: number }) => void;
   onSelectionChange?: (id: string | null) => void;
+  /** Set to lock selection onto a satellite from outside the globe (e.g. a dashboard card). */
+  focusRequest?: { catalogNumber: string; nonce: number } | null;
 }
 
 /**
@@ -36,6 +38,7 @@ export const SpotlightManager: React.FC<SpotlightManagerProps> = ({
   toLatLonAlt,
   onHoverChange,
   onSelectionChange,
+  focusRequest,
 }) => {
   const handlerRef = useRef<Cesium.ScreenSpaceEventHandler | null>(null);
   const [handler, setHandler] = useState<Cesium.ScreenSpaceEventHandler | null>(null);
@@ -70,6 +73,16 @@ export const SpotlightManager: React.FC<SpotlightManagerProps> = ({
     onHoverChange?.(hoveredObject, tooltipPos);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hoveredObject, tooltipPos]);
+
+  // External fly-to request (e.g. Satellite of the Day's "View on Globe")
+  // — lock selection the same way a click would, keyed off `nonce` so the
+  // same satellite can be re-requested.
+  useEffect(() => {
+    if (!focusRequest) return;
+    const obj = catalogMapRef.current?.get(focusRequest.catalogNumber) ?? null;
+    if (obj) selectSatellite(obj);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest]);
 
   // Keyboard focus takes priority over mouse hover for spotlight targeting,
   // since it reflects deliberate keyboard navigation.
