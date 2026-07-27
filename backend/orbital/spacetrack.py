@@ -103,22 +103,28 @@ class SpaceTrackService:
 
     def authenticate(self) -> bool:
         if self._authenticated:
+            logger.debug("[SpaceTrack] Using cached session (already authenticated)")
             return True
         if not self.username or not self.password:
-            logger.warning("SPACETRACK_USERNAME / SPACETRACK_PASSWORD not set.")
+            logger.warning("[SpaceTrack] SPACETRACK_USERNAME / SPACETRACK_PASSWORD not set — Space-Track unavailable")
             return False
         try:
+            logger.info("[SpaceTrack] Authenticating with Space-Track.org ...")
             resp = self.client.post(
                 f"{self.base_url}/ajaxauth/login",
                 data={"identity": self.username, "password": self.password},
             )
             if resp.status_code == 200 and "spacetrack_session" in self.client.cookies:
                 self._authenticated = True
+                logger.info("[SpaceTrack] Authentication successful")
                 return True
             logger.error(f"[SpaceTrack] Auth failed — HTTP {resp.status_code}")
             return False
+        except httpx.RequestError as exc:
+            logger.error(f"[SpaceTrack] Network error during auth (Space-Track may be down): {exc}")
+            return False
         except Exception as exc:
-            logger.error(f"[SpaceTrack] Auth exception: {exc}")
+            logger.error(f"[SpaceTrack] Auth exception: {exc}", exc_info=True)
             return False
 
     def _reset_auth(self):
@@ -145,24 +151,39 @@ class SpaceTrackService:
     @_retry(HTTP_MAX_ATTEMPTS, HTTP_BASE_DELAY, HTTP_MAX_DELAY,
             retry_on=(httpx.RequestError, httpx.HTTPStatusError))
     def _send_request(self, url: str) -> List[Dict[str, Any]]:
+        logger.debug(f"[SpaceTrack] GET {url}")
         resp = self.client.get(url)
         resp.raise_for_status()
         data = resp.json()
         if not isinstance(data, list):
             self._reset_auth()
+            logger.warning(f"[SpaceTrack] Unexpected response type {type(data)} — resetting auth")
             raise ValueError(f"Unexpected Space-Track response type: {type(data)}")
+        logger.debug(f"[SpaceTrack] Response: {len(data)} records")
         return data
 
     def fetch_group_json(self, group: str, limit: int = 500) -> List[Dict[str, Any]]:
-        if not self.authenticate():
-            return []
         path = self._build_group_path(group, limit)
         if not path:
+            logger.warning(f"[SpaceTrack] Unknown group '{group}' — no query path defined")
             return []
+
+        if not self.authenticate():
+            logger.warning(f"[SpaceTrack] Skipping fetch for group '{group}' — not authenticated")
+            return []
+
         try:
-            return self._send_request(f"{self.base_url}{path}")
+            data = self._send_request(f"{self.base_url}{path}")
+            logger.info(f"[SpaceTrack] Fetched {len(data)} records for group '{group}'")
+            return data
+        except httpx.HTTPStatusError as exc:
+            logger.error(f"[SpaceTrack] HTTP {exc.response.status_code} for group '{group}': {exc}")
+            return []
+        except httpx.RequestError as exc:
+            logger.error(f"[SpaceTrack] Network error for group '{group}': {exc}")
+            return []
         except Exception as exc:
-            logger.error(f"[SpaceTrack] Fetch failed for group '{group}': {exc}")
+            logger.error(f"[SpaceTrack] Fetch failed for group '{group}': {exc}", exc_info=True)
             return []
 
     def fetch_by_catalog_json(self, catalog_number: str) -> Optional[Dict[str, Any]]:
@@ -172,7 +193,12 @@ class SpaceTrackService:
                f"{catalog_number}/format/json")
         try:
             data = self._send_request(url)
-            return data[0] if data else None
+            result = data[0] if data else None
+            if result:
+                logger.info(f"[SpaceTrack] fetch_by_catalog({catalog_number}): found record")
+            else:
+                logger.warning(f"[SpaceTrack] fetch_by_catalog({catalog_number}): no record found")
+            return result
         except Exception as exc:
             logger.error(f"[SpaceTrack] fetch_by_catalog({catalog_number}) failed: {exc}")
             return None
@@ -199,7 +225,10 @@ class SpaceTrackService:
         epoch        = _parse_epoch(rec.get("EPOCH", ""))
         tle1         = rec.get("TLE_LINE1") or rec.get("LINE1")
         tle2         = rec.get("TLE_LINE2") or rec.get("LINE2")
-        now          = datetime.datetime.utcnow().isoformat()
+        now          = datetime.datetime.now(datetime.timezone.utc)
+
+        if not norad_id:
+            logger.warning(f"[SpaceTrack] Record missing NORAD_CAT_ID: {rec.get('OBJECT_NAME', '?')}")
 
         return {
             "noradId":          norad_id,
@@ -228,23 +257,31 @@ class SpaceTrackService:
 
     def _bulk_upsert(
         self, db: Session, is_debris: bool, docs: List[Dict[str, Any]]
-    ) -> Tuple[int, List[str]]:
+    ) -> Tuple[int, int, List[str], List[str]]:
         """
         Upsert using PostgreSQL INSERT ... ON CONFLICT (noradId) DO UPDATE SET ...
         Falls back to individual merge for non-PostgreSQL dialects (e.g. SQLite in tests).
+
+        Returns (inserted, updated, failed_ids, skipped_ids).
+        Skipped ids are records that already exist and were updated in place.
         """
         if not docs:
-            return 0, []
+            return 0, 0, [], []
 
         model = Debris if is_debris else Satellite
+        model_cols = {c.name for c in model.__table__.columns}
         failed: List[str] = []
-        written = 0
+        inserted = 0
+        updated = 0
 
         dialect = db.bind.dialect.name if db.bind else "postgresql"
 
         if dialect == "postgresql":
+            filtered_docs = []
+            for doc in docs:
+                filtered_docs.append({k: v for k, v in doc.items() if k in model_cols})
             try:
-                stmt = pg_insert(model).values(docs)
+                stmt = pg_insert(model).values(filtered_docs)
                 update_cols = {
                     c.name: c
                     for c in stmt.excluded
@@ -254,38 +291,45 @@ class SpaceTrackService:
                     index_elements=["noradId"],
                     set_=update_cols,
                 )
-                db.execute(stmt)
+                result = db.execute(stmt)
                 db.commit()
-                written = len(docs)
+                inserted = result.rowcount
             except Exception as exc:
                 db.rollback()
-                logger.error(f"[SpaceTrack] Bulk upsert failed: {exc}")
+                logger.error(f"[SpaceTrack] Bulk upsert failed: {exc}", exc_info=True)
                 failed = [d.get("noradId", "?") for d in docs]
         else:
-            # SQLite / other: row-by-row merge
             for doc in docs:
                 try:
+                    safe_doc = {k: v for k, v in doc.items() if k in model_cols}
                     existing = db.query(model).filter(model.noradId == doc["noradId"]).first()
                     if existing:
-                        for k, v in doc.items():
+                        for k, v in safe_doc.items():
                             if k not in ("id", "noradId", "createdAt") and hasattr(existing, k):
                                 setattr(existing, k, v)
+                        updated += 1
                     else:
-                        db.add(model(**doc))
-                    written += 1
+                        db.add(model(**safe_doc))
+                        inserted += 1
                 except Exception as exc:
                     logger.warning(f"[SpaceTrack] Row upsert failed for {doc.get('noradId')}: {exc}")
                     failed.append(doc.get("noradId", "?"))
             db.commit()
 
-        return written, failed
+        logger.info(
+            f"[SpaceTrack] {model.__tablename__} upsert: "
+            f"{inserted} inserted, {updated} updated, "
+            f"{len(failed)} failed, {len(docs) - inserted - updated - len(failed)} skipped"
+        )
+        return inserted, updated, failed, []
 
     def _ensure_db_connection(self, db: Session) -> bool:
         try:
             db.execute(__import__("sqlalchemy").text("SELECT 1"))
+            logger.debug("[SpaceTrack] Database connection OK")
             return True
         except Exception as exc:
-            logger.error(f"[SpaceTrack] DB unreachable: {exc}")
+            logger.error(f"[SpaceTrack] Database unreachable: {exc}", exc_info=True)
             return False
 
     # ------------------------------------------------------------------
@@ -299,16 +343,28 @@ class SpaceTrackService:
         object_type_override: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> Dict[str, Any]:
+        logger.info(f"[SpaceTrack] Starting sync for group '{group}' (limit={limit or 500})")
+
         if not self._ensure_db_connection(db):
+            logger.error(f"[SpaceTrack] DB unreachable for group '{group}'")
             return {"group": group, "fetched": 0, "parsed": 0, "upserted": 0,
+                    "inserted": 0, "updated": 0,
                     "failed": 0, "source": None, "errors": ["db_unreachable"]}
+
+        # Check authentication
+        if not self.authenticate():
+            logger.warning(f"[SpaceTrack] Not authenticated for group '{group}' — falling through provider chain")
 
         try:
             records, source = self.providers.fetch_group(group, limit or 500, db=db)
+            logger.info(f"[SpaceTrack] Group '{group}': fetched {len(records)} records from '{source}'")
         except AllProvidersFailedError as exc:
+            logger.error(f"[SpaceTrack] All providers failed for group '{group}': {exc.failures}")
             return {
-                "group": group, "fetched": 0, "parsed": 0, "upserted": 0, "failed": 0,
-                "source": None, "errors": ["all_providers_failed"], "provider_failures": exc.failures,
+                "group": group, "fetched": 0, "parsed": 0, "upserted": 0,
+                "inserted": 0, "updated": 0,
+                "failed": 0, "source": None,
+                "errors": ["all_providers_failed"], "provider_failures": exc.failures,
             }
 
         is_debris = (object_type_override == "DEBRIS" or group in ("analyst", "debris"))
@@ -326,34 +382,53 @@ class SpaceTrackService:
                 parse_errors.append(f"{rec.get('NORAD_CAT_ID', '?')}:{exc}")
 
         try:
-            upserted, failed_ids = self._bulk_upsert(db, is_debris, docs)
+            inserted, updated, failed_ids, _ = self._bulk_upsert(db, is_debris, docs)
+            total_upserted = inserted + updated
+            total_failed = len(failed_ids) + len(parse_errors)
+            logger.info(
+                f"[SpaceTrack] Group '{group}' — fetched={len(records)}, "
+                f"parsed={len(docs)}, inserted={inserted}, updated={updated}, "
+                f"failed={total_failed}, source={source}"
+            )
             return {
                 "group": group, "fetched": len(records), "parsed": len(docs),
-                "upserted": upserted, "failed": len(failed_ids) + len(parse_errors),
-                "source": source, "errors": failed_ids + parse_errors,
+                "upserted": total_upserted, "inserted": inserted, "updated": updated,
+                "failed": total_failed, "source": source,
+                "errors": failed_ids + parse_errors,
             }
         except Exception as exc:
-            logger.error(f"[Ingest] Upsert failure for '{group}': {exc}")
+            logger.error(f"[Ingest] Upsert failure for '{group}': {exc}", exc_info=True)
             return {
                 "group": group, "fetched": len(records), "parsed": len(docs),
-                "upserted": 0, "failed": len(docs) + len(parse_errors),
+                "upserted": 0, "inserted": 0, "updated": 0,
+                "failed": len(docs) + len(parse_errors),
                 "source": source, "errors": [str(exc)] + parse_errors,
             }
 
     def sync_all_groups(self, db: Session, limit_per_group: int = 500) -> Dict[str, Any]:
         per_group: Dict[str, Any] = {}
-        total_fetched = total_upserted = total_failed = 0
+        total_fetched = total_upserted = total_failed = total_inserted = total_updated = 0
 
         for group, type_override, _ in SYNC_GROUPS:
             status = self.sync_group(db, group, type_override, limit=limit_per_group)
             per_group[group] = status
-            total_fetched  += status["fetched"]
-            total_upserted += status["upserted"]
-            total_failed   += status["failed"]
+            total_fetched   += status["fetched"]
+            total_upserted  += status.get("upserted", 0)
+            total_inserted  += status.get("inserted", 0)
+            total_updated   += status.get("updated", 0)
+            total_failed    += status["failed"]
+
+        logger.info(
+            f"[SpaceTrack] Sync complete — "
+            f"fetched={total_fetched}, inserted={total_inserted}, "
+            f"updated={total_updated}, failed={total_failed}"
+        )
 
         return {
             "total_fetched":   total_fetched,
             "total_upserted":  total_upserted,
+            "total_inserted":  total_inserted,
+            "total_updated":   total_updated,
             "total_failed":    total_failed,
             "groups":          per_group,
         }
@@ -366,9 +441,16 @@ class SpaceTrackService:
         is_debris = obj_type == "DEBRIS"
         doc       = self._gp_to_doc(rec, obj_type)
         try:
-            self._bulk_upsert(db, is_debris, [doc])
+            inserted, updated, failed_ids, _ = self._bulk_upsert(db, is_debris, [doc])
+            if failed_ids:
+                logger.error(f"[SpaceTrack] Single upsert failed for {catalog_number}: {failed_ids}")
+            else:
+                logger.info(
+                    f"[SpaceTrack] sync_by_catalog({catalog_number}): "
+                    f"{'inserted' if inserted else 'updated'}"
+                )
         except Exception as exc:
-            logger.error(f"[SpaceTrack] Single upsert failed for {catalog_number}: {exc}")
+            logger.error(f"[SpaceTrack] Single upsert failed for {catalog_number}: {exc}", exc_info=True)
         model = Debris if is_debris else Satellite
         return db.query(model).filter(model.noradId == catalog_number).first()
 
