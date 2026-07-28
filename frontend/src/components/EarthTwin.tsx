@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
+import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
 import { useUIStore } from '@/store/uiStore';
 import { MaterialIcon } from './MaterialIcon';
 import { SpotlightManager } from './SatelliteSpotlight/SpotlightManager';
@@ -110,7 +111,12 @@ const LegendCardSkeleton = () => (
   <div className="min-w-[200px] glass-panel p-4 animate-pulse bg-surface-container/40 h-48" />
 );
 
-export const EarthTwin: React.FC = () => {
+export interface EarthTwinHandle {
+  /** Flies the camera to the given NORAD catalog number and opens its info panel. */
+  flyToSatellite: (catalogNumber: string) => void;
+}
+
+export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const entitiesRef = useRef<Map<string, Cesium.Entity>>(new Map());
@@ -119,6 +125,12 @@ export const EarthTwin: React.FC = () => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { activeSector, setSelectedSatelliteId } = useUIStore();
   const [useFallback, setUseFallback] = useState(true);
+  // Set by flyToSatellite(), consumed by SpotlightManager to lock its
+  // selection/info-card onto a satellite chosen from outside the globe
+  // (e.g. the Satellite of the Day card's "View on Globe" button). The
+  // nonce forces the effect to re-fire even if the same satellite is
+  // requested twice in a row.
+  const [focusRequest, setFocusRequest] = useState<{ catalogNumber: string; nonce: number } | null>(null);
   const [hoveredObject, setHoveredObject] = useState<CatalogObject | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
@@ -333,6 +345,27 @@ export const EarthTwin: React.FC = () => {
     }
   }, []); 
 
+  // Mirrors the double-click fly-to in useSatelliteSelection.ts, but
+  // triggerable from outside the globe (e.g. a dashboard card) instead of
+  // from a Cesium pick event.
+  const flyToSatellite = useCallback((catalogNumber: string) => {
+    const viewer = viewerRef.current;
+    const obj = catalogMapRef.current.get(catalogNumber);
+    if (!viewer || viewer.isDestroyed() || !obj) return;
+
+    const pos = keplerToLatLonAlt(obj);
+    if (pos) {
+      const destination = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000);
+      viewer.camera.flyTo({ destination, duration: prefersReducedMotion() ? 0 : 1.5 });
+    }
+
+    // SpotlightManager owns actual selection state; this just tells it
+    // which satellite to lock onto and open the info panel for.
+    setFocusRequest({ catalogNumber, nonce: Date.now() });
+  }, []);
+
+  useImperativeHandle(ref, () => ({ flyToSatellite }), [flyToSatellite]);
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-bg-deep-space border-b border-border-panel">
       {/* 3D Cesium Container */}
@@ -372,6 +405,7 @@ export const EarthTwin: React.FC = () => {
         collisionSetRef={collisionSetRef}
         datasetVersion={datasetVersion}
         toLatLonAlt={keplerToLatLonAlt}
+        focusRequest={focusRequest}
         onHoverChange={(obj, pos) => {
           setHoveredObject(obj);
           setTooltipPos(pos);
@@ -576,5 +610,7 @@ export const EarthTwin: React.FC = () => {
       `}</style>
     </div>
   );
-};
+});
+
+EarthTwin.displayName = 'EarthTwin';
 export default EarthTwin;
