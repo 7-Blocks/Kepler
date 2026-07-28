@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { EarthTwin } from '@/components/EarthTwin';
+import { EarthTwin, type EarthTwinHandle } from '@/components/EarthTwin';
 import { MaterialIcon } from '@/components/MaterialIcon';
 import { MagicCard } from '@/components/ui/magic-card';
+import { SpotlightCard } from '@/components/SatelliteOfTheDay/SpotlightCard';
 import { useSpaceSummary } from '@/hooks/useApi';
 import { useCollisions } from '@/hooks/useApi';
 import { useAgentRuns } from '@/hooks/useApi';
@@ -48,6 +49,7 @@ const CollisionCardSkeleton = () => (
 );
 
 export const Dashboard: React.FC = () => {
+  const earthTwinRef = useRef<EarthTwinHandle>(null);
   const summary  = useSpaceSummary();
   const collisions = useCollisions({ size: 5 });
   const agents   = useAgentRuns({ size: 6 });
@@ -118,7 +120,12 @@ export const Dashboard: React.FC = () => {
     <div className="flex flex-col min-h-screen">
       {/* 3D Earth Twin Digital Hero */}
       <section className="h-[250px] md:h-[409px] relative border-b border-border-panel/60">
-        <EarthTwin />
+        <EarthTwin ref={earthTwinRef} />
+      </section>
+
+      {/* Satellite of the Day */}
+      <section className="px-3 md:px-6 pt-3 md:pt-6">
+        <SpotlightCard onViewOnGlobe={(catalogNumber) => earthTwinRef.current?.flyToSatellite(catalogNumber)} />
       </section>
 
       {/* KPI Bento Grid with Magic Cards */}
