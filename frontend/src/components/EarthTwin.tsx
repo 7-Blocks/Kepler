@@ -2,10 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, f
 import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
 import { useUIStore } from '@/store/uiStore';
 import { MaterialIcon } from './MaterialIcon';
-import { SpotlightManager } from './SatelliteSpotlight/SpotlightManager';
-import type { CatalogObject, CollisionRisk } from '@/types/satellite';
-import { CATEGORY_COLORS, getPointSize, getOutlineWidth } from '@/lib/satelliteVisuals';
-import '@/styles/spotlight.css';
+import { useNavigate } from 'react-router-dom';
 import * as Cesium from 'cesium';
 import { isSatelliteSunlit } from '../utils/illumination';
 import { useBookmarks } from '../hooks/useBookmarks';
@@ -17,6 +14,8 @@ import {
   getSharedBookmarkFromUrl,
 } from '../utils/bookmarkHelpers';
 
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { executeVoiceCommand } from '../lib/voiceCommands';
 
 interface CatalogObject {
   id: number;
@@ -51,33 +50,32 @@ interface CollisionRisk {
 
 function keplerToLatLonAlt(obj: CatalogObject, timeOffsetSec: number = 0): { lat: number; lon: number; alt: number } | null {
   if (obj.semimajor_axis == null || obj.inclination == null || obj.raan == null ||
-      obj.arg_of_perigee == null || obj.mean_anomaly == null || obj.mean_motion == null) {
+    obj.arg_of_perigee == null || obj.mean_anomaly == null || obj.mean_motion == null) {
     return null;
   }
 
-  const EARTH_RADIUS = 6371; 
+  const EARTH_RADIUS = 6371;
   const alt = obj.semimajor_axis - EARTH_RADIUS;
   if (alt < 0 || alt > 100000) return null;
 
-  
+
   const epochDate = obj.epoch ? new Date(obj.epoch) : new Date();
   const now = new Date();
   const elapsedDays = (now.getTime() - epochDate.getTime()) / 86400000 + (timeOffsetSec / 86400);
-  const meanMotionRadPerSec = (obj.mean_motion * 2 * Math.PI) / 86400;
   const currentMeanAnomaly = ((obj.mean_anomaly + (elapsedDays * obj.mean_motion * 360)) % 360) * Math.PI / 180;
 
-  
+
   const ecc = obj.eccentricity ?? 0;
   const trueAnomaly = currentMeanAnomaly + 2 * ecc * Math.sin(currentMeanAnomaly);
 
-  
+
   const argLat = (obj.arg_of_perigee * Math.PI / 180) + trueAnomaly;
 
-  
+
   const raanRad = obj.raan * Math.PI / 180;
   const incRad = obj.inclination * Math.PI / 180;
 
-  
+
   const J2000 = new Date('2000-01-01T12:00:00Z').getTime();
   const daysSinceJ2000 = (now.getTime() + timeOffsetSec * 1000 - J2000) / 86400000;
   const GMST = (280.46061837 + 360.98564736629 * daysSinceJ2000) % 360;
@@ -90,6 +88,34 @@ function keplerToLatLonAlt(obj: CatalogObject, timeOffsetSec: number = 0): { lat
   const lat = Math.asin(Math.sin(incRad) * Math.sin(argLat)) * 180 / Math.PI;
 
   return { lat, lon, alt };
+}
+
+
+const CATEGORY_COLORS = {
+  PAYLOAD: { css: '#00E5FF', cesium: Cesium.Color.fromCssColorString('#00E5FF'), label: 'Active Satellites', icon: 'satellite_alt' },
+  DEBRIS: { css: '#FFAA00', cesium: Cesium.Color.fromCssColorString('#FFAA00'), label: 'Debris Objects', icon: 'delete_sweep' },
+  ROCKET_BODY: { css: '#FF4444', cesium: Cesium.Color.fromCssColorString('#FF4444'), label: 'Rocket Bodies', icon: 'rocket' },
+  UNKNOWN: { css: '#888888', cesium: Cesium.Color.fromCssColorString('#888888'), label: 'Unknown Objects', icon: 'help_outline' },
+  COLLISION: { css: '#FF0000', cesium: Cesium.Color.fromCssColorString('#FF0000'), label: 'Collision Risk', icon: 'warning' },
+  SELECTED: { css: '#00E5FF', cesium: Cesium.Color.fromCssColorString('#00E5FF'), label: 'Selected', icon: 'gps_fixed' },
+} as const;
+
+function getPointSize(classification: string): number {
+  switch (classification) {
+    case 'PAYLOAD': return 5;
+    case 'DEBRIS': return 4;
+    case 'ROCKET_BODY': return 6;
+    default: return 3;
+  }
+}
+
+function getOutlineWidth(classification: string): number {
+  switch (classification) {
+    case 'PAYLOAD': return 1;
+    case 'DEBRIS': return 1;
+    case 'ROCKET_BODY': return 2;
+    default: return 1;
+  }
 }
 
 
@@ -111,6 +137,8 @@ const LegendCardSkeleton = () => (
   <div className="min-w-[200px] glass-panel p-4 animate-pulse bg-surface-container/40 h-48" />
 );
 
+export const EarthTwin: React.FC = () => {
+  const navigate = useNavigate();
 export interface EarthTwinHandle {
   /** Flies the camera to the given NORAD catalog number and opens its info panel. */
   flyToSatellite: (catalogNumber: string) => void;
@@ -120,8 +148,6 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const entitiesRef = useRef<Map<string, Cesium.Entity>>(new Map());
-  const catalogMapRef = useRef<Map<string, CatalogObject>>(new Map());
-  const collisionSetRef = useRef<Set<string>>(new Set());
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { activeSector, setSelectedSatelliteId } = useUIStore();
   const [useFallback, setUseFallback] = useState(true);
@@ -133,23 +159,80 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [focusRequest, setFocusRequest] = useState<{ catalogNumber: string; nonce: number } | null>(null);
   const [hoveredObject, setHoveredObject] = useState<CatalogObject | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
-  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-  const [datasetVersion, setDatasetVersion] = useState(0);
   const [showLegend, setShowLegend] = useState(true);
   const [showDensity, setShowDensity] = useState(false);
   const [showRiskOverlay, setShowRiskOverlay] = useState(false);
   const [objectCounts, setObjectCounts] = useState({ payloads: 0, debris: 0, rocketBodies: 0, total: 0, collisions: 0 });
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false);
+  const [isBookmarkSidebarOpen, setIsBookmarkSidebarOpen] = useState(false);
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const handleTrackISS = useCallback(() => {
+    const viewer = viewerRef.current;
 
-  
+  if (!viewer || viewer.isDestroyed()) {
+    return;
+  }
+
+  autoRotateRef.current = false;
+
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(
+      0,
+      0,
+      2_200_000
+    ),
+    orientation: {
+      heading:  0,
+      pitch: Cesium.Math.toRadians(-85),
+      roll: 0,
+    },
+    duration: 1.5,
+  });
+  }, []);
+
+  const handleShowDebris = useCallback(() => {
+    navigate('/Debris');
+  }, [navigate]);
+
+  const handleOpenCollisionCenter = useCallback(() => {
+    navigate('/dashboard/collision-center');
+  }, [navigate]);
+
+  const handleZoomToIndia = useCallback(() => {
+    const viewer = viewerRef.current;
+
+    if (!viewer || viewer.isDestroyed()) {
+      return;
+    }
+
+    autoRotateRef.current = false;
+
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(
+        78.9629,
+        20.5937,
+        3_000_000
+      ),
+      orientation: {
+        heading: 0,
+        pitch: Cesium.Math.toRadians(-85),
+        roll: 0,
+      },
+      duration: 1.5,
+    });
+  }, []);
+
+  const handleToggleSpaceWeather = useCallback(() => {
+    navigate('/dashboard/space-weather')
+  }, [navigate]);
   const [stats, setStats] = useState({
     totalObjects: 0,
     lastSync: '',
     weatherIndex: 'K0',
   });
 
-  
+
   const populateEntities = useCallback(async (viewer: Cesium.Viewer) => {
     try {
       if (!viewer || viewer.isDestroyed()) return;
@@ -159,7 +242,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         fetchCollisions(),
       ]);
 
-      
+
       const collisionCatNums = new Set<string>();
       collisions.forEach(c => {
         if (c.object_a?.catalog_number) collisionCatNums.add(c.object_a.catalog_number);
@@ -169,22 +252,22 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       let payloads = 0, debris = 0, rocketBodies = 0;
       const entityMap = new Map<string, Cesium.Entity>();
 
-      
+
       if (!viewer || viewer.isDestroyed()) return;
 
-      
-      viewer.entities.removeAll();
 
+      viewer.entities.removeAll();
+      const nowJulian = Cesium.JulianDate.now();
       objects.forEach(obj => {
         const pos = keplerToLatLonAlt(obj);
         if (!pos) return;
 
-        
+
         if (obj.classification === 'PAYLOAD') payloads++;
         else if (obj.classification === 'DEBRIS') debris++;
         else if (obj.classification === 'ROCKET_BODY') rocketBodies++;
 
-        
+
         const isCollisionRisk = collisionCatNums.has(obj.catalog_number);
         const colorConfig = isCollisionRisk
           ? CATEGORY_COLORS.COLLISION
@@ -193,12 +276,15 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         const pixelSize = isCollisionRisk ? 8 : getPointSize(obj.classification);
         const outlineWidth = isCollisionRisk ? 3 : getOutlineWidth(obj.classification);
 
+        const cartPos = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000);
+        const sunlit = isSatelliteSunlit(cartPos, nowJulian, viewer.scene.globe);
+
         const entity = viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000),
+          position: cartPos,
           point: {
             pixelSize,
-            color: colorConfig.cesium.withAlpha(0.85),
-            outlineColor: colorConfig.cesium.withAlpha(0.4),
+            color: sunlit ? colorConfig.cesium.withAlpha(0.85) : colorConfig.cesium.withAlpha(0.3),
+            outlineColor: sunlit ? colorConfig.cesium.withAlpha(0.4) : colorConfig.cesium.withAlpha(0.1),
             outlineWidth,
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
             scaleByDistance: new Cesium.NearFarScalar(1e6, 1.5, 5e7, 0.4),
@@ -217,7 +303,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         entityMap.set(obj.catalog_number, entity);
       });
 
-      
+
       collisions.forEach(conj => {
         if (!conj.object_a || !conj.object_b) return;
         const entityA = entityMap.get(conj.object_a.catalog_number);
@@ -241,9 +327,6 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       });
 
       entitiesRef.current = entityMap;
-      catalogMapRef.current = new Map(objects.map(obj => [obj.catalog_number, obj]));
-      collisionSetRef.current = collisionCatNums;
-      setDatasetVersion(v => v + 1);
       setObjectCounts({
         payloads,
         debris,
@@ -263,12 +346,211 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     }
   }, []);
 
-  
+
+  const autoRotateRef = useRef(true);
+
+  const {
+    bookmarks,
+    filteredBookmarks,
+    favoriteBookmarks,
+    recentBookmarks,
+    categories,
+
+    searchQuery,
+    selectedCategory,
+
+    setSearchQuery,
+    setSelectedCategory,
+
+    addBookmark,
+    updateBookmark,
+    deleteBookmark,
+    toggleFavorite,
+    markAsRecent,
+
+    exportBookmarks,
+    importBookmarks,
+  } = useBookmarks();
+
+  const [selectedBookmarkId, setSelectedBookmarkId] =
+    useState('');
+
+
+  const saveCurrentView = useCallback(() => {
+    const viewer = viewerRef.current;
+
+    if (!viewer || viewer.isDestroyed()) {
+      return;
+    }
+
+    const cartographic =
+      viewer.scene.globe.ellipsoid.cartesianToCartographic(
+        viewer.camera.positionWC
+      );
+
+    if (!cartographic) {
+      return;
+    }
+
+    const timestamp = new Intl.DateTimeFormat('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date());
+
+    addBookmark({
+      name: `Saved view — ${timestamp}`,
+      description: 'Saved from the current globe camera position.',
+      category: 'Custom',
+
+      latitude: Cesium.Math.toDegrees(cartographic.latitude),
+      longitude: Cesium.Math.toDegrees(cartographic.longitude),
+      altitude: cartographic.height,
+
+      // Cesium expects these values in radians when restoring.
+      heading: viewer.camera.heading,
+      pitch: viewer.camera.pitch,
+      roll: viewer.camera.roll,
+    });
+  }, [addBookmark]);
+
+  const restoreBookmark = useCallback(
+    (bookmark: Bookmark) => {
+      const viewer = viewerRef.current;
+
+      if (!viewer || viewer.isDestroyed()) {
+        return;
+      }
+
+      // Prevent the existing automatic globe rotation from immediately
+      // moving the camera away from the restored bookmark view.
+      autoRotateRef.current = false;
+
+      markAsRecent(bookmark.id);
+
+      const prefersReducedMotion =
+        window.matchMedia?.(
+          '(prefers-reduced-motion: reduce)'
+        ).matches ?? false;
+
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(
+          bookmark.longitude,
+          bookmark.latitude,
+          bookmark.altitude
+        ),
+        orientation: {
+          heading: bookmark.heading,
+          pitch: bookmark.pitch,
+          roll: bookmark.roll,
+        },
+        duration: prefersReducedMotion ? 0 : 1.5,
+      });
+    },
+    [markAsRecent]
+  );
+
+
+  const handleBookmarkSubmit = useCallback(
+    (values: BookmarkFormValues) => {
+      if (editingBookmark) {
+        updateBookmark(editingBookmark.id, {
+          name: values.name,
+          description: values.description,
+          category: values.category,
+        });
+
+        setEditingBookmark(null);
+        setIsBookmarkModalOpen(false);
+        return;
+      }
+
+      const viewer = viewerRef.current;
+
+      if (!viewer || viewer.isDestroyed()) {
+        return;
+      }
+
+      const cartographic =
+        viewer.scene.globe.ellipsoid.cartesianToCartographic(
+          viewer.camera.positionWC
+        );
+
+      if (!cartographic) {
+        return;
+      }
+
+      addBookmark({
+        name: values.name,
+        description: values.description,
+        category: values.category,
+
+        latitude: Cesium.Math.toDegrees(cartographic.latitude),
+        longitude: Cesium.Math.toDegrees(cartographic.longitude),
+        altitude: cartographic.height,
+
+        heading: viewer.camera.heading,
+        pitch: viewer.camera.pitch,
+        roll: viewer.camera.roll,
+      });
+
+      setIsBookmarkModalOpen(false);
+    },
+    [addBookmark, editingBookmark, updateBookmark]
+  );
+
+  const handleShareBookmark = useCallback(
+    async (bookmark: Bookmark) => {
+      const shareUrl = createBookmarkShareUrl(bookmark);
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch {
+        window.prompt(
+          'Copy this bookmark link:',
+          shareUrl
+        );
+      }
+    },
+    []
+  );
+
+
+  const handleVoiceCommand = useCallback(
+    (transcript: string) => {
+      executeVoiceCommand(transcript, {
+        trackISS: handleTrackISS,
+        showDebris: handleShowDebris,
+        openCollisionCenter: handleOpenCollisionCenter,
+        zoomToIndia: handleZoomToIndia,
+        toggleSpaceWeather: handleToggleSpaceWeather,
+      });
+    },
+    [
+      handleTrackISS,
+      handleShowDebris,
+      handleOpenCollisionCenter,
+      handleZoomToIndia,
+      handleToggleSpaceWeather,
+    ]
+  );
+
+  const {
+    isSupported,
+    isListening,
+    transcript,
+    error,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition({
+    onCommand: handleVoiceCommand,
+  });
+
   useEffect(() => {
     if (!containerRef.current || !Cesium) return;
     if (viewerRef.current && !viewerRef.current.isDestroyed()) return;
 
     let onTick: (() => void) | null = null;
+    let handler: Cesium.ScreenSpaceEventHandler | null = null;
 
     try {
       const viewer = new Cesium.Viewer(containerRef.current, {
@@ -289,19 +571,18 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       });
 
       viewerRef.current = viewer;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUseFallback(false);
-      setViewerInstance(viewer);
-      setContainerEl(containerRef.current);
 
-      
-      viewer.scene.globe.enableLighting = false;
+
+      viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
       viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050710');
       viewer.scene.fog.enabled = false;
       if (viewer.scene.skyAtmosphere) {
         viewer.scene.skyAtmosphere.show = true;
       }
 
-      
+
       viewer.camera.setView({
         destination: Cesium.Cartesian3.fromDegrees(30, 15, 20000000),
         orientation: {
@@ -310,17 +591,87 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
           roll: 0.0,
         },
       });
+      const sharedBookmark = getSharedBookmarkFromUrl();
 
-      
+      if (sharedBookmark) {
+        autoRotateRef.current = false;
+
+        const prefersReducedMotion =
+          window.matchMedia?.(
+            '(prefers-reduced-motion: reduce)'
+          ).matches ?? false;
+
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(
+            sharedBookmark.longitude,
+            sharedBookmark.latitude,
+            sharedBookmark.altitude
+          ),
+          orientation: {
+            heading: sharedBookmark.heading,
+            pitch: sharedBookmark.pitch,
+            roll: sharedBookmark.roll,
+          },
+          duration: prefersReducedMotion ? 0 : 1.5,
+        });
+      }
+
       onTick = () => {
-        viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, 0.0003);
+        if (autoRotateRef.current) {
+          viewer.scene.camera.rotate(
+            Cesium.Cartesian3.UNIT_Z,
+            0.0003
+          );
+        }
       };
       viewer.clock.onTick.addEventListener(onTick);
 
-      
+
+      handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+      handler.setInputAction((movement: { endPosition: Cesium.Cartesian2 }) => {
+        const picked = viewer.scene.pick(movement.endPosition);
+        if (Cesium.defined(picked) && picked.id && picked.id.properties) {
+          try {
+            const rawData = picked.id.properties.catalogData?.getValue(Cesium.JulianDate.now());
+            if (rawData) {
+              const obj = JSON.parse(rawData) as CatalogObject;
+              setHoveredObject(obj);
+              setTooltipPos({ x: movement.endPosition.x + 15, y: movement.endPosition.y - 10 });
+            }
+          } catch { /* ignore parse errors */ }
+        } else {
+          setHoveredObject(null);
+        }
+      }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+
+      handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
+        const picked = viewer.scene.pick(click.position);
+        if (Cesium.defined(picked) && picked.id && picked.id.properties) {
+          try {
+            const rawData = picked.id.properties.catalogData?.getValue(Cesium.JulianDate.now());
+            if (rawData) {
+              const obj = JSON.parse(rawData) as CatalogObject;
+              setSelectedSatelliteId(obj.catalog_number);
+
+
+              const pos = keplerToLatLonAlt(obj);
+              if (pos) {
+                viewer.camera.flyTo({
+                  destination: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000),
+                  duration: 1.5,
+                });
+              }
+            }
+          } catch { /* ignore parse errors */ }
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+
       populateEntities(viewer);
 
-      
+
       const refreshInterval = setInterval(() => {
         if (viewerRef.current && !viewerRef.current.isDestroyed()) {
           populateEntities(viewerRef.current);
@@ -329,21 +680,21 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
       return () => {
         clearInterval(refreshInterval);
+        if (handler) handler.destroy();
         const v = viewerRef.current;
         if (v && !v.isDestroyed()) {
           if (onTick) v.clock.onTick.removeEventListener(onTick);
           v.destroy();
         }
         viewerRef.current = null;
-        setViewerInstance(null);
-        setContainerEl(null);
       };
 
     } catch (e) {
       console.warn('Cesium initialization failed, using fallback', e);
       setUseFallback(true);
     }
-  }, []); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Mirrors the double-click fly-to in useSatelliteSelection.ts, but
   // triggerable from outside the globe (e.g. a dashboard card) instead of
@@ -369,13 +720,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   return (
     <div className="relative w-full h-full overflow-hidden bg-bg-deep-space border-b border-border-panel">
       {/* 3D Cesium Container */}
-      <div
-        ref={containerRef}
-        tabIndex={0}
-        role="application"
-        aria-label="Orbital object globe. Use arrow keys to navigate between tracked objects, Enter to select, Escape to clear."
-        className="spotlight-globe-container absolute inset-0 w-full h-full z-0"
-      />
+      <div ref={containerRef} className="absolute inset-0 w-full h-full z-0" />
 
       {/* High-Fidelity SVG Fallback */}
       {useFallback && (
@@ -455,7 +800,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       )}
 
       {/* ── HUD Overlay ───────────────────────────────────────── */}
-      <div className="absolute inset-0 p-3 md:p-6 flex flex-col justify-between z-10 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 p-3 pb-16 md:p-6 md:pb-16 flex flex-col justify-between z-10 pointer-events-none overflow-hidden">
 
         {/* Top Row */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
@@ -474,30 +819,30 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
           </div>
 
           <div className="text-right space-y-1 animate-[slideDown_0.5s_ease-out] hidden sm:block">
-          {dataLoaded ? (
-            <>
-            {objectCounts.collisions > 0 ? (
-              <div className="bg-status-emergency/20 border border-status-emergency px-3 md:px-4 py-1 flex items-center gap-2 drop-shadow-[0_0_12px_rgba(255,59,48,0.4)]">
-                <MaterialIcon name="warning" className="text-status-emergency text-sm animate-pulse" />
-                <span className="font-technical-data text-status-emergency text-[11px] md:text-[12px] font-bold">
-                  {objectCounts.collisions} ACTIVE CONJUNCTION{objectCounts.collisions !== 1 ? 'S' : ''}
-                </span>
-              </div>
+            {dataLoaded ? (
+              <>
+                {objectCounts.collisions > 0 ? (
+                  <div className="bg-status-emergency/20 border border-status-emergency px-3 md:px-4 py-1 flex items-center gap-2 drop-shadow-[0_0_12px_rgba(255,59,48,0.4)]">
+                    <MaterialIcon name="warning" className="text-status-emergency text-sm animate-pulse" />
+                    <span className="font-technical-data text-status-emergency text-[11px] md:text-[12px] font-bold">
+                      {objectCounts.collisions} ACTIVE CONJUNCTION{objectCounts.collisions !== 1 ? 'S' : ''}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-status-success/20 border border-status-success px-3 md:px-4 py-1 flex items-center gap-2">
+                    <MaterialIcon name="verified_user" className="text-status-success text-sm" />
+                    <span className="font-technical-data text-status-success text-[11px] md:text-[12px] font-bold">
+                      ALL CLEAR
+                    </span>
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="bg-status-success/20 border border-status-success px-3 md:px-4 py-1 flex items-center gap-2">
-                <MaterialIcon name="verified_user" className="text-status-success text-sm" />
-                <span className="font-technical-data text-status-success text-[11px] md:text-[12px] font-bold">
-                  ALL CLEAR
-                </span>
-              </div>
+              <>
+                <div className="w-full h-8 bg-surface-container/80 animate-pulse" />
+                <div className="w-full h-4 bg-surface-container/80 animate-pulse" />
+              </>
             )}
-            </>
-          ) : (
-            <>
-            <div className="w-full h-8 bg-surface-container/80 animate-pulse" />
-            <div className="w-full h-4 bg-surface-container/80 animate-pulse" />
-            </>
-          ) }
             <p className={`font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block transition-ui ${dataLoaded ? 'opacity-100' : 'opacity-0'}`}>
               WEATHER: {stats.weatherIndex} · DATA SOURCE: SPACE-TRACK / NASA DONKI
             </p>
@@ -512,52 +857,107 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
               <div className="min-w-[250px] p-4 animate-pulse bg-surface-container/80 h-12" />
             ) : (
               <>
-            <div className="space-y-0.5">
-              <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Objects Tracked</p>
-              <p className="font-headline-lg text-primary text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
-                {objectCounts.total.toLocaleString()}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Debris</p>
-              <p className="font-headline-lg text-status-warning text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(255,170,0,0.4)]">
-                {objectCounts.debris.toLocaleString()}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Collision Risks</p>
-              <p className={`font-headline-lg text-xl md:text-3xl font-bold font-technical-data ${objectCounts.collisions > 0 ? 'text-status-emergency animate-pulse drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]' : 'text-status-success drop-shadow-[0_0_8px_rgba(0,255,136,0.4)]'}`}>
-                {objectCounts.collisions}
-              </p>
-            </div>
-            </>
+                <div className="space-y-0.5">
+                  <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Objects Tracked</p>
+                  <p className="font-headline-lg text-primary text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
+                    {objectCounts.total.toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Debris</p>
+                  <p className="font-headline-lg text-status-warning text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(255,170,0,0.4)]">
+                    {objectCounts.debris.toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Collision Risks</p>
+                  <p className={`font-headline-lg text-xl md:text-3xl font-bold font-technical-data ${objectCounts.collisions > 0 ? 'text-status-emergency animate-pulse drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]' : 'text-status-success drop-shadow-[0_0_8px_rgba(0,255,136,0.4)]'}`}>
+                    {objectCounts.collisions}
+                  </p>
+                </div>
+              </>
             )
-          }
+            }
           </div>
 
           {/* Controls */}
           <div className="flex gap-1.5 md:gap-2 pointer-events-auto">
             <button
+              type="button"
+              onClick={isListening ? stopListening : startListening}
+              disabled={!isSupported}
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui border ${isListening
+                ? 'bg-status-emergency text-white border-status-emergency animate-pulse'
+                : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+                }`}
+              aria-label={
+                isListening
+                  ? 'Stop listening'
+                  : 'Start voice commands'
+              }
+            >
+              {isListening ? 'LISTENING...' : 'VOICE COMMAND'}
+            </button>
+            {(isListening || transcript || error) && (
+              <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+                <div className="glass-panel px-4 py-3 text-center">
+                  {isListening && (
+                    <p className="font-label-caps text-[10px] text-primary-container animate-pulse">
+                      LISTENING FOR COMMAND...
+                    </p>
+                  )}
+
+                  {transcript && (
+                    <p className="mt-1 font-technical-data text-xs text-on-surface">
+                      "{transcript}"
+                    </p>
+                  )}
+
+                  {error && (
+                    <p className="mt-1 font-technical-data text-xs text-status-emergency">
+                      Voice error: {error}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsBookmarkModalOpen(true)}
+              className="px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
+              aria-label="Save the current globe view as a bookmark"
+            >
+              SAVE VIEW
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsBookmarkSidebarOpen(true)}
+              className="px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
+              aria-label="Open saved globe bookmarks"
+            >
+              BOOKMARKS
+            </button>
+
+
+            <button
               onClick={() => setShowLegend(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${
-                showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
-              }`}
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+                }`}
             >
               LEGEND
             </button>
             <button
               onClick={() => setShowDensity(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${
-                showDensity ? 'bg-status-warning text-bg-deep-space border-status-warning' : 'border-status-warning/50 text-status-warning hover:bg-status-warning/10'
-              }`}
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showDensity ? 'bg-status-warning text-bg-deep-space border-status-warning' : 'border-status-warning/50 text-status-warning hover:bg-status-warning/10'
+                }`}
             >
               DENSITY
             </button>
             <button
               onClick={() => setShowRiskOverlay(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${
-                showRiskOverlay ? 'bg-status-emergency text-white border-status-emergency' : 'border-status-emergency/50 text-status-emergency hover:bg-status-emergency/10'
-              }`}
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showRiskOverlay ? 'bg-status-emergency text-white border-status-emergency' : 'border-status-emergency/50 text-status-emergency hover:bg-status-emergency/10'
+                }`}
             >
               RISK
             </button>
@@ -569,38 +969,91 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       {showLegend && (
         <div className="absolute bottom-16 md:bottom-24 left-3 md:left-6 z-20 pointer-events-auto animate-[slideUp_0.3s_ease-out]">
           {dataLoaded ? (
-          <div className="bg-bg-deep-space/90 backdrop-blur-xl border border-border-panel p-4 min-w-[200px] shadow-[0_0_30px_rgba(0,0,0,0.6)]">
-            <div className="flex justify-between items-center mb-3">
-              <span className="font-label-caps text-[10px] text-primary-container font-bold tracking-widest">ORBITAL LEGEND</span>
-              <button onClick={() => setShowLegend(false)} className="text-on-surface-variant/60 hover:text-on-surface cursor-pointer">
-                <MaterialIcon name="close" className="text-xs" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {[
-                { color: CATEGORY_COLORS.PAYLOAD.css,     label: 'Active Satellites', count: objectCounts.payloads },
-                { color: CATEGORY_COLORS.DEBRIS.css,      label: 'Debris Objects',    count: objectCounts.debris },
-                { color: CATEGORY_COLORS.ROCKET_BODY.css, label: 'Rocket Bodies',     count: objectCounts.rocketBodies },
-                { color: CATEGORY_COLORS.COLLISION.css,    label: 'Collision Risks',   count: objectCounts.collisions },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
-                    />
-                    <span className="font-technical-data text-[11px] text-on-surface-variant">{item.label}</span>
+            <div className="bg-bg-deep-space/90 backdrop-blur-xl border border-border-panel p-4 min-w-[200px] shadow-[0_0_30px_rgba(0,0,0,0.6)]">
+              <div className="flex justify-between items-center mb-3">
+                <span className="font-label-caps text-[10px] text-primary-container font-bold tracking-widest">ORBITAL LEGEND</span>
+                <button onClick={() => setShowLegend(false)} className="text-on-surface-variant/60 hover:text-on-surface cursor-pointer">
+                  <MaterialIcon name="close" className="text-xs" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { color: CATEGORY_COLORS.PAYLOAD.css, label: 'Active Satellites', count: objectCounts.payloads },
+                  { color: CATEGORY_COLORS.DEBRIS.css, label: 'Debris Objects', count: objectCounts.debris },
+                  { color: CATEGORY_COLORS.ROCKET_BODY.css, label: 'Rocket Bodies', count: objectCounts.rocketBodies },
+                  { color: CATEGORY_COLORS.COLLISION.css, label: 'Collision Risks', count: objectCounts.collisions },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
+                      />
+                      <span className="font-technical-data text-[11px] text-on-surface-variant">{item.label}</span>
+                    </div>
+                    <span className="font-technical-data text-[11px] font-bold text-on-surface">{item.count.toLocaleString()}</span>
                   </div>
-                  <span className="font-technical-data text-[11px] font-bold text-on-surface">{item.count.toLocaleString()}</span>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="mt-3 pt-2 border-t border-border-panel/40 text-[9px] text-on-surface-variant/50 font-technical-data">
+                All positions from real orbital elements
+              </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-border-panel/40 text-[9px] text-on-surface-variant/50 font-technical-data">
-              All positions from real orbital elements
-            </div>
-          </div>
-          ) : (<LegendCardSkeleton />) }
+          ) : (<LegendCardSkeleton />)}
         </div>
+      )}
+
+      {/* Bookmark create/edit dialog */}
+      {isBookmarkModalOpen && (
+        <BookmarkModal
+          onClose={() => setIsBookmarkModalOpen(false)}
+          onSubmit={handleBookmarkSubmit}
+        />
+      )}
+
+
+      {/* Bookmark sidebar */}
+      {isBookmarkSidebarOpen && (
+        <BookmarkSidebar
+          bookmarks={bookmarks}
+          filteredBookmarks={filteredBookmarks}
+          favoriteBookmarks={favoriteBookmarks}
+          recentBookmarks={recentBookmarks}
+          categories={categories}
+          searchQuery={searchQuery}
+          selectedCategory={selectedCategory}
+          onSearchChange={setSearchQuery}
+          onCategoryChange={setSelectedCategory}
+          onOpenBookmark={restoreBookmark}
+          onCreateBookmark={() => {
+            setEditingBookmark(null);
+            setIsBookmarkModalOpen(true);
+          }}
+          onShareBookmark={handleShareBookmark}
+          onEditBookmark={(bookmark) => {
+            setEditingBookmark(bookmark);
+            setIsBookmarkModalOpen(true);
+          }}
+          onDeleteBookmark={deleteBookmark}
+          onToggleFavorite={(bookmarkId) =>
+            toggleFavorite(bookmarkId)
+          }
+          onExportBookmarks={exportBookmarks}
+          onImportBookmarks={importBookmarks}
+          onClose={() => setIsBookmarkSidebarOpen(false)}
+        />
+      )}
+
+      {isBookmarkModalOpen && (
+        <BookmarkModal
+          key={editingBookmark?.id ?? 'create-bookmark'}
+          initialBookmark={editingBookmark}
+          onClose={() => {
+            setEditingBookmark(null);
+            setIsBookmarkModalOpen(false);
+          }}
+          onSubmit={handleBookmarkSubmit}
+        />
       )}
       {/* ── Inline Styles for Animations ──────────────────────── */}
       <style>{`
