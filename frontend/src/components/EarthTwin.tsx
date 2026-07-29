@@ -16,6 +16,7 @@ import {
 
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { executeVoiceCommand } from '../lib/voiceCommands';
+import { SpotlightManager } from './SatelliteSpotlight/SpotlightManager';
 
 interface CatalogObject {
   id: number;
@@ -137,18 +138,22 @@ const LegendCardSkeleton = () => (
   <div className="min-w-[200px] glass-panel p-4 animate-pulse bg-surface-container/40 h-48" />
 );
 
-export const EarthTwin: React.FC = () => {
-  const navigate = useNavigate();
 export interface EarthTwinHandle {
   /** Flies the camera to the given NORAD catalog number and opens its info panel. */
   flyToSatellite: (catalogNumber: string) => void;
 }
 
 export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
   const entitiesRef = useRef<Map<string, Cesium.Entity>>(new Map());
+  const catalogMapRef = useRef<Map<string, CatalogObject>>(new Map());
+  const collisionSetRef = useRef<Set<string>>(new Set());
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  const [datasetVersion, setDatasetVersion] = useState(0);
   const { activeSector, setSelectedSatelliteId } = useUIStore();
   const [useFallback, setUseFallback] = useState(true);
   // Set by flyToSatellite(), consumed by SpotlightManager to lock its
@@ -251,6 +256,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
       let payloads = 0, debris = 0, rocketBodies = 0;
       const entityMap = new Map<string, Cesium.Entity>();
+      const catalogMap = new Map<string, CatalogObject>();
 
 
       if (!viewer || viewer.isDestroyed()) return;
@@ -301,6 +307,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         });
 
         entityMap.set(obj.catalog_number, entity);
+        catalogMap.set(obj.catalog_number, obj);
       });
 
 
@@ -327,6 +334,9 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       });
 
       entitiesRef.current = entityMap;
+      catalogMapRef.current = catalogMap;
+      collisionSetRef.current = collisionCatNums;
+      setDatasetVersion(v => v + 1);
       setObjectCounts({
         payloads,
         debris,
@@ -573,6 +583,10 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       viewerRef.current = viewer;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUseFallback(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setViewerInstance(viewer);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setContainerEl(containerRef.current);
 
 
       viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
@@ -687,6 +701,8 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
           v.destroy();
         }
         viewerRef.current = null;
+        setViewerInstance(null);
+        setContainerEl(null);
       };
 
     } catch (e) {
