@@ -43,7 +43,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/Ayush-0918"><img src="https://github.com/Ayush-0918.png" width="50px" style="border-radius:50%;margin:5px;" alt="Ayush-0918" /></a>
 <a href="https://github.com/Dependabot"><img src="https://github.com/Dependabot.png" width="50px" style="border-radius:50%;margin:5px;" alt="Dependabot" /></a>
 <a href="https://github.com/super-eagleee"><img src="https://github.com/super-eagleee.png" width="50px" style="border-radius:50%;margin:5px;" alt="super-eagleee" /></a>
-<a href="https://github.com/draexon"><img src="https://github.com/draexon" width="50px" style="border-radius:50%;margin:5px;" alt="draexon" /></a>
+<a href="https://github.com/draexon"><img src="https://github.com/draexon.png" width="50px" style="border-radius:50%;margin:5px;" alt="draexon" /></a>
 
 </div>
 <!-- CONTRIBUTORS_END -->
