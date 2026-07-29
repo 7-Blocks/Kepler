@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
-import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
 import { useUIStore } from '@/store/uiStore';
 import { MaterialIcon } from './MaterialIcon';
 import { SpotlightManager } from './SatelliteSpotlight/SpotlightManager';
@@ -16,36 +15,6 @@ import {
   createBookmarkShareUrl,
   getSharedBookmarkFromUrl,
 } from '../utils/bookmarkHelpers';
-
-
-interface CatalogObject {
-  id: number;
-  name: string;
-  catalog_number: string;
-  classification: 'PAYLOAD' | 'DEBRIS' | 'ROCKET_BODY' | 'UNKNOWN';
-  epoch: string | null;
-  inclination: number | null;
-  eccentricity: number | null;
-  semimajor_axis: number | null;
-  raan: number | null;
-  arg_of_perigee: number | null;
-  mean_anomaly: number | null;
-  mean_motion: number | null;
-  period: number | null;
-  has_tle: boolean;
-  updated_at: string | null;
-}
-
-interface CollisionRisk {
-  id: number;
-  object_a: { name: string; catalog_number: string } | null;
-  object_b: { name: string; catalog_number: string } | null;
-  probability: number;
-  miss_distance_m: number;
-  relative_velocity_kms: number;
-  risk_level: string;
-  tca: string;
-}
 
 
 
@@ -125,17 +94,17 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { activeSector, setSelectedSatelliteId } = useUIStore();
   const [useFallback, setUseFallback] = useState(true);
+  const [hoveredObject, setHoveredObject] = useState<CatalogObject | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  const [datasetVersion, setDatasetVersion] = useState(0);
   // Set by flyToSatellite(), consumed by SpotlightManager to lock its
   // selection/info-card onto a satellite chosen from outside the globe
   // (e.g. the Satellite of the Day card's "View on Globe" button). The
   // nonce forces the effect to re-fire even if the same satellite is
   // requested twice in a row.
   const [focusRequest, setFocusRequest] = useState<{ catalogNumber: string; nonce: number } | null>(null);
-  const [hoveredObject, setHoveredObject] = useState<CatalogObject | null>(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
-  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-  const [datasetVersion, setDatasetVersion] = useState(0);
   const [showLegend, setShowLegend] = useState(true);
   const [showDensity, setShowDensity] = useState(false);
   const [showRiskOverlay, setShowRiskOverlay] = useState(false);
@@ -356,7 +325,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     const pos = keplerToLatLonAlt(obj);
     if (pos) {
       const destination = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000);
-      viewer.camera.flyTo({ destination, duration: prefersReducedMotion() ? 0 : 1.5 });
+      viewer.camera.flyTo({ destination, duration: 1.5 });
     }
 
     // SpotlightManager owns actual selection state; this just tells it
