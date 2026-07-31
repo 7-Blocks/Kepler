@@ -5,6 +5,7 @@ import { MaterialIcon } from '@/components/MaterialIcon';
 import { MagicCard } from '@/components/ui/magic-card';
 import { SpotlightCard } from '@/components/SatelliteOfTheDay/SpotlightCard';
 import { useSpaceSummary } from '@/hooks/useApi';
+import RocketLaunchCountdown from "@/components/RocketLaunchCountdown/RocketLaunchCountdown";
 import { useCollisions } from '@/hooks/useApi';
 import { useAgentRuns } from '@/hooks/useApi';
 import { useWeatherStatus } from '@/hooks/useApi';
@@ -173,6 +174,10 @@ export const Dashboard: React.FC = () => {
             </motion.div>
           ))
         }
+      </section>
+
+      <section className="px-3 md:px-6 pb-6">
+        <RocketLaunchCountdown />
       </section>
 
       {/* Bottom Timeline & Reasoning Stream */}
