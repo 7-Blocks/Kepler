@@ -30,7 +30,6 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/TheLinuxGuy-ssh"><img src="https://github.com/TheLinuxGuy-ssh.png" width="50px" style="border-radius:50%;margin:5px;" alt="TheLinuxGuy-ssh" /></a>
 <a href="https://github.com/ronaksarda"><img src="https://github.com/ronaksarda.png" width="50px" style="border-radius:50%;margin:5px;" alt="ronaksarda" /></a>
 <a href="https://github.com/SankeerthNara"><img src="https://github.com/SankeerthNara.png" width="50px" style="border-radius:50%;margin:5px;" alt="SankeerthNara" /></a>
-<a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a>
 <a href="https://github.com/nayanraj864-cmyk"><img src="https://github.com/nayanraj864-cmyk.png" width="50px" style="border-radius:50%;margin:5px;" alt="nayanraj864-cmyk" /></a>
 <a href="https://github.com/muntasiractive"><img src="https://github.com/muntasiractive.png" width="50px" style="border-radius:50%;margin:5px;" alt="muntasiractive" /></a>
 <a href="https://github.com/Parshant-12"><img src="https://github.com/Parshant-12.png" width="50px" style="border-radius:50%;margin:5px;" alt="Parshant-12" /></a>
@@ -44,6 +43,8 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/Dependabot"><img src="https://github.com/Dependabot.png" width="50px" style="border-radius:50%;margin:5px;" alt="Dependabot" /></a>
 <a href="https://github.com/super-eagleee"><img src="https://github.com/super-eagleee.png" width="50px" style="border-radius:50%;margin:5px;" alt="super-eagleee" /></a>
 <a href="https://github.com/draexon"><img src="https://github.com/draexon.png" width="50px" style="border-radius:50%;margin:5px;" alt="draexon" /></a>
+<a href="https://github.com/AaineeSinha"><img src="https://github.com/AaineeSinha.png" width="50px" style="border-radius:50%;margin:5px;" alt="AaineeSinha" /></a>
+<!-- <a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a> -->
 
 </div>
 <!-- CONTRIBUTORS_END -->
