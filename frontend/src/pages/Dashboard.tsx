@@ -142,7 +142,9 @@ export const Dashboard: React.FC = () => {
           : kpis?.map((kpi, idx) => (
             <motion.div
               key={idx}
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -3, scale: 1.02 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="group h-full"
             >
               <MagicCard
                 mode="orb"
@@ -151,7 +153,7 @@ export const Dashboard: React.FC = () => {
                 glowOpacity={0.3}
                 glowSize={250}
                 glowBlur={50}
-                className="h-full rounded-xl border border-white/10"
+                className="h-full rounded-xl border border-white/10 hover:border-white/20 transition-colors duration-300 shadow-md hover:shadow-lg"
                 fillClassName="bg-[#0A0F1A]"
               >
                 <div className="p-4 flex flex-col justify-between h-24">
@@ -167,7 +169,7 @@ export const Dashboard: React.FC = () => {
                         <span className="text-[10px] text-status-warning/60 font-technical-data">{kpi.subValue}</span>
                       )}
                     </div>
-                    <MaterialIcon name={kpi.icon} className="text-primary-container/30 text-lg" />
+                    <MaterialIcon name={kpi.icon} className="text-primary-container/30 text-lg group-hover:scale-110 group-hover:text-primary-container/60 transition-all duration-200" />
                   </div>
                 </div>
               </MagicCard>
@@ -217,55 +219,61 @@ export const Dashboard: React.FC = () => {
             ) : (
               <div className="flex gap-4 min-w-[600px]">
                 {conjunctions.map((conj: Collision) => (
-                  <MagicCard
+                  <motion.div
                     key={conj.id}
-                    gradientColor={
-                      conj.risk_level === 'CRITICAL' || conj.risk_level === 'HIGH'
-                        ? '#FF3B30'
-                        : conj.risk_level === 'MEDIUM'
-                        ? '#FF9500'
-                        : '#00e5ff'
-                    }
-                    gradientSize={200}
-                    gradientOpacity={0.3}
-                    className="w-64 sm:w-72 shrink-0 rounded-xl border border-white/10"
-                    fillClassName="bg-[#0A0F1A]"
+                    whileHover={{ y: -3, scale: 1.02 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="shrink-0"
                   >
-                    <div className={`p-4 border-l-4 ${riskColor(conj.risk_level)} relative overflow-hidden rounded-l`}>
-                      <div className="absolute top-0 right-0 p-2 opacity-10">
-                        <MaterialIcon name="crisis_alert" className={`text-6xl ${riskBarColor(conj.risk_level)}`} />
-                      </div>
-                      <div className="flex justify-between items-start mb-4 relative z-10">
-                        <div>
-                          <p className="text-[10px] text-text-muted mb-1 font-technical-data">
-                            {conj.object_a?.name ?? '\u2014'} vs {conj.object_b?.name ?? '\u2014'}
-                          </p>
-                          <p className="font-bold text-sm text-on-surface font-technical-data">
-                            {formatTCA(conj.tca)}
+                    <MagicCard
+                      gradientColor={
+                        conj.risk_level === 'CRITICAL' || conj.risk_level === 'HIGH'
+                          ? '#FF3B30'
+                          : conj.risk_level === 'MEDIUM'
+                          ? '#FF9500'
+                          : '#00e5ff'
+                      }
+                      gradientSize={200}
+                      gradientOpacity={0.3}
+                      className="w-64 sm:w-72 rounded-xl border border-white/10 hover:border-white/20 transition-colors duration-300 shadow-md hover:shadow-lg"
+                      fillClassName="bg-[#0A0F1A]"
+                    >
+                      <div className={`p-4 border-l-4 ${riskColor(conj.risk_level)} relative overflow-hidden rounded-l`}>
+                        <div className="absolute top-0 right-0 p-2 opacity-10">
+                          <MaterialIcon name="crisis_alert" className={`text-6xl ${riskBarColor(conj.risk_level)}`} />
+                        </div>
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                          <div>
+                            <p className="text-[10px] text-text-muted mb-1 font-technical-data">
+                              {conj.object_a?.name ?? '\u2014'} vs {conj.object_b?.name ?? '\u2014'}
+                            </p>
+                            <p className="font-bold text-sm text-on-surface font-technical-data">
+                              {formatTCA(conj.tca)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-xs font-bold font-technical-data ${riskColor(conj.risk_level).split(' ')[1]}`}>
+                              {(conj.probability * 100).toFixed(2)}% PROB
+                            </p>
+                            <p className="text-[9px] text-text-muted font-label-caps uppercase">{conj.risk_level}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2 relative z-10">
+                          <div className="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className={`${riskBarColor(conj.risk_level)} h-full ${conj.risk_level === 'CRITICAL' ? 'animate-pulse' : ''}`}
+                              style={{ width: riskBarWidth(conj.probability) }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-primary/80 font-technical-data">
+                            MISS DISTANCE: {conj.miss_distance_m < 1000
+                              ? `${conj.miss_distance_m.toFixed(0)}m`
+                              : `${(conj.miss_distance_m / 1000).toFixed(2)} KM`}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className={`text-xs font-bold font-technical-data ${riskColor(conj.risk_level).split(' ')[1]}`}>
-                            {(conj.probability * 100).toFixed(2)}% PROB
-                          </p>
-                          <p className="text-[9px] text-text-muted font-label-caps uppercase">{conj.risk_level}</p>
-                        </div>
                       </div>
-                      <div className="space-y-2 relative z-10">
-                        <div className="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
-                          <div
-                            className={`${riskBarColor(conj.risk_level)} h-full ${conj.risk_level === 'CRITICAL' ? 'animate-pulse' : ''}`}
-                            style={{ width: riskBarWidth(conj.probability) }}
-                          />
-                        </div>
-                        <p className="text-[10px] text-primary/80 font-technical-data">
-                          MISS DISTANCE: {conj.miss_distance_m < 1000
-                            ? `${conj.miss_distance_m.toFixed(0)}m`
-                            : `${(conj.miss_distance_m / 1000).toFixed(2)} KM`}
-                        </p>
-                      </div>
-                    </div>
-                  </MagicCard>
+                    </MagicCard>
+                  </motion.div>
                 ))}
               </div>
             )}
@@ -282,7 +290,7 @@ export const Dashboard: React.FC = () => {
             gradientColor="#7c3aed"
             gradientSize={200}
             gradientOpacity={0.15}
-            className="flex-1 rounded-xl border border-white/10"
+            className="flex-1 rounded-xl border border-white/10 hover:border-white/20 transition-colors duration-300"
             fillClassName="bg-[#0A0F1A]"
           >
             <div className="p-3.5 font-technical-data text-[11px] overflow-y-auto space-y-3.5 custom-scrollbar h-full">
@@ -307,14 +315,16 @@ export const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 decisions.map((d, i) => (
-                  <div
+                  <motion.div
                     key={d.id ?? i}
-                    className={`border-l-2 pl-3 py-1 ${
+                    whileHover={{ x: 2 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className={`border-l-2 pl-3 py-1 transition-colors duration-200 ${
                       d.agent_name?.toLowerCase().includes('risk')
-                        ? 'border-status-emergency bg-status-emergency/5'
+                        ? 'border-status-emergency bg-status-emergency/5 hover:bg-status-emergency/10'
                         : d.agent_name?.toLowerCase().includes('watch') || d.agent_name?.toLowerCase().includes('weather')
-                        ? 'border-status-warning bg-status-warning/5'
-                        : 'border-primary-container bg-primary-container/5'
+                        ? 'border-status-warning bg-status-warning/5 hover:bg-status-warning/10'
+                        : 'border-primary-container bg-primary-container/5 hover:bg-primary-container/10'
                     }`}
                   >
                     <span className={`font-bold uppercase block mb-1 ${
@@ -330,7 +340,7 @@ export const Dashboard: React.FC = () => {
                     <span className="text-primary/40 block mt-1">
                       {new Date(d.created_at).toISOString().replace('T', ' ').substring(0, 19)}Z
                     </span>
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>
