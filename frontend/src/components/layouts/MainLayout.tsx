@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
 import { useUIStore } from '@/store/uiStore';
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
+import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
+import { useLogbookStore, logEvent } from '@/store/logbookStore';
+
+/** Ensures the mission-init System log fires once per browser tab session. */
+let hasLoggedMissionInit = false;
 
 export const MainLayout: React.FC = () => {
   const {
@@ -53,22 +58,46 @@ export const MainLayout: React.FC = () => {
 
   const [activeDrawerTab, setActiveDrawerTab] = useState<'STREAM' | 'STATUS' | 'LOGS'>('STREAM');
   const [assistantInput, setAssistantInput] = useState('');
-  const [assistantLogs, setAssistantLogs] = useState<Array<{ time: string; msg: string; type: string }>>([
-    { time: '14:22:01', msg: 'GYROSCOPE DELTA CALIBRATION COMPLETE', type: 'info' },
-    { time: '14:21:45', msg: 'UPLINK ESTABLISHED WITH GROUND STATION XI\'AN', type: 'success' },
-    { time: '14:18:22', msg: 'THERMAL SHIELD ATTACHMENT TEMP: -142.2C', type: 'info' }
-  ]);
+  const [tleSearch, setTleSearch] = useState('');
+
+  const logbookEntryCount = useLogbookStore((s) => s.entries.length);
+  const lastViewedLogCountRef = useRef(0);
+  const [unreadLogCount, setUnreadLogCount] = useState(0);
+  const isViewingLogs = rightDrawerOpen && activeDrawerTab === 'LOGS';
+
+  // Record a System event once, when mission control first comes online.
+  // Module-scope guard (not a ref) so it survives React StrictMode's
+  // double-invoke in dev *and* Vite HMR module reloads — a component-local
+  // ref resets on remount, but this only resets on a genuine full page load.
+  useEffect(() => {
+    if (hasLoggedMissionInit) return;
+    hasLoggedMissionInit = true;
+    logEvent('SYSTEM', 'LOW', 'Mission control interface initialized', 'Dashboard shell mounted and ready.');
+  }, []);
+
+  // Sync the unread badge to the logbook store (an external system) as new
+  // entries arrive or the Logs tab is opened; see the identical, pre-existing
+  // pattern in EarthTwin.tsx for setState-in-effect used this way.
+  useEffect(() => {
+    if (isViewingLogs) {
+      lastViewedLogCountRef.current = logbookEntryCount;
+    }
+    setUnreadLogCount(isViewingLogs ? 0 : Math.max(0, logbookEntryCount - lastViewedLogCountRef.current));
+  }, [isViewingLogs, logbookEntryCount]);
 
   const handleSendQuery = (e: React.FormEvent) => {
     e.preventDefault();
     if (!assistantInput.trim()) return;
 
-    const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setAssistantLogs(prev => [
-      { time, msg: `COMMAND RECEIVED: ${assistantInput.toUpperCase()}`, type: 'command' },
-      ...prev
-    ]);
+    logEvent('MISSION', 'LOW', 'Command received', assistantInput.trim(), { SOURCE: 'AI Assistant' });
     setAssistantInput('');
+  };
+
+  const handleTleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
+    const q = tleSearch.trim();
+    if (!q) return;
+    logEvent('SEARCH', 'LOW', 'Command search executed', `Query: "${q}"`);
   };
 
   return (
@@ -189,6 +218,9 @@ export const MainLayout: React.FC = () => {
                 <MaterialIcon name="search" className="absolute left-2 text-primary/50 text-sm" />
                 <input
                   type="text"
+                  value={tleSearch}
+                  onChange={(e) => setTleSearch(e.target.value)}
+                  onKeyDown={handleTleSearchSubmit}
                   placeholder="ID / TLE SEARCH"
                   className="bg-surface-container-low w-full border-b border-primary/30 text-primary font-technical-data text-[12px] pl-8 pr-2 sm:pr-16 py-1 focus:outline-none focus:border-primary-container transition-ui placeholder:text-primary/30"
                 />
@@ -210,9 +242,14 @@ export const MainLayout: React.FC = () => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleRightDrawer}
-                  className={`transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
+                  className={`relative transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
                 >
                   <MaterialIcon name="monitor_heart" />
+                  {unreadLogCount > 0 && (
+                    <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-status-emergency text-white text-[8px] font-bold font-technical-data flex items-center justify-center leading-none">
+                      {unreadLogCount > 99 ? '99+' : unreadLogCount}
+                    </span>
+                  )}
                 </button>
                 <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                   <MaterialIcon name="schedule" />
@@ -343,18 +380,7 @@ export const MainLayout: React.FC = () => {
                       </div>
                     )}
 
-                    {activeDrawerTab === 'LOGS' && (
-                      <div className="space-y-3 font-technical-data text-[11px]">
-                        {assistantLogs.map((log, i) => (
-                          <div key={i} className="flex gap-2 border-b border-border-panel/40 pb-1">
-                            <span className="text-on-surface-variant font-mono">[{log.time}]</span>
-                            <span className={log.type === 'success' ? 'text-status-success' : log.type === 'command' ? 'text-primary-container' : 'text-on-surface'}>
-                              {log.msg}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {activeDrawerTab === 'LOGS' && <LogbookPanel />}
                   </div>
 
                   {/* Chat Input */}

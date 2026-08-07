@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { EarthTwin, type EarthTwinHandle } from '@/components/EarthTwin';
 import { MaterialIcon } from '@/components/MaterialIcon';
@@ -10,6 +10,7 @@ import { useCollisions } from '@/hooks/useApi';
 import { useAgentRuns } from '@/hooks/useApi';
 import { useWeatherStatus } from '@/hooks/useApi';
 import type { Collision, AgentDecision } from '@/services/api';
+import { logEvent } from '@/store/logbookStore';
 
 const riskColor = (level: string) => {
   switch (level) {
@@ -107,8 +108,30 @@ export const Dashboard: React.FC = () => {
       ]
     : null;
 
-  const conjunctions = collisions.data?.data ?? [];
+  const conjunctions = useMemo(() => collisions.data?.data ?? [], [collisions.data]);
   const agentRuns    = agents.data?.data ?? [];
+
+  // Log newly-detected CRITICAL/HIGH risk conjunctions as Alert events —
+  // guarded by a ref of already-seen ids so repeated polling doesn't spam
+  // the logbook with the same conjunction on every refetch.
+  const loggedCollisionIdsRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    for (const conj of conjunctions) {
+      if (
+        (conj.risk_level === 'CRITICAL' || conj.risk_level === 'HIGH') &&
+        !loggedCollisionIdsRef.current.has(conj.id)
+      ) {
+        loggedCollisionIdsRef.current.add(conj.id);
+        logEvent(
+          'ALERTS',
+          conj.risk_level === 'CRITICAL' ? 'CRITICAL' : 'HIGH',
+          'Conjunction risk detected',
+          `${conj.object_a?.name ?? 'Unknown'} vs ${conj.object_b?.name ?? 'Unknown'} — ${(conj.probability * 100).toFixed(2)}% probability`,
+          { RISK_LEVEL: conj.risk_level, MISS_DISTANCE_M: conj.miss_distance_m.toFixed(0) }
+        );
+      }
+    }
+  }, [conjunctions]);
 
   const decisions: Array<AgentDecision & { runName: string }> = agentRuns
     .flatMap(run =>

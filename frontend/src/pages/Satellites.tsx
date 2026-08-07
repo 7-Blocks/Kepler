@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
 import { useUIStore } from '@/store/uiStore';
+import { logEvent } from '@/store/logbookStore';
 import { useCatalogObjects, useCatalogStats, useCatalogSync, useSatelliteTelemetry } from '@/hooks/useApi';
 import type { SpaceObject } from '@/services/api';
 import { SatelliteComparisonModal } from '@/components/SatelliteComparisonModal';
@@ -59,6 +60,9 @@ export const Satellites: React.FC = () => {
 searchTimer.current = setTimeout(() => {
       setDebounced(val);
       setPage(1);
+      if (val.trim()) {
+        logEvent('SEARCH', 'LOW', 'Satellite catalog search', `Query: "${val.trim()}"`);
+      }
     }, 400);
   };
 

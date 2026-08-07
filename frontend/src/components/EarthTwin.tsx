@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
 import { useUIStore } from '@/store/uiStore';
+import { logEvent } from '@/store/logbookStore';
 import { MaterialIcon } from './MaterialIcon';
 import { useNavigate } from 'react-router-dom';
 import * as Cesium from 'cesium';
@@ -194,6 +195,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     },
     duration: 1.5,
   });
+  logEvent('TRACKING', 'MEDIUM', 'ISS tracking engaged', 'Camera locked onto the International Space Station.');
   }, []);
 
   const handleShowDebris = useCallback(() => {
@@ -226,6 +228,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       },
       duration: 1.5,
     });
+    logEvent('CAMERA', 'LOW', 'Camera repositioned', 'Zoomed to regional view: India.');
   }, []);
 
   const handleToggleSpaceWeather = useCallback(() => {
@@ -724,6 +727,12 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     if (pos) {
       const destination = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000);
       viewer.camera.flyTo({ destination, duration: prefersReducedMotion() ? 0 : 1.5 });
+      logEvent(
+        'CAMERA',
+        'LOW',
+        'Camera focused on target',
+        `Flew to ${obj.name ?? 'Unknown object'} — NORAD ${catalogNumber}`
+      );
     }
 
     // SpotlightManager owns actual selection state; this just tells it
