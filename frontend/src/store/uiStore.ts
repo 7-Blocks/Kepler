@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { logEvent } from './logbookStore';
 
 interface UIState {
   sidebarCollapsed: boolean;
@@ -32,7 +33,17 @@ export const useUIStore = create<UIState>((set) => ({
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   toggleRightDrawer: () => set((state) => ({ rightDrawerOpen: !state.rightDrawerOpen })),
   setRightDrawerOpen: (open) => set({ rightDrawerOpen: open }),
-  setSelectedSatelliteId: (id) => set({ selectedSatelliteId: id }),
+  setSelectedSatelliteId: (id) =>
+    set((state) => {
+      // Single source of truth for satellite selection — both the 3D globe
+      // and the satellite list page funnel here, so log it once, here,
+      // rather than at every call site (which would double-log the globe
+      // path, since it also updates this same field).
+      if (id && id !== state.selectedSatelliteId) {
+        logEvent('TRACKING', 'LOW', 'Satellite locked', `NORAD ${id}`, { CATALOG_NUMBER: id });
+      }
+      return { selectedSatelliteId: id };
+    }),
   setSelectedSatelliteIds: (ids) => set({ selectedSatelliteIds: ids }),
   toggleSatelliteSelection: (id) => set((state) => {
     const isSelected = state.selectedSatelliteIds.includes(id);
