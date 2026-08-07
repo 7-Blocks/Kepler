@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Cesium from 'cesium';
 import type { CatalogObject } from '@/types/satellite';
 import { prefersReducedMotion } from '@/components/SatelliteSpotlight/GlowEffect';
+import { logEvent } from '@/store/logbookStore';
 
 interface UseSatelliteSelectionArgs {
   viewer: Cesium.Viewer | null;
@@ -51,7 +52,12 @@ export function useSatelliteSelection({
     (obj: CatalogObject | null) => {
       setSelectedId(obj?.catalog_number ?? null);
       setSelectedObject(obj);
-      setSelectedIsCollisionRisk(obj ? collisionSetRef.current?.has(obj.catalog_number) ?? false : false);
+      const isCollisionRisk = obj ? collisionSetRef.current?.has(obj.catalog_number) ?? false : false;
+      setSelectedIsCollisionRisk(isCollisionRisk);
+      // Selection logging happens centrally in uiStore.setSelectedSatelliteId
+      // (which this ultimately calls via onSelect), since the satellite list
+      // page also writes to that same field directly — logging here too
+      // would double up for globe-driven selections.
       onSelectRef.current?.(obj?.catalog_number ?? null);
     },
     [collisionSetRef]
@@ -103,6 +109,12 @@ export function useSatelliteSelection({
             } else {
               viewer.camera.flyTo({ destination, duration: 1.5 });
             }
+            logEvent(
+              'CAMERA',
+              'LOW',
+              'Camera focused on target',
+              `Flew to ${obj.name ?? 'Unknown object'} — NORAD ${obj.catalog_number}`
+            );
           }
         } catch {
           /* ignore malformed entity data */
