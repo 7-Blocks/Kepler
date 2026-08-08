@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as Cesium from 'cesium';
-import { useUIStore, CameraMode } from '@/store/uiStore';
-import { CatalogObject } from '@/types/satellite';
+import { useUIStore } from '@/store/uiStore';
+import type { CameraMode } from '@/store/uiStore';
+import type { CatalogObject } from '@/types/satellite';
 import { keplerToLatLonAlt } from '@/utils/orbitCalc';
 
 const LERP_FACTOR = 0.08; // Controls how fast the camera catches up to the target position

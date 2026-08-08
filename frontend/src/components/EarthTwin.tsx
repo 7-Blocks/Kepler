@@ -3,6 +3,7 @@ import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
 import { useSatelliteSelection } from '@/hooks/useSatelliteSelection';
 import { useSpotlightEffect } from '@/hooks/useSpotlightEffect';
 import { useCinematicCamera } from '@/hooks/useCinematicCamera';
+import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
 import { keplerToLatLonAlt } from '@/utils/orbitCalc';
 import { useUIStore } from '@/store/uiStore';
 import { logEvent } from '@/store/logbookStore';
@@ -356,6 +357,9 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     viewer: viewerInstance,
     selectedId: selectedSatelliteId,
     entitiesRef,
+    catalogMapRef,
+    collisionSetRef,
+    datasetVersion,
     hoveredId: hoveredObject?.catalog_number ?? null,
   });
 
@@ -553,6 +557,11 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         navigationInstructionsInitiallyVisible: false,
         scene3DOnly: true,
         shouldAnimate: true,
+        contextOptions: {
+          webgl: {
+            alpha: true,
+          }
+        },
       });
 
       viewerRef.current = viewer;
@@ -565,7 +574,10 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
 
       viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
-      viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050710');
+      viewer.scene.backgroundColor = Cesium.Color.TRANSPARENT;
+      viewer.scene.skyBox.show = false;
+      viewer.scene.sun.show = false;
+      viewer.scene.moon.show = false;
       viewer.scene.fog.enabled = false;
       if (viewer.scene.skyAtmosphere) {
         viewer.scene.skyAtmosphere.show = true;
@@ -715,10 +727,15 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   useImperativeHandle(ref, () => ({ flyToSatellite }), [flyToSatellite]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-bg-deep-space border-b border-border-panel">
-      {/* 3D Cesium Container */}
-      <div ref={containerRef} className="absolute inset-0 w-full h-full z-0" />
-
+    <div 
+      className="relative w-full h-full overflow-hidden bg-bg-deep-space border-b border-border-panel"
+    >
+      <ProceduralSpaceBackground viewer={viewerInstance} />
+      {/* The Cesium container must sit cleanly in the background */}
+      <div 
+        ref={containerRef} 
+        className="absolute inset-0 z-0 bg-transparent"
+      />
       {/* High-Fidelity SVG Fallback */}
       {useFallback && (
         <div className="absolute inset-0 z-0 flex items-center justify-center bg-[radial-gradient(circle_at_center,rgba(5,7,10,0.8)_0%,#000000_100%)]">

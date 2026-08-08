@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUIStore, CameraMode } from '@/store/uiStore';
+import { useUIStore } from '@/store/uiStore';
+import type { CameraMode } from '@/store/uiStore';
 import { MaterialIcon } from '../MaterialIcon';
 
 export const CameraControls: React.FC = () => {
