@@ -87,3 +87,14 @@ coverage/
 .tmp/
 *storybook.log
 storybook-static
+
+# ──── Python ───────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+alembic.ini
