@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { logEvent } from './logbookStore';
 
+export type CameraMode = 'FREE' | 'CHASE' | 'COCKPIT' | 'EARTH_OBSERVER' | 'ORBITAL';
+
 interface UIState {
   sidebarCollapsed: boolean;
   rightDrawerOpen: boolean;
@@ -10,6 +12,7 @@ interface UIState {
   activeSector: string;
   globalSearchOpen: boolean;
   isFlybyHistoryOpen: boolean;
+  cameraMode: CameraMode;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleRightDrawer: () => void;
@@ -21,6 +24,7 @@ interface UIState {
   setActiveSector: (sector: string) => void;
   setGlobalSearchOpen: (open: boolean) => void;
   toggleFlybyHistory: () => void;
+  setCameraMode: (mode: CameraMode) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -32,6 +36,7 @@ export const useUIStore = create<UIState>((set) => ({
   activeSector: '',
   globalSearchOpen: false,
   isFlybyHistoryOpen: false,
+  cameraMode: 'FREE',
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   toggleRightDrawer: () => set((state) => ({ rightDrawerOpen: !state.rightDrawerOpen })),
@@ -62,4 +67,5 @@ export const useUIStore = create<UIState>((set) => ({
   setActiveSector: (sector) => set({ activeSector: sector }),
   setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
   toggleFlybyHistory: () => set((state) => ({ isFlybyHistoryOpen: !state.isFlybyHistoryOpen })),
+  setCameraMode: (mode) => set({ cameraMode: mode }),
 }));

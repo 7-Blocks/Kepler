@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
+import { useSatelliteSelection } from '@/hooks/useSatelliteSelection';
+import { useSpotlightEffect } from '@/hooks/useSpotlightEffect';
+import { useCinematicCamera } from '@/hooks/useCinematicCamera';
 import { keplerToLatLonAlt } from '@/utils/orbitCalc';
 import { useUIStore } from '@/store/uiStore';
 import { logEvent } from '@/store/logbookStore';
@@ -116,7 +119,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const [datasetVersion, setDatasetVersion] = useState(0);
-  const { activeSector, setSelectedSatelliteId } = useUIStore();
+  const { activeSector, setSelectedSatelliteId, selectedSatelliteId } = useUIStore();
   const [useFallback, setUseFallback] = useState(true);
   // Set by flyToSatellite(), consumed by SpotlightManager to lock its
   // selection/info-card onto a satellite chosen from outside the globe
@@ -349,6 +352,14 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [selectedBookmarkId, setSelectedBookmarkId] =
     useState('');
 
+  useSpotlightEffect({
+    viewer: viewerInstance,
+    selectedId: selectedSatelliteId,
+    entitiesRef,
+    hoveredId: hoveredObject?.catalog_number ?? null,
+  });
+
+  useCinematicCamera(viewerInstance, entitiesRef, catalogMapRef);
 
   const saveCurrentView = useCallback(() => {
     const viewer = viewerRef.current;
