@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
+import { keplerToLatLonAlt } from '@/utils/orbitCalc';
 import { useUIStore } from '@/store/uiStore';
 import { logEvent } from '@/store/logbookStore';
 import { MaterialIcon } from './MaterialIcon';
@@ -50,47 +51,7 @@ interface CollisionRisk {
 
 
 
-function keplerToLatLonAlt(obj: CatalogObject, timeOffsetSec: number = 0): { lat: number; lon: number; alt: number } | null {
-  if (obj.semimajor_axis == null || obj.inclination == null || obj.raan == null ||
-    obj.arg_of_perigee == null || obj.mean_anomaly == null || obj.mean_motion == null) {
-    return null;
-  }
 
-  const EARTH_RADIUS = 6371;
-  const alt = obj.semimajor_axis - EARTH_RADIUS;
-  if (alt < 0 || alt > 100000) return null;
-
-
-  const epochDate = obj.epoch ? new Date(obj.epoch) : new Date();
-  const now = new Date();
-  const elapsedDays = (now.getTime() - epochDate.getTime()) / 86400000 + (timeOffsetSec / 86400);
-  const currentMeanAnomaly = ((obj.mean_anomaly + (elapsedDays * obj.mean_motion * 360)) % 360) * Math.PI / 180;
-
-
-  const ecc = obj.eccentricity ?? 0;
-  const trueAnomaly = currentMeanAnomaly + 2 * ecc * Math.sin(currentMeanAnomaly);
-
-
-  const argLat = (obj.arg_of_perigee * Math.PI / 180) + trueAnomaly;
-
-
-  const raanRad = obj.raan * Math.PI / 180;
-  const incRad = obj.inclination * Math.PI / 180;
-
-
-  const J2000 = new Date('2000-01-01T12:00:00Z').getTime();
-  const daysSinceJ2000 = (now.getTime() + timeOffsetSec * 1000 - J2000) / 86400000;
-  const GMST = (280.46061837 + 360.98564736629 * daysSinceJ2000) % 360;
-
-  const lon = ((Math.atan2(
-    Math.cos(incRad) * Math.sin(argLat),
-    Math.cos(argLat)
-  ) * 180 / Math.PI + (raanRad * 180 / Math.PI) - GMST + 540) % 360) - 180;
-
-  const lat = Math.asin(Math.sin(incRad) * Math.sin(argLat)) * 180 / Math.PI;
-
-  return { lat, lon, alt };
-}
 
 
 const CATEGORY_COLORS = {

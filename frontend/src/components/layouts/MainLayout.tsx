@@ -6,6 +6,7 @@ import { useUIStore } from '@/store/uiStore';
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
 import { useLogbookStore, logEvent } from '@/store/logbookStore';
+import { NotificationCenter } from '@/components/ui/NotificationCenter';
 
 /** Ensures the mission-init System log fires once per browser tab session. */
 let hasLoggedMissionInit = false;
@@ -14,8 +15,10 @@ export const MainLayout: React.FC = () => {
   const {
     sidebarCollapsed,
     rightDrawerOpen,
+    isFlybyHistoryOpen,
     toggleSidebar,
-    toggleRightDrawer
+    toggleRightDrawer,
+    toggleFlybyHistory
   } = useUIStore();
 
   const location = useLocation();
@@ -251,8 +254,11 @@ export const MainLayout: React.FC = () => {
                     </span>
                   )}
                 </button>
-                <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
-                  <MaterialIcon name="schedule" />
+                <button 
+                  onClick={toggleFlybyHistory}
+                  className={`relative transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${isFlybyHistoryOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
+                >
+                  <MaterialIcon name="radar" />
                 </button>
                 <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                   <MaterialIcon name="account_circle" />
@@ -406,6 +412,7 @@ export const MainLayout: React.FC = () => {
 
         </div>
 
+        <NotificationCenter />
       </div>
     </div>
   );
