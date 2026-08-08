@@ -4,6 +4,7 @@ import type { CatalogObject } from '@/types/satellite';
 import { applyBaseline, applyDim, applyHighlight, type PointBaseline } from '@/components/SatelliteSpotlight/GlowEffect';
 import { setOrbitHighlight, clearOrbitHighlight } from '@/components/SatelliteSpotlight/OrbitHighlight';
 import { CATEGORY_COLORS, getOutlineWidth, getPointSize } from '@/lib/satelliteVisuals';
+import { deriveObjectCategory, getObjectCategoryCss } from '@/types/objectCategories';
 
 interface UseSpotlightEffectArgs {
   viewer: Cesium.Viewer | null;
@@ -20,11 +21,13 @@ function baselineFor(id: string, catalogMap: Map<string, CatalogObject>, collisi
   const obj = catalogMap.get(id);
   if (!obj) return null;
   const isCollisionRisk = collisionSet.has(id);
-  const colorConfig = isCollisionRisk ? CATEGORY_COLORS.COLLISION : CATEGORY_COLORS[obj.classification] ?? CATEGORY_COLORS.UNKNOWN;
+  const markerColor = isCollisionRisk
+    ? CATEGORY_COLORS.COLLISION.cesium
+    : Cesium.Color.fromCssColorString(getObjectCategoryCss(deriveObjectCategory(obj)));
   return {
-    color: colorConfig.cesium,
+    color: markerColor,
     pixelSize: isCollisionRisk ? 8 : getPointSize(obj.classification),
-    outlineColor: colorConfig.cesium,
+    outlineColor: markerColor,
     outlineWidth: isCollisionRisk ? 3 : getOutlineWidth(obj.classification),
   };
 }
