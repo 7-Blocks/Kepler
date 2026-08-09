@@ -35,7 +35,8 @@ import SignUp from './pages/SignUp';
 function GlobalShortcuts() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toggleSidebar, setGlobalSearchOpen } = useUIStore();
+  const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const setGlobalSearchOpen = useUIStore((state) => state.setGlobalSearchOpen);
 
   const { isHelpOpen, closeHelp, isMac } = useKeyboardShortcuts({
     // Navigation — routes that exist today. Telemetry / Space Weather /

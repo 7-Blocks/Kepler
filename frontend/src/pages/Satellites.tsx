@@ -2,8 +2,7 @@ import { exportCsv } from "@/utils/exportCsv";
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
-import { useUIStore } from '@/store/uiStore';
-import { logEvent } from '@/store/logbookStore';
+import { useUIStore, useSelectedSatelliteId, useSelectedSatelliteIds, logEvent } from '@/store';
 import { useCatalogObjects, useCatalogStats, useCatalogSync, useSatelliteTelemetry } from '@/hooks/useApi';
 import type { SpaceObject } from '@/services/api';
 import { SatelliteComparisonModal } from '@/components/SatelliteComparisonModal';
@@ -42,7 +41,10 @@ const TableSkeleton = () => (
 
 
 export const Satellites: React.FC = () => {
-  const { selectedSatelliteId, setSelectedSatelliteId, selectedSatelliteIds, toggleSatelliteSelection } = useUIStore();
+  const selectedSatelliteId = useSelectedSatelliteId();
+  const selectedSatelliteIds = useSelectedSatelliteIds();
+  const setSelectedSatelliteId = useUIStore((s) => s.setSelectedSatelliteId);
+  const toggleSatelliteSelection = useUIStore((s) => s.toggleSatelliteSelection);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [searchQuery, setSearchQuery]   = useState('');
   const [debouncedSearch, setDebounced] = useState('');

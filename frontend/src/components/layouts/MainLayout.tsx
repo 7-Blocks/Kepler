@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MaterialIcon } from '@/components/MaterialIcon';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore, useSidebarCollapsed, useRightDrawerOpen, logEvent } from '@/store';
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
 import { useLogbookStore, logEvent } from '@/store/logbookStore';
 import { PerformanceOverlay } from '@/components/PerformanceOverlay/PerformanceOverlay';
 import { PerformanceToggleButton } from '@/components/PerformanceOverlay/PerformanceToggleButton';
+import { NotificationCenter } from '@/components/ui/NotificationCenter';
 
 /** Ensures the mission-init System log fires once per browser tab session. */
 let hasLoggedMissionInit = false;
@@ -16,9 +16,15 @@ export const MainLayout: React.FC = () => {
   const {
     sidebarCollapsed,
     rightDrawerOpen,
+    isFlybyHistoryOpen,
     toggleSidebar,
-    toggleRightDrawer
+    toggleRightDrawer,
+    toggleFlybyHistory
   } = useUIStore();
+  const sidebarCollapsed = useSidebarCollapsed();
+  const rightDrawerOpen = useRightDrawerOpen();
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const toggleRightDrawer = useUIStore((s) => s.toggleRightDrawer);
 
   const location = useLocation();
   const [utcTime, setUtcTime] = useState<string>('00:00:00 UTC');
@@ -254,8 +260,11 @@ export const MainLayout: React.FC = () => {
                     </span>
                   )}
                 </button>
-                <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
-                  <MaterialIcon name="schedule" />
+                <button 
+                  onClick={toggleFlybyHistory}
+                  className={`relative transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${isFlybyHistoryOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
+                >
+                  <MaterialIcon name="radar" />
                 </button>
                 <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                   <MaterialIcon name="account_circle" />
@@ -409,6 +418,7 @@ export const MainLayout: React.FC = () => {
 
         </div>
 
+        <NotificationCenter />
       </div>
 
       <PerformanceOverlay />
