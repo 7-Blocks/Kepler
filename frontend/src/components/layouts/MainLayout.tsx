@@ -45,6 +45,7 @@ export const MainLayout: React.FC = () => {
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
+    { name: 'Event Timeline', path: '/dashboard/timeline', icon: 'timeline' },
     { name: 'Space Traffic', path: '/dashboard/space-traffic', icon: 'language' },
     { name: 'Space Weather', path: '/dashboard/space-weather', icon: 'wb_sunny' },
     { name: 'Satellites', path: '/dashboard/satellites', icon: 'satellite_alt' },
