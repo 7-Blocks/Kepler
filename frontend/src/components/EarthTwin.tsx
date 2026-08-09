@@ -544,7 +544,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     try {
       const viewer = new Cesium.Viewer(containerRef.current, {
         animation: false,
-        baseLayerPicker: false,
+        baseLayer: false, // Disable default Ion imagery to prevent 401s
         fullscreenButton: false,
         vrButton: false,
         geocoder: false,
@@ -564,6 +564,15 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         },
       });
 
+      // Add offline Natural Earth imagery layer as fallback
+      Cesium.TileMapServiceImageryProvider.fromUrl(
+        Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+      ).then((provider) => {
+        if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+          viewerRef.current.imageryLayers.addImageryProvider(provider);
+        }
+      });
+
       viewerRef.current = viewer;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUseFallback(false);
@@ -574,6 +583,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
 
       viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
+      viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a24'); // Visible fallback color
       viewer.scene.backgroundColor = Cesium.Color.TRANSPARENT;
       viewer.scene.skyBox.show = false;
       viewer.scene.sun.show = false;
@@ -734,7 +744,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       {/* The Cesium container must sit cleanly in the background */}
       <div 
         ref={containerRef} 
-        className="absolute inset-0 z-0 bg-transparent"
+        className="absolute inset-0 z-10 bg-transparent"
       />
       {/* High-Fidelity SVG Fallback */}
       {useFallback && (
