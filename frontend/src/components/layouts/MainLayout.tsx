@@ -6,6 +6,8 @@ import { useUIStore } from '@/store/uiStore';
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
 import { useLogbookStore, logEvent } from '@/store/logbookStore';
+import { PerformanceOverlay } from '@/components/PerformanceOverlay/PerformanceOverlay';
+import { PerformanceToggleButton } from '@/components/PerformanceOverlay/PerformanceToggleButton';
 
 /** Ensures the mission-init System log fires once per browser tab session. */
 let hasLoggedMissionInit = false;
@@ -239,6 +241,7 @@ export const MainLayout: React.FC = () => {
               <div className="text-primary/45 font-technical-data text-[10px] sm:text-[11px] hidden sm:block">
                 {utcTime}
               </div>
+              <PerformanceToggleButton />
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleRightDrawer}
@@ -407,6 +410,8 @@ export const MainLayout: React.FC = () => {
         </div>
 
       </div>
+
+      <PerformanceOverlay />
     </div>
   );
 };
