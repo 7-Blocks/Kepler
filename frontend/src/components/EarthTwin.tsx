@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
-import { useUIStore } from '@/store/uiStore';
-import { logEvent } from '@/store/logbookStore';
+import { useUIStore, useActiveSector, useLayerStore, logEvent } from '@/store';
 import { MaterialIcon } from './MaterialIcon';
 import { useNavigate } from 'react-router-dom';
 import * as Cesium from 'cesium';
@@ -26,7 +25,6 @@ import {
   OBJECT_CATEGORY_INFO,
   type ObjectCategory,
 } from '@/types/objectCategories';
-import { useLayerStore } from '@/store/layerStore';
 import { LayerManagerPanel } from './OrbitLayers/LayerManagerPanel';
 
 interface CatalogObject {
@@ -178,7 +176,8 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const [datasetVersion, setDatasetVersion] = useState(0);
-  const { activeSector, setSelectedSatelliteId } = useUIStore();
+  const activeSector = useActiveSector();
+  const setSelectedSatelliteId = useUIStore((s) => s.setSelectedSatelliteId);
   const [useFallback, setUseFallback] = useState(true);
   // Set by flyToSatellite(), consumed by SpotlightManager to lock its
   // selection/info-card onto a satellite chosen from outside the globe
