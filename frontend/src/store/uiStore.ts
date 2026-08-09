@@ -9,6 +9,7 @@ interface UIState {
   selectedCollisionId: string | null;
   activeSector: string;
   globalSearchOpen: boolean;
+  isFlybyHistoryOpen: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleRightDrawer: () => void;
@@ -19,6 +20,7 @@ interface UIState {
   setSelectedCollisionId: (id: string | null) => void;
   setActiveSector: (sector: string) => void;
   setGlobalSearchOpen: (open: boolean) => void;
+  toggleFlybyHistory: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -29,6 +31,7 @@ export const useUIStore = create<UIState>((set) => ({
   selectedCollisionId: null,   
   activeSector: '',
   globalSearchOpen: false,
+  isFlybyHistoryOpen: false,
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   toggleRightDrawer: () => set((state) => ({ rightDrawerOpen: !state.rightDrawerOpen })),
@@ -58,4 +61,5 @@ export const useUIStore = create<UIState>((set) => ({
   setSelectedCollisionId: (id) => set({ selectedCollisionId: id }),
   setActiveSector: (sector) => set({ activeSector: sector }),
   setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
+  toggleFlybyHistory: () => set((state) => ({ isFlybyHistoryOpen: !state.isFlybyHistoryOpen })),
 }));
