@@ -48,6 +48,7 @@ jobs:
 
       - name: Run tests
         env:
+          PYTHONPATH: .
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/orbital_guardian_test
           SECRET_KEY: ci_test_secret_key_not_for_production
           ALLOWED_ORIGINS: http://localhost:5173
