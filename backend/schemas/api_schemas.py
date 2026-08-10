@@ -53,12 +53,28 @@ class UserLogin(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    full_name: Optional[str] = Field(None, max_length=255)
     role_id: Optional[int] = None
     organization_id: Optional[int] = None
+
+class GoogleAuthRequest(BaseModel):
+    """
+    Payload sent by the frontend after Google Identity Services returns.
+
+    Send *either* an OAuth 2.0 `access_token` (token-client flow) or an
+    `id_token` (One Tap / credential flow). The backend verifies whichever
+    is provided against Google before trusting any profile data.
+    """
+
+    access_token: Optional[str] = None
+    id_token: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    auth_provider: str = "local"
     is_active: bool
     role_id: Optional[int]
     organization_id: Optional[int]
@@ -70,6 +86,7 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+    user: Optional["UserResponse"] = None
 
 class TokenData(BaseModel):
     email: Optional[str] = None

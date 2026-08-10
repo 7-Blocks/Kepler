@@ -3,7 +3,6 @@
 An AI-Powered Autonomous Space Traffic Management Platform
 </div>
 
-
 <p align="center">
   <img src="https://img.shields.io/badge/Space-Tech-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/AI-Powered-green?style=for-the-badge" />
@@ -28,14 +27,28 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/PushkarP-404"><img src="https://github.com/PushkarP-404.png" width="50px" style="border-radius:50%;margin:5px;" alt="PushkarP-404" /></a>
 <a href="https://github.com/kalpitt"><img src="https://github.com/kalpitt.png" width="50px" style="border-radius:50%;margin:5px;" alt="kalpitt" /></a>
 <a href="https://github.com/shwetakanth09"><img src="https://github.com/shwetakanth09.png" width="50px" style="border-radius:50%;margin:5px;" alt="shwetakanth09" /></a>
-<a href="https://github.com/TheLinuxGuy-ssh"><img src="https://github.com/TheLinuxGuy-ssh.png" width="50px" style="border-radius:50%;margin:5px;" alt="TheLinuxGuy-ssh" /></a>
 <a href="https://github.com/ronaksarda"><img src="https://github.com/ronaksarda.png" width="50px" style="border-radius:50%;margin:5px;" alt="ronaksarda" /></a>
 <a href="https://github.com/SankeerthNara"><img src="https://github.com/SankeerthNara.png" width="50px" style="border-radius:50%;margin:5px;" alt="SankeerthNara" /></a>
-<a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a>
-<a href="https://github.com/nayanraj864-cmyk"><img src="https://github.com/nayanraj864-cmyk.png" width="50px" style="border-radius:50%;margin:5px;" alt="nayanraj864-cmyk" /></a>
+<a href="https://github.com/ChinmaySonar007"><img src="https://github.com/ChinmaySonar007.png" width="50px" style="border-radius:50%;margin:5px;" alt="ChinmaySonar007" /></a>
 <a href="https://github.com/muntasiractive"><img src="https://github.com/muntasiractive.png" width="50px" style="border-radius:50%;margin:5px;" alt="muntasiractive" /></a>
+<a href="https://github.com/nayanraj864-cmyk"><img src="https://github.com/nayanraj864-cmyk.png" width="50px" style="border-radius:50%;margin:5px;" alt="nayanraj864-cmyk" /></a>
 <a href="https://github.com/Parshant-12"><img src="https://github.com/Parshant-12.png" width="50px" style="border-radius:50%;margin:5px;" alt="Parshant-12" /></a>
 <a href="https://github.com/varshu55"><img src="https://github.com/varshu55.png" width="50px" style="border-radius:50%;margin:5px;" alt="varshu55" /></a>
+<a href="https://github.com/khedkaravani-rgb"><img src="https://github.com/khedkaravani-rgb.png" width="50px" style="border-radius:50%;margin:5px;" alt="khedkaravani-rgb" /></a>
+<a href="https://github.com/HaimiyaWasn"><img src="https://github.com/HaimiyaWasn.png" width="50px" style="border-radius:50%;margin:5px;" alt="HaimiyaWasn" /></a>
+<a href="https://github.com/littlegod20"><img src="https://github.com/littlegod20.png" width="50px" style="border-radius:50%;margin:5px;" alt="littlegod20" /></a>
+<a href="https://github.com/sumittiwari1302"><img src="https://github.com/sumittiwari1302.png" width="50px" style="border-radius:50%;margin:5px;" alt="sumittiwari1302" /></a>
+<a href="https://github.com/shahkhushi0307"><img src="https://github.com/shahkhushi0307.png" width="50px" style="border-radius:50%;margin:5px;" alt="shahkhushi0307" /></a>
+<a href="https://github.com/Ayush-0918"><img src="https://github.com/Ayush-0918.png" width="50px" style="border-radius:50%;margin:5px;" alt="Ayush-0918" /></a>
+<a href="https://github.com/Dependabot"><img src="https://github.com/Dependabot.png" width="50px" style="border-radius:50%;margin:5px;" alt="Dependabot" /></a>
+<a href="https://github.com/super-eagleee"><img src="https://github.com/super-eagleee.png" width="50px" style="border-radius:50%;margin:5px;" alt="super-eagleee" /></a>
+<a href="https://github.com/draexon"><img src="https://github.com/draexon.png" width="50px" style="border-radius:50%;margin:5px;" alt="draexon" /></a>
+<a href="https://github.com/AaineeSinha"><img src="https://github.com/AaineeSinha.png" width="50px" style="border-radius:50%;margin:5px;" alt="AaineeSinha" /></a>
+<a href="https://github.com/Sk-Uruj"><img src="https://github.com/Sk-Uruj.png" width="50px" style="border-radius:50%;margin:5px;" alt="Sk-Uruj" /></a>
+<a href="https://github.com/SohammPawarr"><img src="https://github.com/SohammPawarr.png" width="50px" style="border-radius:50%;margin:5px;" alt="SohammPawarr" /></a>
+<a href="https://github.com/Pranitrane"><img src="https://github.com/Pranitrane.png" width="50px" style="border-radius:50%;margin:5px;" alt="Pranitrane" /></a>
+<!-- <a href="https://github.com/TheLinuxGuy-ssh"><img src="https://github.com/TheLinuxGuy-ssh.png" width="50px" style="border-radius:50%;margin:5px;" alt="TheLinuxGuy-ssh" /></a> -->
+<!--<a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a> -->
 
 </div>
 <!-- CONTRIBUTORS_END -->
@@ -96,8 +109,9 @@ The platform combines modern AI systems, orbital mechanics, data visualization, 
 
 * FastAPI
 * Python
-* MongoDB
-* Motor / PyMongo
+* PostgreSQL
+* SQLAlchemy (async) / asyncpg
+* Alembic (migrations)
 
 ### AI & Data Processing
 
@@ -149,6 +163,7 @@ Kepler/
 │   ├── models/
 │   ├── schemas/
 │   ├── middleware/
+│   ├── migrations/
 │   └── utils/
 │
 ├── docs/
@@ -230,8 +245,13 @@ Create a `.env` file in the project root.
 Example:
 
 ```env
-MONGODB_URI=your_mongodb_uri
-DATABASE_NAME=kepler
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=kepler
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost:5432/kepler
 
 SPACETRACK_USERNAME=your_username
 SPACETRACK_PASSWORD=your_password
@@ -241,13 +261,34 @@ OPENAI_API_KEY=your_api_key
 
 ---
 
-## 8. Start MongoDB
+## 8. Start PostgreSQL
 
-Run your local MongoDB instance or connect to MongoDB Atlas.
+Run a local PostgreSQL instance, or use Docker:
+
+```bash
+docker run --name kepler-postgres \
+  -e POSTGRES_USER=your_username \
+  -e POSTGRES_PASSWORD=your_password \
+  -e POSTGRES_DB=kepler \
+  -p 5432:5432 \
+  -d postgres:16
+```
+
+Alternatively, connect to a managed PostgreSQL instance (e.g. Supabase, Neon, RDS) by pointing `DATABASE_URL` at it.
 
 ---
 
-## 9. Run the Backend
+## 9. Run Database Migrations
+
+```bash
+cd backend
+
+alembic upgrade head
+```
+
+---
+
+## 10. Run the Backend
 
 ```bash
 cd backend
@@ -269,7 +310,7 @@ http://localhost:8000/docs
 
 ---
 
-## 10. Run the Frontend
+## 11. Run the Frontend
 
 ```bash
 cd frontend
@@ -285,9 +326,9 @@ http://localhost:5173
 
 ---
 
-## 11. Database Seeding
+## 12. Database Seeding
 
-To quickly populate the local MongoDB database with realistic sample satellite, telemetry, and conjunction records for development, testing, and demonstration, use the seeding script:
+To quickly populate the local PostgreSQL database with realistic sample satellite, telemetry, and conjunction records for development, testing, and demonstration, use the seeding script:
 
 ```bash
 cd backend
@@ -296,13 +337,13 @@ PYTHONPATH=. python scripts/seed_db.py --count 50 --clear
 
 ### Seeding Options
 - `--count` / `-c` (default `50`): Number of satellite records to generate.
-- `--clear` / `-x`: Drops existing satellite, debris, telemetry, and conjunction records from MongoDB before seeding.
+- `--clear` / `-x`: Drops existing satellite, debris, telemetry, and conjunction records from PostgreSQL before seeding.
 
 ### Configuration
-By default, the script connects to the URI specified in the `.env` file or defaults to `mongodb://localhost:27017/orbital_guardian`. You can configure a custom MongoDB connection string by setting the `MONGODB_URI` environment variable:
+By default, the script connects to the database specified by `DATABASE_URL` in the `.env` file, defaulting to `postgresql+asyncpg://postgres:postgres@localhost:5432/orbital_guardian` if unset. You can configure a custom PostgreSQL connection string by setting the `DATABASE_URL` environment variable:
 
 ```bash
-MONGODB_URI=mongodb://localhost:27017/custom_db PYTHONPATH=. python scripts/seed_db.py --count 100 --clear
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/custom_db PYTHONPATH=. python scripts/seed_db.py --count 100 --clear
 ```
 
 ---
@@ -326,6 +367,9 @@ npm test
 # 🤝 Contributing
 
 We welcome contributions from developers of all experience levels. Whether you're fixing bugs, improving documentation, or adding new features, your contributions are appreciated.
+
+## Important: 
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ## Step 1: Sync Your Fork
 
@@ -353,7 +397,7 @@ Examples:
 
 ```
 feature/add-authentication
-bugfix/fix-mongodb-sync
+bugfix/fix-postgres-sync
 docs/update-readme
 refactor/improve-api
 ```
@@ -520,7 +564,7 @@ The workflow (`.github/workflows/auto-labeler.yml`) triggers on various GitHub e
   - Changes in `.github/workflows/**` -> `github-actions`
   - Changes in `tests/**` -> `testing`
   - Docker changes -> `docker`
-  - Database-related files -> `database`
+  - Database-related files (models, migrations, schemas) -> `database`
 - **Documentation-Only Changes:** If a pull request modifies *only* documentation paths (e.g., `docs/**`, `README.md`, `*.md`), it will receive the `documentation` label, and other code/scope labels will be bypassed.
 - **PR Size Calculation:** Measures the total lines changed (additions + deletions) and applies a size label:
   - `size:XS` (≤ 10 lines)

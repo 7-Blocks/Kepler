@@ -67,6 +67,7 @@ export const NotFound: React.FC = () => {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrefersReducedMotion(mediaQuery.matches);
     const listener = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
     mediaQuery.addEventListener("change", listener);
@@ -74,7 +75,7 @@ export const NotFound: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full bg-background technical-grid text-on-surface overflow-hidden flex items-center justify-center px-6">
+    <div className="relative min-h-screen w-full technical-grid text-on-surface overflow-hidden flex items-center justify-center px-6">
       <DebrisField prefersReducedMotion={prefersReducedMotion} />
 
       <div className="relative z-10 max-w-lg w-full text-center">

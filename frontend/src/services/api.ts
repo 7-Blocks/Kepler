@@ -181,7 +181,17 @@ export const api = {
     apiFetch<{ synced_at: string }>('/weather/sync', { method: 'POST' }),
 
   triggerCollisionEvaluation: () =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     apiFetch<any>('/collisions/evaluate', { method: 'POST' }),
+
+  getEvents: (params: { category?: string; severity?: string; limit?: number; search?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.category) q.set('category', params.category);
+    if (params.severity) q.set('severity', params.severity);
+    if (params.limit)    q.set('limit', String(params.limit));
+    if (params.search)   q.set('search', params.search);
+    return apiFetch<import('@/types/events').TimelineEvent[]>(`/events?${q}`);
+  },
 };
 
 

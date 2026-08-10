@@ -165,6 +165,7 @@ Improvements to README, inline comments, API docs, and setup guides are always w
 - Run tests to confirm nothing is broken.
 - Keep changes focused — one feature/fix per PR.
 - Keep the diff under ~400 lines when possible. Larger changes should be discussed in an issue first.
+- Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to maintain a respectful and welcoming community.
 
 ### PR Checklist
 

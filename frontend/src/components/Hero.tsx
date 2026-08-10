@@ -5,6 +5,7 @@ import { Globe } from "@/components/ui/globe";
 import { OrbitSatellites } from "@/components/ui/OrbitSatellites";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Link } from "react-router-dom";
+import { MouseParallax } from "./MouseParallax";
 
 const TELEMETRY = [
   { label: "OBJECTS TRACKED", value: "34,900+" },
@@ -25,16 +26,23 @@ const fadeUp = {
 export function Hero() {
   return (
     <section className="relative flex min-h-screen w-full items-center overflow-hidden bg-[radial-gradient(120%_90%_at_50%_10%,#0B111F_0%,#05070C_60%)] font-[Inter]">
-      <Particles className="absolute inset-0" quantity={220} />
+      <MouseParallax className="absolute inset-0" strength={20}>
+        <Particles  quantity={220} />
+      </MouseParallax>
+
+      
       <div
         className="absolute left-1/2 top-[32%] h-[240px] w-[240px] max-w-[85vw] -translate-x-1/2 -translate-y-1/2 opacity-40
                    sm:left-auto sm:right-[3%] sm:top-1/2 sm:h-[380px] sm:w-[380px] sm:translate-x-0 sm:-translate-y-1/2 sm:opacity-70
                    lg:right-[5%] lg:h-[520px] lg:w-[520px] lg:opacity-90"
       >
-        <OrbitSatellites />
-        <div className="absolute inset-0 flex items-center justify-center">
+        <MouseParallax strength={10}>
+          <OrbitSatellites />
+        </MouseParallax>
+
+        <MouseParallax strength={20} className="absolute inset-0 flex items-center justify-center">
           <Globe className="h-max-[480px] w-max-[480px]" />
-        </div>
+        </MouseParallax>
       </div>
 
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#05070C_0%,rgba(5,7,12,0.85)_38%,rgba(5,7,12,0.25)_62%,transparent_85%)] sm:bg-[linear-gradient(90deg,#05070C_0%,rgba(5,7,12,0.85)_38%,rgba(5,7,12,0.25)_62%,transparent_85%)]" />

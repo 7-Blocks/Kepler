@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     # OpenAI — optional; AI agent endpoints will be unavailable without a real key.
     OPENAI_API_KEY: Optional[str] = None
 
+    # Google OAuth — required for "Continue with Google". Create an OAuth 2.0
+    # Client ID (Web application) in Google Cloud Console and set it here and in
+    # the frontend (VITE_GOOGLE_CLIENT_ID). When set, incoming Google tokens are
+    # verified to have been issued for this client id.
+    GOOGLE_CLIENT_ID: Optional[str] = None
+
     # NASA DONKI space weather API key (public demo key provided as default)
     NASA_DONKI_API_KEY: str = "DEMO_KEY"
 

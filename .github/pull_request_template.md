@@ -1,25 +1,49 @@
-## Description
+## Summary
 
-<!-- Describe your changes in detail -->
+<!-- Describe your changes in detail and explain why they are needed. -->
 
 ## Related Issue
 
-<!-- Link to the issue this PR resolves: e.g. Fixes #123 -->
+<!-- Link to the issue this PR resolves, e.g. Fixes #123 -->
 
-## Checklist
+## Type of Change
 
-- [ ] I have read the contributing guidelines
-- [ ] My code follows the project guidelines
-- [ ] I have completed testing of my changes
-- [ ] Documentation has been updated (if applicable)
+<!-- Select all that apply. -->
+
+- [ ] 🐛 Bug fix
+- [ ] ✨ New feature
+- [ ] 📚 Documentation update
+- [ ] 🚀 Performance improvement
+- [ ] 🎨 UI/UX enhancement
+- [ ] 🔧 Refactoring
+- [ ] 🧹 Chore / Maintenance
+- [ ] 🔒 Security improvement
 
 ## Screenshots / Screen Recordings
 
-<!-- If applicable, add screenshots to help explain your changes -->
+<!-- If applicable, add screenshots or screen recordings to help explain your changes. -->
+
+## Testing Performed
+
+<!-- Describe the tests you performed to verify your changes. -->
+
+- [ ] Tested locally
+- [ ] Tested relevant functionality
+- [ ] Checked for linting errors
+- [ ] Checked for TypeScript/build errors
+- [ ] Tested responsive behavior (if applicable)
 
 ## Breaking Changes
 
-<!-- Does this PR introduce a breaking change? Please describe it -->
+<!-- Does this PR introduce a breaking change? If yes, please describe it. -->
+
+## Checklist
+
+- [ ] I have read and followed the contributing guidelines.
+- [ ] My code follows the project's coding standards and guidelines.
+- [ ] I have completed testing of my changes.
+- [ ] I have updated documentation where applicable.
+- [ ] I have checked that my changes do not introduce unintended regressions.
 
 ---
 

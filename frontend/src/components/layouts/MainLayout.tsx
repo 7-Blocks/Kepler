@@ -1,16 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MaterialIcon } from '@/components/MaterialIcon';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore, useSidebarCollapsed, useRightDrawerOpen, logEvent } from '@/store';
+import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
+import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
+import { useLogbookStore, logEvent } from '@/store/logbookStore';
+import { NotificationCenter } from '@/components/ui/NotificationCenter';
+
+/** Ensures the mission-init System log fires once per browser tab session. */
+let hasLoggedMissionInit = false;
 
 export const MainLayout: React.FC = () => {
   const {
     sidebarCollapsed,
     rightDrawerOpen,
+    isFlybyHistoryOpen,
     toggleSidebar,
-    toggleRightDrawer
+    toggleRightDrawer,
+    toggleFlybyHistory
   } = useUIStore();
+  const sidebarCollapsed = useSidebarCollapsed();
+  const rightDrawerOpen = useRightDrawerOpen();
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const toggleRightDrawer = useUIStore((s) => s.toggleRightDrawer);
 
   const location = useLocation();
   const [utcTime, setUtcTime] = useState<string>('00:00:00 UTC');
@@ -33,12 +45,15 @@ export const MainLayout: React.FC = () => {
 
   useEffect(() => {
     // Close mobile sidebar on route change
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileSidebarOpen(false);
   }, [location.pathname]);
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
+    { name: 'Event Timeline', path: '/dashboard/timeline', icon: 'timeline' },
     { name: 'Space Traffic', path: '/dashboard/space-traffic', icon: 'language' },
+    { name: 'Space Weather', path: '/dashboard/space-weather', icon: 'wb_sunny' },
     { name: 'Satellites', path: '/dashboard/satellites', icon: 'satellite_alt' },
     { name: 'Debris', path: '/dashboard/debris', icon: 'delete_sweep' },
     { name: 'Collision Center', path: '/dashboard/collision-center', icon: 'warning' },
@@ -50,26 +65,53 @@ export const MainLayout: React.FC = () => {
 
   const [activeDrawerTab, setActiveDrawerTab] = useState<'STREAM' | 'STATUS' | 'LOGS'>('STREAM');
   const [assistantInput, setAssistantInput] = useState('');
-  const [assistantLogs, setAssistantLogs] = useState<Array<{ time: string; msg: string; type: string }>>([
-    { time: '14:22:01', msg: 'GYROSCOPE DELTA CALIBRATION COMPLETE', type: 'info' },
-    { time: '14:21:45', msg: 'UPLINK ESTABLISHED WITH GROUND STATION XI\'AN', type: 'success' },
-    { time: '14:18:22', msg: 'THERMAL SHIELD ATTACHMENT TEMP: -142.2C', type: 'info' }
-  ]);
+  const [tleSearch, setTleSearch] = useState('');
+
+  const logbookEntryCount = useLogbookStore((s) => s.entries.length);
+  const lastViewedLogCountRef = useRef(0);
+  const [unreadLogCount, setUnreadLogCount] = useState(0);
+  const isViewingLogs = rightDrawerOpen && activeDrawerTab === 'LOGS';
+
+  // Record a System event once, when mission control first comes online.
+  // Module-scope guard (not a ref) so it survives React StrictMode's
+  // double-invoke in dev *and* Vite HMR module reloads — a component-local
+  // ref resets on remount, but this only resets on a genuine full page load.
+  useEffect(() => {
+    if (hasLoggedMissionInit) return;
+    hasLoggedMissionInit = true;
+    logEvent('SYSTEM', 'LOW', 'Mission control interface initialized', 'Dashboard shell mounted and ready.');
+  }, []);
+
+  // Sync the unread badge to the logbook store (an external system) as new
+  // entries arrive or the Logs tab is opened; see the identical, pre-existing
+  // pattern in EarthTwin.tsx for setState-in-effect used this way.
+  useEffect(() => {
+    if (isViewingLogs) {
+      lastViewedLogCountRef.current = logbookEntryCount;
+    }
+    setUnreadLogCount(isViewingLogs ? 0 : Math.max(0, logbookEntryCount - lastViewedLogCountRef.current));
+  }, [isViewingLogs, logbookEntryCount]);
 
   const handleSendQuery = (e: React.FormEvent) => {
     e.preventDefault();
     if (!assistantInput.trim()) return;
 
-    const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setAssistantLogs(prev => [
-      { time, msg: `COMMAND RECEIVED: ${assistantInput.toUpperCase()}`, type: 'command' },
-      ...prev
-    ]);
+    logEvent('MISSION', 'LOW', 'Command received', assistantInput.trim(), { SOURCE: 'AI Assistant' });
     setAssistantInput('');
   };
 
+  const handleTleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
+    const q = tleSearch.trim();
+    if (!q) return;
+    logEvent('SEARCH', 'LOW', 'Command search executed', `Query: "${q}"`);
+  };
+
   return (
-    <div className="relative w-screen h-screen overflow-hidden font-body-ui bg-bg-deep-space text-on-surface select-none">
+    <div className="relative w-screen h-screen overflow-hidden font-body-ui text-on-surface select-none">
+      {/* Dynamic animated background */}
+      <DynamicBackground />
+
       {/* Scanline CRT overlay filter */}
       <div className="scanlines" />
 
@@ -91,7 +133,7 @@ export const MainLayout: React.FC = () => {
 
         {/* Left Navigation Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 flex flex-col h-full bg-bg-deep-space border-r border-border-panel transition-ui z-50 md:relative ${
+          className={`fixed inset-y-0 left-0 flex flex-col h-full backdrop-blur-xl bg-bg-deep-space/70 border-r border-border-panel/60 transition-ui z-50 md:relative ${
             mobileSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
           } ${!mobileSidebarOpen && sidebarCollapsed ? 'md:w-20' : 'md:w-64'}`}
         >
@@ -150,7 +192,7 @@ export const MainLayout: React.FC = () => {
           </nav>
 
           {/* Footer User Profile Section */}
-          <div className="p-4 border-t border-border-panel bg-bg-deep-space mt-auto">
+          <div className="p-4 border-t border-border-panel/60 bg-bg-deep-space/40 mt-auto">
             <div className="flex items-center">
               <div className="w-8 h-8 rounded shrink-0 bg-primary-container/20 flex items-center justify-center border border-primary-container/40">
                 <MaterialIcon name="account_circle" className="text-primary-container text-lg" />
@@ -169,7 +211,7 @@ export const MainLayout: React.FC = () => {
         <div className="flex-1 flex flex-col h-full min-w-0 relative">
 
           {/* Top Command Bar */}
-          <header className="h-12 bg-bg-deep-space/95 border-b border-border-panel flex justify-between items-center px-4 md:px-6 w-full sticky top-0 z-30">
+          <header className="h-12 backdrop-blur-xl bg-bg-deep-space/70 border-b border-border-panel/60 flex justify-between items-center px-4 md:px-6 w-full sticky top-0 z-30">
             {/* Command Search & Mobile Toggle */}
             <div className="flex items-center gap-2 sm:gap-4 flex-1">
               <button
@@ -183,6 +225,9 @@ export const MainLayout: React.FC = () => {
                 <MaterialIcon name="search" className="absolute left-2 text-primary/50 text-sm" />
                 <input
                   type="text"
+                  value={tleSearch}
+                  onChange={(e) => setTleSearch(e.target.value)}
+                  onKeyDown={handleTleSearchSubmit}
                   placeholder="ID / TLE SEARCH"
                   className="bg-surface-container-low w-full border-b border-primary/30 text-primary font-technical-data text-[12px] pl-8 pr-2 sm:pr-16 py-1 focus:outline-none focus:border-primary-container transition-ui placeholder:text-primary/30"
                 />
@@ -204,12 +249,20 @@ export const MainLayout: React.FC = () => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleRightDrawer}
-                  className={`transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
+                  className={`relative transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
                 >
                   <MaterialIcon name="monitor_heart" />
+                  {unreadLogCount > 0 && (
+                    <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-status-emergency text-white text-[8px] font-bold font-technical-data flex items-center justify-center leading-none">
+                      {unreadLogCount > 99 ? '99+' : unreadLogCount}
+                    </span>
+                  )}
                 </button>
-                <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
-                  <MaterialIcon name="schedule" />
+                <button 
+                  onClick={toggleFlybyHistory}
+                  className={`relative transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${isFlybyHistoryOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
+                >
+                  <MaterialIcon name="radar" />
                 </button>
                 <button className="text-primary hover:text-primary-fixed cursor-pointer transition-ui p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
                   <MaterialIcon name="account_circle" />
@@ -220,7 +273,7 @@ export const MainLayout: React.FC = () => {
 
           {/* Main workspace frame */}
           <div className="flex-1 flex overflow-hidden relative">
-            <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-bg-deep-space">
+            <main className="flex-1 overflow-y-auto custom-scrollbar relative">
               <Outlet />
             </main>
 
@@ -232,7 +285,7 @@ export const MainLayout: React.FC = () => {
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: '100%', opacity: 0.8 }}
                   transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="w-full sm:w-80 h-full bg-surface-container-lowest border-l border-border-panel flex flex-col z-35 shadow-[-10px_0_30px_rgba(0,0,0,0.8)] absolute right-0 top-0 sm:relative"
+                  className="w-full sm:w-80 h-full backdrop-blur-xl bg-surface-container-lowest/80 border-l border-border-panel/60 flex flex-col z-35 shadow-[-10px_0_30px_rgba(0,0,0,0.8)] absolute right-0 top-0 sm:relative"
                 >
                   {/* Assistant Header */}
                   <div className="p-6 border-b border-border-panel flex justify-between items-center">
@@ -337,22 +390,11 @@ export const MainLayout: React.FC = () => {
                       </div>
                     )}
 
-                    {activeDrawerTab === 'LOGS' && (
-                      <div className="space-y-3 font-technical-data text-[11px]">
-                        {assistantLogs.map((log, i) => (
-                          <div key={i} className="flex gap-2 border-b border-border-panel/40 pb-1">
-                            <span className="text-on-surface-variant font-mono">[{log.time}]</span>
-                            <span className={log.type === 'success' ? 'text-status-success' : log.type === 'command' ? 'text-primary-container' : 'text-on-surface'}>
-                              {log.msg}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {activeDrawerTab === 'LOGS' && <LogbookPanel />}
                   </div>
 
                   {/* Chat Input */}
-                  <form onSubmit={handleSendQuery} className="p-4 bg-bg-deep-space/85 border-t border-border-panel">
+                  <form onSubmit={handleSendQuery} className="p-4 bg-bg-deep-space/50 backdrop-blur-sm border-t border-border-panel/60">
                     <div className="relative">
                       <input
                         type="text"
@@ -374,6 +416,7 @@ export const MainLayout: React.FC = () => {
 
         </div>
 
+        <NotificationCenter />
       </div>
     </div>
   );

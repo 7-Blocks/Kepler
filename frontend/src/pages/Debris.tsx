@@ -16,13 +16,6 @@ function altFromSMA(sma: number | null): number {
   return Math.round(sma - 6371);
 }
 
-function sizeCategory(alt: number, inc: number | null): string {
-  
-  if (alt < 500)  return 'SMALL';
-  if (alt < 1000) return 'MEDIUM';
-  return 'LARGE';
-}
-
 function riskFromOrbit(obj: SpaceObject): 'HIGH' | 'MEDIUM' | 'LOW' {
   const alt = altFromSMA(obj.semimajor_axis);
   if (alt < 600)  return 'HIGH';
@@ -53,8 +46,8 @@ export const Debris: React.FC = () => {
 
   const onSearch = (val: string) => {
     setSearchQuery(val);
-    clearTimeout((window as any)._debrisSearchTimer);
-    (window as any)._debrisSearchTimer = setTimeout(() => {
+    clearTimeout((window as unknown as { _debrisSearchTimer: ReturnType<typeof setTimeout> })._debrisSearchTimer);
+    (window as unknown as { _debrisSearchTimer: ReturnType<typeof setTimeout> })._debrisSearchTimer = setTimeout(() => {
       setDebounced(val);
       setPage(1);
     }, 400);

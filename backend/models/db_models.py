@@ -58,9 +58,15 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    full_name: Mapped[Optional[str]] = mapped_column(String(255))
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # "local" for email/password, "google" for Google OAuth accounts.
+    auth_provider: Mapped[str] = mapped_column(String(20), default="local", nullable=False)
+    # Google's stable subject identifier (`sub`); unique per Google account.
+    google_sub: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True)
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(512))
     role_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("roles.id", ondelete="SET NULL"))
     organization_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"))
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -95,8 +101,8 @@ class SpaceObject(Base):
     mean_anomaly: Mapped[Optional[float]] = mapped_column(Float)
     mean_motion: Mapped[Optional[float]] = mapped_column(Float)
     period: Mapped[Optional[float]] = mapped_column(Float)
-    tle_line1: Mapped[Optional[str]] = mapped_column(String(100))
-    tle_line2: Mapped[Optional[str]] = mapped_column(String(100))
+    tle_line1: Mapped[Optional[str]] = mapped_column(String(200))
+    tle_line2: Mapped[Optional[str]] = mapped_column(String(200))
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -159,8 +165,8 @@ class Satellite(Base):
     operational_mode: Mapped[str] = mapped_column(String(20), default="NORMAL")
     semimajor_axis: Mapped[Optional[float]] = mapped_column(Float)
     period: Mapped[Optional[float]] = mapped_column(Float)
-    tle_line1: Mapped[Optional[str]] = mapped_column(String(100))
-    tle_line2: Mapped[Optional[str]] = mapped_column(String(100))
+    tle_line1: Mapped[Optional[str]] = mapped_column(String(200))
+    tle_line2: Mapped[Optional[str]] = mapped_column(String(200))
 
     organization: Mapped[Optional["Organization"]] = relationship("Organization", back_populates="satellites")
     space_object_rel: Mapped[Optional["SpaceObject"]] = relationship(
@@ -214,8 +220,8 @@ class Debris(Base):
     average_mass: Mapped[Optional[float]] = mapped_column(Float)
     semimajor_axis: Mapped[Optional[float]] = mapped_column(Float)
     period: Mapped[Optional[float]] = mapped_column(Float)
-    tle_line1: Mapped[Optional[str]] = mapped_column(String(100))
-    tle_line2: Mapped[Optional[str]] = mapped_column(String(100))
+    tle_line1: Mapped[Optional[str]] = mapped_column(String(200))
+    tle_line2: Mapped[Optional[str]] = mapped_column(String(200))
 
     space_object_rel: Mapped[Optional["SpaceObject"]] = relationship(
         "SpaceObject", back_populates="debris_details"
@@ -412,7 +418,7 @@ class SpaceWeather(Base):
     k_index: Mapped[Optional[int]] = mapped_column(Integer)
     description: Mapped[Optional[str]] = mapped_column(Text)
     recorded_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), index=True
+        DateTime(timezone=True), server_default=func.now()
     )
 
     @property

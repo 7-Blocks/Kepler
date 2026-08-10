@@ -1,0 +1,76 @@
+name: UI/UX Enhancement
+description: Suggest an improvement to the user interface or user experience
+title: "[UI/UX]: "
+labels:
+  - "type:ui"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping us improve the user experience!
+        Please provide as much detail as possible about the UI/UX improvement you are suggesting.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or usability issue
+      description: Describe the current UI/UX issue or usability problem.
+      placeholder: |
+        What is difficult, confusing, inconsistent, or inconvenient for users?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed improvement
+      description: Describe how you think the UI/UX could be improved.
+      placeholder: |
+        Explain your proposed design or user experience improvement.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: What part of the project does this UI/UX issue affect?
+      options:
+        - Website
+        - Frontend
+        - Backend
+        - API
+        - Mobile
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or mockups
+      description: If applicable, attach screenshots, mockups, or design references that help explain the proposed improvement.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternative designs or solutions you have considered.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important do you think this improvement is?
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Add any other context, references, or information that may help us understand this suggestion.
