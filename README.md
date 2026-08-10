@@ -46,6 +46,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/AaineeSinha"><img src="https://github.com/AaineeSinha.png" width="50px" style="border-radius:50%;margin:5px;" alt="AaineeSinha" /></a>
 <a href="https://github.com/Sk-Uruj"><img src="https://github.com/Sk-Uruj.png" width="50px" style="border-radius:50%;margin:5px;" alt="Sk-Uruj" /></a>
 <a href="https://github.com/SohammPawarr"><img src="https://github.com/SohammPawarr.png" width="50px" style="border-radius:50%;margin:5px;" alt="SohammPawarr" /></a>
+<a href="https://github.com/Pranitrane"><img src="https://github.com/Pranitrane.png" width="50px" style="border-radius:50%;margin:5px;" alt="Pranitrane" /></a>
 <!-- <a href="https://github.com/TheLinuxGuy-ssh"><img src="https://github.com/TheLinuxGuy-ssh.png" width="50px" style="border-radius:50%;margin:5px;" alt="TheLinuxGuy-ssh" /></a> -->
 <!--<a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a> -->
 
