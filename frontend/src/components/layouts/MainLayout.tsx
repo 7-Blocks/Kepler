@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MaterialIcon } from '@/components/MaterialIcon';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore, useSidebarCollapsed, useRightDrawerOpen, logEvent } from '@/store';
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
 import { useLogbookStore, logEvent } from '@/store/logbookStore';
@@ -21,6 +20,10 @@ export const MainLayout: React.FC = () => {
     toggleRightDrawer,
     toggleFlybyHistory
   } = useUIStore();
+  const sidebarCollapsed = useSidebarCollapsed();
+  const rightDrawerOpen = useRightDrawerOpen();
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const toggleRightDrawer = useUIStore((s) => s.toggleRightDrawer);
 
   const location = useLocation();
   const [utcTime, setUtcTime] = useState<string>('00:00:00 UTC');

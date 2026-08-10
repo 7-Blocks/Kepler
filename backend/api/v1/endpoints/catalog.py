@@ -31,9 +31,46 @@ def _validate_group(group: str) -> None:
         )
 
 
+def _angles_from_tle(tle_line2: Optional[str]) -> tuple[Optional[float], Optional[float], Optional[float]]:
+    """Extract RAAN, arg of perigee, and mean anomaly (degrees) from TLE line 2.
+
+    Satellite / Debris rows often store TLEs but leave the dedicated angle
+    columns empty, and the globe placer needs those angles to plot points.
+    """
+    if not tle_line2:
+        return None, None, None
+    try:
+        line = tle_line2.rstrip("\n\r")
+        # NORAD fixed-width columns (0-indexed): RAAN 17:25, ArgP 34:42, MA 43:51
+        if len(line) >= 51 and line[17:25].strip() and line[34:42].strip() and line[43:51].strip():
+            return float(line[17:25]), float(line[34:42]), float(line[43:51])
+        parts = line.split()
+        # 2 <satnum> <incl> <raan> <ecc> <argp> <ma> <n> ...
+        if len(parts) >= 7:
+            return float(parts[3]), float(parts[5]), float(parts[6])
+    except (ValueError, IndexError):
+        pass
+    return None, None, None
+
+
+def _orbital_angles(
+    tle_line2: Optional[str],
+    space_object=None,
+) -> tuple[Optional[float], Optional[float], Optional[float]]:
+    if space_object is not None:
+        if (
+            space_object.raan is not None
+            and space_object.arg_of_perigee is not None
+            and space_object.mean_anomaly is not None
+        ):
+            return space_object.raan, space_object.arg_of_perigee, space_object.mean_anomaly
+    return _angles_from_tle(tle_line2)
+
+
 def _serialize_sat(sat: Satellite) -> Dict[str, Any]:
     epoch   = sat.epoch
     updated = sat.updatedAt
+    raan, arg_of_perigee, mean_anomaly = _orbital_angles(sat.tle_line2, sat.space_object_rel)
     return {
         "id":             str(sat.id),
         "name":           sat.objectName or "",
@@ -44,9 +81,9 @@ def _serialize_sat(sat: Satellite) -> Dict[str, Any]:
         "inclination":    sat.inclination,
         "eccentricity":   sat.eccentricity,
         "semimajor_axis": sat.semimajor_axis,
-        "raan":           None,
-        "arg_of_perigee": None,
-        "mean_anomaly":   None,
+        "raan":           raan,
+        "arg_of_perigee": arg_of_perigee,
+        "mean_anomaly":   mean_anomaly,
         "mean_motion":    sat.meanMotion,
         "period":         sat.period,
         "has_tle":        bool(sat.tle_line1 and sat.tle_line2),
@@ -56,6 +93,7 @@ def _serialize_sat(sat: Satellite) -> Dict[str, Any]:
 
 def _serialize_debris(deb: Debris) -> Dict[str, Any]:
     epoch = deb.epoch
+    raan, arg_of_perigee, mean_anomaly = _orbital_angles(deb.tle_line2, deb.space_object_rel)
     return {
         "id":             str(deb.id),
         "name":           deb.objectName or "",
@@ -66,9 +104,9 @@ def _serialize_debris(deb: Debris) -> Dict[str, Any]:
         "inclination":    deb.inclination,
         "eccentricity":   deb.eccentricity,
         "semimajor_axis": deb.semimajor_axis,
-        "raan":           None,
-        "arg_of_perigee": None,
-        "mean_anomaly":   None,
+        "raan":           raan,
+        "arg_of_perigee": arg_of_perigee,
+        "mean_anomaly":   mean_anomaly,
         "mean_motion":    deb.meanMotion,
         "period":         deb.period,
         "has_tle":        bool(deb.tle_line1 and deb.tle_line2),

@@ -7,6 +7,7 @@ import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackgr
 import { keplerToLatLonAlt } from '@/utils/orbitCalc';
 import { useUIStore } from '@/store/uiStore';
 import { logEvent } from '@/store/logbookStore';
+import { useUIStore, useActiveSector, useLayerStore, logEvent } from '@/store';
 import { MaterialIcon } from './MaterialIcon';
 import { useNavigate } from 'react-router-dom';
 import * as Cesium from 'cesium';
@@ -23,6 +24,15 @@ import {
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { executeVoiceCommand } from '../lib/voiceCommands';
 import { SpotlightManager } from './SatelliteSpotlight/SpotlightManager';
+import { deriveOrbitRegime, type OrbitRegime } from '@/types/orbitLayers';
+import {
+  deriveObjectCategory,
+  getObjectCategoryCss,
+  isObjectCategoryVisible,
+  OBJECT_CATEGORY_INFO,
+  type ObjectCategory,
+} from '@/types/objectCategories';
+import { LayerManagerPanel } from './OrbitLayers/LayerManagerPanel';
 
 interface CatalogObject {
   id: number;
@@ -66,6 +76,16 @@ const CATEGORY_COLORS = {
   COLLISION: { css: '#FF0000', cesium: Cesium.Color.fromCssColorString('#FF0000'), label: 'Collision Risk', icon: 'warning' },
   SELECTED: { css: '#00E5FF', cesium: Cesium.Color.fromCssColorString('#00E5FF'), label: 'Selected', icon: 'gps_fixed' },
 } as const;
+
+/** Cesium colors aligned with Layer Manager toggle accents. */
+const OBJECT_CATEGORY_CESIUM: Record<ObjectCategory, Cesium.Color> = {
+  NAVIGATION: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.NAVIGATION.css),
+  WEATHER: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.WEATHER.css),
+  MILITARY: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.MILITARY.css),
+  SPACE_DEBRIS: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.SPACE_DEBRIS.css),
+  ROCKET_BODY: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.ROCKET_BODY.css),
+  OTHER: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.OTHER.css),
+};
 
 function getPointSize(classification: string): number {
   switch (classification) {
@@ -116,11 +136,15 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const entitiesRef = useRef<Map<string, Cesium.Entity>>(new Map());
   const catalogMapRef = useRef<Map<string, CatalogObject>>(new Map());
   const collisionSetRef = useRef<Set<string>>(new Set());
+  const regimeMapRef = useRef<Map<string, OrbitRegime>>(new Map());
+  const categoryMapRef = useRef<Map<string, ObjectCategory>>(new Map());
+  const collisionLinesRef = useRef<{ entity: Cesium.Entity; objectA: string; objectB: string }[]>([]);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const [datasetVersion, setDatasetVersion] = useState(0);
-  const { activeSector, setSelectedSatelliteId, selectedSatelliteId } = useUIStore();
+  const activeSector = useActiveSector();
+  const { setSelectedSatelliteId, selectedSatelliteId } = useUIStore();
   const [useFallback, setUseFallback] = useState(true);
   // Set by flyToSatellite(), consumed by SpotlightManager to lock its
   // selection/info-card onto a satellite chosen from outside the globe
@@ -133,7 +157,12 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [showLegend, setShowLegend] = useState(true);
   const [showDensity, setShowDensity] = useState(false);
   const [showRiskOverlay, setShowRiskOverlay] = useState(false);
-  const [objectCounts, setObjectCounts] = useState({ payloads: 0, debris: 0, rocketBodies: 0, total: 0, collisions: 0 });
+  const [showLayerManager, setShowLayerManager] = useState(false);
+  const [objectCounts, setObjectCounts] = useState({
+    navigation: 0, weather: 0, military: 0, debris: 0, rocketBodies: 0, other: 0,
+    total: 0, collisions: 0,
+    leo: 0, meo: 0, geo: 0, heo: 0,
+  });
   const [dataLoaded, setDataLoaded] = useState(false);
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false);
   const [isBookmarkSidebarOpen, setIsBookmarkSidebarOpen] = useState(false);
@@ -222,9 +251,13 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         if (c.object_b?.catalog_number) collisionCatNums.add(c.object_b.catalog_number);
       });
 
-      let payloads = 0, debris = 0, rocketBodies = 0;
+      let navigation = 0, weather = 0, military = 0, debris = 0, rocketBodies = 0, other = 0;
+      let leo = 0, meo = 0, geo = 0, heo = 0;
       const entityMap = new Map<string, Cesium.Entity>();
       const catalogMap = new Map<string, CatalogObject>();
+      const regimeMap = new Map<string, OrbitRegime>();
+      const categoryMap = new Map<string, ObjectCategory>();
+      const collisionLines: { entity: Cesium.Entity; objectA: string; objectB: string }[] = [];
 
 
       if (!viewer || viewer.isDestroyed()) return;
@@ -232,20 +265,30 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
       viewer.entities.removeAll();
       const nowJulian = Cesium.JulianDate.now();
+      const { categoryVisibility: catVis, regimeVisibility: regVis } = useLayerStore.getState();
       objects.forEach(obj => {
         const pos = keplerToLatLonAlt(obj);
         if (!pos) return;
 
+        const objectCategory = deriveObjectCategory(obj);
+        if (objectCategory === 'NAVIGATION') navigation++;
+        else if (objectCategory === 'WEATHER') weather++;
+        else if (objectCategory === 'MILITARY') military++;
+        else if (objectCategory === 'SPACE_DEBRIS') debris++;
+        else if (objectCategory === 'ROCKET_BODY') rocketBodies++;
+        else other++;
 
-        if (obj.classification === 'PAYLOAD') payloads++;
-        else if (obj.classification === 'DEBRIS') debris++;
-        else if (obj.classification === 'ROCKET_BODY') rocketBodies++;
+        const regime = deriveOrbitRegime(obj);
+        if (regime === 'LEO') leo++;
+        else if (regime === 'MEO') meo++;
+        else if (regime === 'GEO') geo++;
+        else if (regime === 'HEO') heo++;
 
 
         const isCollisionRisk = collisionCatNums.has(obj.catalog_number);
-        const colorConfig = isCollisionRisk
-          ? CATEGORY_COLORS.COLLISION
-          : CATEGORY_COLORS[obj.classification] ?? CATEGORY_COLORS.UNKNOWN;
+        const markerColor = isCollisionRisk
+          ? CATEGORY_COLORS.COLLISION.cesium
+          : OBJECT_CATEGORY_CESIUM[objectCategory];
 
         const pixelSize = isCollisionRisk ? 8 : getPointSize(obj.classification);
         const outlineWidth = isCollisionRisk ? 3 : getOutlineWidth(obj.classification);
@@ -253,12 +296,16 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         const cartPos = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000);
         const sunlit = isSatelliteSunlit(cartPos, nowJulian, viewer.scene.globe);
 
+        const initiallyVisible =
+          isObjectCategoryVisible(objectCategory, catVis) && (regVis[regime] ?? true);
+
         const entity = viewer.entities.add({
           position: cartPos,
+          show: initiallyVisible,
           point: {
             pixelSize,
-            color: sunlit ? colorConfig.cesium.withAlpha(0.85) : colorConfig.cesium.withAlpha(0.3),
-            outlineColor: sunlit ? colorConfig.cesium.withAlpha(0.4) : colorConfig.cesium.withAlpha(0.1),
+            color: sunlit ? markerColor.withAlpha(0.85) : markerColor.withAlpha(0.3),
+            outlineColor: sunlit ? markerColor.withAlpha(0.4) : markerColor.withAlpha(0.1),
             outlineWidth,
             disableDepthTestDistance: Number.POSITIVE_INFINITY,
             scaleByDistance: new Cesium.NearFarScalar(1e6, 1.5, 5e7, 0.4),
@@ -266,7 +313,9 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
           properties: new Cesium.PropertyBag({
             catalogData: JSON.stringify(obj),
             objectType: obj.classification,
+            objectCategory,
             isCollisionRisk,
+            orbitRegime: regime,
           }),
           label: {
             text: '',
@@ -276,6 +325,8 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
         entityMap.set(obj.catalog_number, entity);
         catalogMap.set(obj.catalog_number, obj);
+        regimeMap.set(obj.catalog_number, regime);
+        categoryMap.set(obj.catalog_number, objectCategory);
       });
 
 
@@ -289,7 +340,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         const posB = entityB.position.getValue(Cesium.JulianDate.now());
         if (!posA || !posB) return;
 
-        viewer.entities.add({
+        const lineEntity = viewer.entities.add({
           polyline: {
             positions: [posA, posB],
             width: 2,
@@ -299,18 +350,29 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             }),
           },
         });
+        collisionLines.push({ entity: lineEntity, objectA: conj.object_a.catalog_number, objectB: conj.object_b.catalog_number });
       });
 
       entitiesRef.current = entityMap;
       catalogMapRef.current = catalogMap;
       collisionSetRef.current = collisionCatNums;
+      regimeMapRef.current = regimeMap;
+      categoryMapRef.current = categoryMap;
+      collisionLinesRef.current = collisionLines;
       setDatasetVersion(v => v + 1);
       setObjectCounts({
-        payloads,
+        navigation,
+        weather,
+        military,
         debris,
         rocketBodies,
+        other,
         total: objects.length,
         collisions: collisions.length,
+        leo,
+        meo,
+        geo,
+        heo,
       });
       setStats({
         totalObjects: objects.length,
@@ -542,9 +604,17 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     let handler: Cesium.ScreenSpaceEventHandler | null = null;
 
     try {
+      // Use Cesium's bundled Natural Earth II tiles so the globe works
+      // without a Cesium ion access token (avoids api.cesium.com 401s).
       const viewer = new Cesium.Viewer(containerRef.current, {
         animation: false,
-        baseLayer: false, // Disable default Ion imagery to prevent 401s
+        baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+          Cesium.TileMapServiceImageryProvider.fromUrl(
+            Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+          ),
+          {}
+        ),
+        baseLayerPicker: false,
         fullscreenButton: false,
         vrButton: false,
         geocoder: false,
@@ -709,6 +779,34 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const categoryVisibility = useLayerStore((s) => s.categoryVisibility);
+  const regimeVisibility = useLayerStore((s) => s.regimeVisibility);
+
+  // Applies the current layer-manager toggle state to entities Cesium has
+  // already created. Mutating `.show` here (instead of refetching/re-running
+  // populateEntities) keeps toggling instant and network-free. Re-runs on
+  // datasetVersion so toggle state survives the periodic 5-minute refetch,
+  // which recreates every entity from scratch.
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || viewer.isDestroyed()) return;
+
+    const visibleIds = new Set<string>();
+    entitiesRef.current.forEach((entity, catNum) => {
+      const regime = regimeMapRef.current.get(catNum) ?? 'LEO';
+      const objectCategory = categoryMapRef.current.get(catNum) ?? 'OTHER';
+      const visible =
+        isObjectCategoryVisible(objectCategory, categoryVisibility) &&
+        (regimeVisibility[regime] ?? true);
+      entity.show = visible;
+      if (visible) visibleIds.add(catNum);
+    });
+    collisionLinesRef.current.forEach(({ entity, objectA, objectB }) => {
+      entity.show = visibleIds.has(objectA) && visibleIds.has(objectB);
+    });
+    viewer.scene.requestRender();
+  }, [categoryVisibility, regimeVisibility, datasetVersion]);
+
   // Mirrors the double-click fly-to in useSatelliteSelection.ts, but
   // triggerable from outside the globe (e.g. a dashboard card) instead of
   // from a Cesium pick event.
@@ -735,6 +833,9 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   }, []);
 
   useImperativeHandle(ref, () => ({ flyToSatellite }), [flyToSatellite]);
+
+  const hoveredCategory = hoveredObject ? deriveObjectCategory(hoveredObject) : 'OTHER';
+  const hoveredCategoryLabel = OBJECT_CATEGORY_INFO[hoveredCategory].label;
 
   return (
     <div 
@@ -793,7 +894,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             <div className="flex items-center gap-2 mb-2">
               <span
                 className="w-2.5 h-2.5 rounded-full animate-pulse"
-                style={{ backgroundColor: CATEGORY_COLORS[hoveredObject.classification]?.css ?? '#888' }}
+                style={{ backgroundColor: getObjectCategoryCss(hoveredCategory) }}
               />
               <span className="font-technical-data text-xs font-bold text-primary-container">
                 {hoveredObject.name}
@@ -802,7 +903,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-technical-data text-[10px]">
               {[
                 ['NORAD ID', hoveredObject.catalog_number],
-                ['TYPE', hoveredObject.classification],
+                ['TYPE', hoveredCategoryLabel],
                 ['ALTITUDE', hoveredObject.semimajor_axis ? `${Math.round(hoveredObject.semimajor_axis - 6371).toLocaleString()} km` : '—'],
                 ['INCLINATION', hoveredObject.inclination != null ? `${hoveredObject.inclination.toFixed(2)}°` : '—'],
                 ['MEAN MOTION', hoveredObject.mean_motion != null ? `${hoveredObject.mean_motion.toFixed(4)} rev/d` : '—'],
@@ -985,6 +1086,14 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             >
               RISK
             </button>
+            <button
+              onClick={() => setShowLayerManager(v => !v)}
+              aria-pressed={showLayerManager}
+              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLayerManager ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+                }`}
+            >
+              LAYERS
+            </button>
           </div>
         </div>
       </div>
@@ -1002,9 +1111,12 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
               </div>
               <div className="space-y-2">
                 {[
-                  { color: CATEGORY_COLORS.PAYLOAD.css, label: 'Active Satellites', count: objectCounts.payloads },
-                  { color: CATEGORY_COLORS.DEBRIS.css, label: 'Debris Objects', count: objectCounts.debris },
-                  { color: CATEGORY_COLORS.ROCKET_BODY.css, label: 'Rocket Bodies', count: objectCounts.rocketBodies },
+                  { color: OBJECT_CATEGORY_INFO.NAVIGATION.css, label: OBJECT_CATEGORY_INFO.NAVIGATION.label, count: objectCounts.navigation },
+                  { color: OBJECT_CATEGORY_INFO.WEATHER.css, label: OBJECT_CATEGORY_INFO.WEATHER.label, count: objectCounts.weather },
+                  { color: OBJECT_CATEGORY_INFO.MILITARY.css, label: OBJECT_CATEGORY_INFO.MILITARY.label, count: objectCounts.military },
+                  { color: OBJECT_CATEGORY_INFO.SPACE_DEBRIS.css, label: OBJECT_CATEGORY_INFO.SPACE_DEBRIS.label, count: objectCounts.debris },
+                  { color: OBJECT_CATEGORY_INFO.ROCKET_BODY.css, label: OBJECT_CATEGORY_INFO.ROCKET_BODY.label, count: objectCounts.rocketBodies },
+                  { color: OBJECT_CATEGORY_INFO.OTHER.css, label: OBJECT_CATEGORY_INFO.OTHER.label, count: objectCounts.other },
                   { color: CATEGORY_COLORS.COLLISION.css, label: 'Collision Risks', count: objectCounts.collisions },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between gap-3">
@@ -1024,6 +1136,26 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
               </div>
             </div>
           ) : (<LegendCardSkeleton />)}
+        </div>
+      )}
+
+      {/* ── Orbit Layer Manager Panel ──────────────────────────── */}
+      {/* Bounded by the HUD's top status row and bottom button row so the
+          panel can never overflow the globe section and be clipped. */}
+      {showLayerManager && (
+        <div className="absolute top-14 sm:top-20 bottom-16 md:bottom-24 right-3 md:right-6 z-20 flex items-start justify-end pointer-events-none animate-[slideUp_0.3s_ease-out]">
+          <LayerManagerPanel
+            onClose={() => setShowLayerManager(false)}
+            regimeCounts={{ LEO: objectCounts.leo, MEO: objectCounts.meo, GEO: objectCounts.geo, HEO: objectCounts.heo }}
+            categoryCounts={{
+              NAVIGATION: objectCounts.navigation,
+              WEATHER: objectCounts.weather,
+              MILITARY: objectCounts.military,
+              SPACE_DEBRIS: objectCounts.debris,
+              ROCKET_BODY: objectCounts.rocketBodies,
+              OTHER: objectCounts.other,
+            }}
+          />
         </div>
       )}
 
