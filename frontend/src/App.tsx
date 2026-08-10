@@ -19,6 +19,7 @@ import { Debris } from '@/pages/Debris';
 import { CollisionCenter } from '@/pages/CollisionCenter';
 import { AIAgents } from '@/pages/AIAgents';
 import { MissionPlanner } from '@/pages/MissionPlanner';
+import EventTimelinePage from '@/pages/EventTimeline';
 import { Settings } from '@/pages/Settings';
 import { Toaster } from 'sonner';
 import { toastOptions } from './constants/toast';
@@ -90,6 +91,7 @@ function App() {
         </Route>
         <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<Dashboard />} />
+          <Route path="timeline" element={<EventTimelinePage />} />
           <Route path="space-traffic" element={<SpaceTraffic />} />
           <Route path="space-weather" element={<SpaceWeather />} />
           <Route path="satellites" element={<Satellites />} />

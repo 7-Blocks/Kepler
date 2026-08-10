@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { EarthTwin, type EarthTwinHandle } from '@/components/EarthTwin';
 import { MaterialIcon } from '@/components/MaterialIcon';
@@ -215,7 +216,13 @@ export const Dashboard: React.FC = () => {
               <MaterialIcon name="timeline" className="text-sm" />
               LIVE COLLISION TIMELINE
             </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/dashboard/timeline"
+                className="text-[10px] font-technical-data font-bold text-primary-container hover:underline flex items-center gap-1"
+              >
+                FULL EVENT STREAM <MaterialIcon name="arrow_forward" className="text-xs" />
+              </Link>
               {collisions.isFetching && (
                 <span className="font-technical-data text-[9px] text-primary/50 animate-pulse">UPDATING\u2026</span>
               )}
