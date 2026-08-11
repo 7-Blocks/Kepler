@@ -6,6 +6,7 @@ import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackgro
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
 import { useLogbookStore, logEvent } from '@/store/logbookStore';
 import { NotificationCenter } from '@/components/ui/NotificationCenter';
+import { CameraControls } from '@/components/ui/CameraControls';
 
 /** Ensures the mission-init System log fires once per browser tab session. */
 let hasLoggedMissionInit = false;
@@ -417,6 +418,7 @@ export const MainLayout: React.FC = () => {
         </div>
 
         <NotificationCenter />
+        <CameraControls />
       </div>
     </div>
   );

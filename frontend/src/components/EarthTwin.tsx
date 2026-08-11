@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
+import { useSatelliteSelection } from '@/hooks/useSatelliteSelection';
+import { useSpotlightEffect } from '@/hooks/useSpotlightEffect';
+import { useCinematicCamera } from '@/hooks/useCinematicCamera';
+import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
 import { keplerToLatLonAlt } from '@/utils/orbitCalc';
 import { useUIStore } from '@/store/uiStore';
 import { logEvent } from '@/store/logbookStore';
@@ -140,7 +144,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   const [datasetVersion, setDatasetVersion] = useState(0);
   const activeSector = useActiveSector();
-  const setSelectedSatelliteId = useUIStore((s) => s.setSelectedSatelliteId);
+  const { setSelectedSatelliteId, selectedSatelliteId } = useUIStore();
   const [useFallback, setUseFallback] = useState(true);
   // Set by flyToSatellite(), consumed by SpotlightManager to lock its
   // selection/info-card onto a satellite chosen from outside the globe
@@ -411,6 +415,17 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [selectedBookmarkId, setSelectedBookmarkId] =
     useState('');
 
+  useSpotlightEffect({
+    viewer: viewerInstance,
+    selectedId: selectedSatelliteId,
+    entitiesRef,
+    catalogMapRef,
+    collisionSetRef,
+    datasetVersion,
+    hoveredId: hoveredObject?.catalog_number ?? null,
+  });
+
+  useCinematicCamera(viewerInstance, entitiesRef, catalogMapRef);
 
   const saveCurrentView = useCallback(() => {
     const viewer = viewerRef.current;
@@ -612,6 +627,20 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         navigationInstructionsInitiallyVisible: false,
         scene3DOnly: true,
         shouldAnimate: true,
+        contextOptions: {
+          webgl: {
+            alpha: true,
+          }
+        },
+      });
+
+      // Add offline Natural Earth imagery layer as fallback
+      Cesium.TileMapServiceImageryProvider.fromUrl(
+        Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+      ).then((provider) => {
+        if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+          viewerRef.current.imageryLayers.addImageryProvider(provider);
+        }
       });
 
       viewerRef.current = viewer;
@@ -624,7 +653,11 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
 
       viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
-      viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050710');
+      viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a24'); // Visible fallback color
+      viewer.scene.backgroundColor = Cesium.Color.TRANSPARENT;
+      viewer.scene.skyBox.show = false;
+      viewer.scene.sun.show = false;
+      viewer.scene.moon.show = false;
       viewer.scene.fog.enabled = false;
       if (viewer.scene.skyAtmosphere) {
         viewer.scene.skyAtmosphere.show = true;
@@ -805,10 +838,15 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const hoveredCategoryLabel = OBJECT_CATEGORY_INFO[hoveredCategory].label;
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-bg-deep-space border-b border-border-panel">
-      {/* 3D Cesium Container */}
-      <div ref={containerRef} className="absolute inset-0 w-full h-full z-0" />
-
+    <div 
+      className="relative w-full h-full overflow-hidden bg-bg-deep-space border-b border-border-panel"
+    >
+      <ProceduralSpaceBackground viewer={viewerInstance} />
+      {/* The Cesium container must sit cleanly in the background */}
+      <div 
+        ref={containerRef} 
+        className="absolute inset-0 z-10 bg-transparent"
+      />
       {/* High-Fidelity SVG Fallback */}
       {useFallback && (
         <div className="absolute inset-0 z-0 flex items-center justify-center bg-[radial-gradient(circle_at_center,rgba(5,7,10,0.8)_0%,#000000_100%)]">
