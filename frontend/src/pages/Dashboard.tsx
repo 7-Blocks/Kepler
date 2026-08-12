@@ -64,32 +64,11 @@ export const Dashboard: React.FC = () => {
   const kpis = s
     ? [
         {
-          title: 'Tracked Satellites',
-          value: s.tracked_satellites.toLocaleString(),
-          icon: 'satellite_alt',
-          gradientFrom: '#00e5ff',
-          gradientTo: '#0088ff',
-        },
-        {
-          title: 'Debris Objects',
-          value: s.debris_objects > 0 ? s.debris_objects.toLocaleString() : '\u2014',
-          icon: 'delete_sweep',
-          gradientFrom: '#7c3aed',
-          gradientTo: '#a855f7',
-        },
-        {
           title: 'Active Alerts',
           value: s.active_alerts_count.toLocaleString(),
           icon: 'dangerous',
           gradientFrom: s.active_alerts_count > 0 ? '#FF3B30' : '#8892A6',
           gradientTo: s.active_alerts_count > 0 ? '#FF3B30' : '#8892A6',
-        },
-        {
-          title: 'Pred. Collisions',
-          value: s.predicted_collisions_count.toLocaleString(),
-          icon: 'cognition',
-          gradientFrom: '#FF9500',
-          gradientTo: '#FF3B30',
         },
         {
           title: 'Space Weather',
@@ -154,12 +133,12 @@ export const Dashboard: React.FC = () => {
       </section>
 
       {/* KPI Bento Grid with Magic Cards */}
-      <section className="p-3 md:p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3">
+      <section className="p-3 md:p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 md:gap-3">
         {summary.isLoading
-          ? Array(6).fill(0).map((_, i) => <KPISkeleton key={i} />)
+          ? Array(3).fill(0).map((_, i) => <KPISkeleton key={i} />)
           : summary.isError
           ? (
-            <div className="col-span-6 text-center text-status-emergency font-technical-data text-sm py-4">
+            <div className="col-span-full lg:col-span-3 text-center text-status-emergency font-technical-data text-sm py-4">
               {'\u26A0'} Failed to connect to backend \u2014 please refresh or contact support if the issue persists.
             </div>
           )

@@ -5,8 +5,6 @@ import { useSpotlightEffect } from '@/hooks/useSpotlightEffect';
 import { useCinematicCamera } from '@/hooks/useCinematicCamera';
 import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
 import { keplerToLatLonAlt } from '@/utils/orbitCalc';
-import { useUIStore } from '@/store/uiStore';
-import { logEvent } from '@/store/logbookStore';
 import { useUIStore, useActiveSector, useLayerStore, logEvent } from '@/store';
 import { MaterialIcon } from './MaterialIcon';
 import { useNavigate } from 'react-router-dom';
@@ -155,8 +153,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const [hoveredObject, setHoveredObject] = useState<CatalogObject | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [showLegend, setShowLegend] = useState(true);
-  const [showDensity, setShowDensity] = useState(false);
-  const [showRiskOverlay, setShowRiskOverlay] = useState(false);
+
   const [showLayerManager, setShowLayerManager] = useState(false);
   const [objectCounts, setObjectCounts] = useState({
     navigation: 0, weather: 0, military: 0, debris: 0, rocketBodies: 0, other: 0,
@@ -976,42 +973,14 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         </div>
 
         {/* Bottom Row */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 items-start sm:items-end justify-between animate-[slideUp_0.5s_ease-out]">
-          <div className="flex gap-4 md:gap-8 flex-wrap">
-            {!dataLoaded && !useFallback ? (
-              <div className="min-w-[250px] p-4 animate-pulse bg-surface-container/80 h-12" />
-            ) : (
-              <>
-                <div className="space-y-0.5">
-                  <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Objects Tracked</p>
-                  <p className="font-headline-lg text-primary text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
-                    {objectCounts.total.toLocaleString()}
-                  </p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Debris</p>
-                  <p className="font-headline-lg text-status-warning text-xl md:text-3xl font-bold font-technical-data drop-shadow-[0_0_8px_rgba(255,170,0,0.4)]">
-                    {objectCounts.debris.toLocaleString()}
-                  </p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="font-label-caps text-[9px] md:text-[10px] text-primary/70 uppercase">Collision Risks</p>
-                  <p className={`font-headline-lg text-xl md:text-3xl font-bold font-technical-data ${objectCounts.collisions > 0 ? 'text-status-emergency animate-pulse drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]' : 'text-status-success drop-shadow-[0_0_8px_rgba(0,255,136,0.4)]'}`}>
-                    {objectCounts.collisions}
-                  </p>
-                </div>
-              </>
-            )
-            }
-          </div>
-
-          {/* Controls */}
-          <div className="flex gap-1.5 md:gap-2 pointer-events-auto">
+        <div className="flex justify-end w-full animate-[slideUp_0.5s_ease-out]">
+          {/* Controls — compact mission-control toolbar */}
+          <div className="flex items-center gap-1 md:gap-1.5 pointer-events-auto bg-bg-deep-space/70 backdrop-blur-xl border border-border-panel/50 p-1.5 md:p-2 rounded-sm">
             <button
               type="button"
               onClick={isListening ? stopListening : startListening}
               disabled={!isSupported}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui border ${isListening
+              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui border ${isListening
                 ? 'bg-status-emergency text-white border-status-emergency animate-pulse'
                 : 'border-primary-container text-primary-container hover:bg-primary-container/10'
                 }`}
@@ -1049,7 +1018,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             <button
               type="button"
               onClick={() => setIsBookmarkModalOpen(true)}
-              className="px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
+              className="px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
               aria-label="Save the current globe view as a bookmark"
             >
               SAVE VIEW
@@ -1058,38 +1027,23 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             <button
               type="button"
               onClick={() => setIsBookmarkSidebarOpen(true)}
-              className="px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
+              className="px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
               aria-label="Open saved globe bookmarks"
             >
               BOOKMARKS
             </button>
 
-
             <button
               onClick={() => setShowLegend(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
                 }`}
             >
               LEGEND
             </button>
             <button
-              onClick={() => setShowDensity(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showDensity ? 'bg-status-warning text-bg-deep-space border-status-warning' : 'border-status-warning/50 text-status-warning hover:bg-status-warning/10'
-                }`}
-            >
-              DENSITY
-            </button>
-            <button
-              onClick={() => setShowRiskOverlay(v => !v)}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showRiskOverlay ? 'bg-status-emergency text-white border-status-emergency' : 'border-status-emergency/50 text-status-emergency hover:bg-status-emergency/10'
-                }`}
-            >
-              RISK
-            </button>
-            <button
               onClick={() => setShowLayerManager(v => !v)}
               aria-pressed={showLayerManager}
-              className={`px-2.5 md:px-4 py-2 md:py-2.5 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLayerManager ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLayerManager ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
                 }`}
             >
               LAYERS
