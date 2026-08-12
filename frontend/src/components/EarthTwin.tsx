@@ -975,7 +975,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         {/* Bottom Row */}
         <div className="flex justify-end w-full animate-[slideUp_0.5s_ease-out]">
           {/* Controls — compact mission-control toolbar */}
-          <div className="flex items-center gap-1 md:gap-1.5 pointer-events-auto bg-bg-deep-space/70 backdrop-blur-xl border border-border-panel/50 p-1.5 md:p-2 rounded-sm">
+          <div className="flex flex-wrap justify-end items-center gap-1 md:gap-1.5 pointer-events-auto bg-bg-deep-space/70 backdrop-blur-xl border border-border-panel/50 p-1.5 md:p-2 rounded-sm max-w-full">
             <button
               type="button"
               onClick={isListening ? stopListening : startListening}
@@ -1035,6 +1035,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
             <button
               onClick={() => setShowLegend(v => !v)}
+              aria-pressed={showLegend}
               className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
                 }`}
             >
