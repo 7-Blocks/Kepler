@@ -5,6 +5,8 @@ import { useUIStore, useSidebarCollapsed, useRightDrawerOpen, logEvent } from '@
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
 import { useLogbookStore, logEvent } from '@/store/logbookStore';
+import { PerformanceOverlay } from '@/components/PerformanceOverlay/PerformanceOverlay';
+import { PerformanceToggleButton } from '@/components/PerformanceOverlay/PerformanceToggleButton';
 import { NotificationCenter } from '@/components/ui/NotificationCenter';
 import { CameraControls } from '@/components/ui/CameraControls';
 
@@ -247,6 +249,7 @@ export const MainLayout: React.FC = () => {
               <div className="text-primary/45 font-technical-data text-[10px] sm:text-[11px] hidden sm:block">
                 {utcTime}
               </div>
+              <PerformanceToggleButton />
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleRightDrawer}
@@ -420,6 +423,8 @@ export const MainLayout: React.FC = () => {
         <NotificationCenter />
         <CameraControls />
       </div>
+
+      <PerformanceOverlay />
     </div>
   );
 };

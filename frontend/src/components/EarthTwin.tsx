@@ -33,6 +33,7 @@ import {
   type ObjectCategory,
 } from '@/types/objectCategories';
 import { LayerManagerPanel } from './OrbitLayers/LayerManagerPanel';
+import { useCesiumPerformance } from '@/hooks/useCesiumPerformance';
 
 interface CatalogObject {
   id: number;
@@ -142,6 +143,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  useCesiumPerformance(viewerInstance);
   const [datasetVersion, setDatasetVersion] = useState(0);
   const activeSector = useActiveSector();
   const { setSelectedSatelliteId, selectedSatelliteId } = useUIStore();
