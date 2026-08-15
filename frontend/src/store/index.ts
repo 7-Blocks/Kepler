@@ -6,14 +6,38 @@ import { useDataStore } from './dataStore';
 import { useLayerStore } from './layerStore';
 import { useLogbookStore } from './logbookStore';
 import { useUIStore } from './uiStore';
+import { useOrbitalStore } from './orbitalStore';
 
 export { useAuthStore } from './authStore';
 export { useDataStore, type DataFilters, type RiskLevel, type TimeRangeOption } from './dataStore';
 export { useLayerStore, type ObjectCategory } from './layerStore';
 export { useLogbookStore, logEvent } from './logbookStore';
 export { useUIStore } from './uiStore';
+export { useOrbitalStore } from './orbitalStore';
 
 // Fine-grained atomic selector hooks to prevent unnecessary React re-renders
+
+// Orbital Selectors
+export function useOrbitalObjects() {
+  return useOrbitalStore((state) => state.objects);
+}
+
+export function useSelectedOrbitalObject() {
+  return useOrbitalStore((state) => state.selectedObject);
+}
+
+export function useHoveredOrbitalObject() {
+  return useOrbitalStore((state) => state.hoveredObject);
+}
+
+export function useOrbitalStatistics() {
+  return useOrbitalStore((state) => state.statistics);
+}
+
+export function useOrbitalLoading() {
+  return useOrbitalStore((state) => state.loading);
+}
+
 
 // Auth Selectors
 export function useIsAuthenticated(): boolean {

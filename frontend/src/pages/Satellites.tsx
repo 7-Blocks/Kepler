@@ -1,11 +1,13 @@
 import { exportCsv } from "@/utils/exportCsv";
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MaterialIcon } from '@/components/MaterialIcon';
-import { useUIStore, useSelectedSatelliteId, useSelectedSatelliteIds, logEvent } from '@/store';
+import { useUIStore, useSelectedSatelliteId, useSelectedSatelliteIds, useOrbitalStore, logEvent } from '@/store';
 import { useCatalogObjects, useCatalogStats, useCatalogSync, useSatelliteTelemetry } from '@/hooks/useApi';
 import type { SpaceObject } from '@/services/api';
 import { SatelliteComparisonModal } from '@/components/SatelliteComparisonModal';
+import { orbitalDataService } from '@/services/orbitalDataService';
+import { toSpaceObject } from '@/types/orbital';
 
 
 function orbitTypeFromSMA(sma: number | null): 'LEO' | 'MEO' | 'GEO' | 'HEO' {
@@ -68,6 +70,10 @@ searchTimer.current = setTimeout(() => {
     }, 400);
   };
 
+  useEffect(() => {
+    useOrbitalStore.getState().loadCatalog();
+  }, []);
+
   const catalogQ = useCatalogObjects({
     page,
     size: PAGE_SIZE,
@@ -75,12 +81,41 @@ searchTimer.current = setTimeout(() => {
     search: debouncedSearch || undefined,
   });
 
-  const statsQ   = useCatalogStats();
-  const syncM    = useCatalogSync();
+  const statsQ = useCatalogStats();
+  const syncM = useCatalogSync();
+  const orbitalStats = useOrbitalStore((s) => s.statistics);
 
-  const objects: SpaceObject[] = catalogQ.data?.data ?? [];
-  const pagination = catalogQ.data?.pagination;
-  const stats = statsQ.data?.data;
+  const localQuery = useMemo(() => {
+    return orbitalDataService.queryObjects(
+      { objectType: 'SATELLITE', searchQuery: debouncedSearch },
+      page,
+      PAGE_SIZE
+    );
+  }, [debouncedSearch, page]);
+
+  const objects: SpaceObject[] = useMemo(() => {
+    if (catalogQ.data?.data && catalogQ.data.data.length > 0) {
+      return catalogQ.data.data;
+    }
+    return localQuery.items.map(toSpaceObject);
+  }, [catalogQ.data, localQuery.items]);
+
+  const pagination = catalogQ.data?.pagination ?? {
+    page,
+    size: PAGE_SIZE,
+    total: localQuery.total,
+    pages: localQuery.pages,
+  };
+
+  const stats = statsQ.data?.data ?? (orbitalStats ? {
+    total: orbitalStats.totalObjects,
+    payloads: orbitalStats.totalSatellites,
+    debris: orbitalStats.totalDebris,
+    rocket_bodies: orbitalStats.totalRocketBodies,
+    unknown: 0,
+    last_sync: orbitalStats.lastUpdated ?? new Date().toISOString(),
+  } : undefined);
+
 
   
   const selectedObj = objects.find(o => o.catalog_number === selectedSatelliteId) ?? objects[0] ?? null;

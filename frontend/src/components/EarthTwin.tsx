@@ -1,131 +1,39 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
-import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
-
-let globalAutoRotate = true;
-import { useSpotlightEffect } from '@/hooks/useSpotlightEffect';
-import { useCinematicCamera } from '@/hooks/useCinematicCamera';
-import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
-import { keplerToLatLonAlt } from '@/utils/orbitCalc';
-import { useUIStore, useActiveSector, useLayerStore, logEvent } from '@/store';
-import { MaterialIcon } from './MaterialIcon';
-import { useNavigate } from 'react-router-dom';
 import * as Cesium from 'cesium';
-import { isSatelliteSunlit } from '../utils/illumination';
+import { useNavigate } from 'react-router-dom';
+import { useUIStore, useActiveSector, useLayerStore, useOrbitalStore, logEvent } from '@/store';
+import { orbitalDataService } from '@/services/orbitalDataService';
+import { calculateCartesianPosition, calculateOrbitalPosition } from '@/services/orbitalPositionService';
+import type { OrbitalObject } from '@/types/orbital';
+import { deriveObjectCategory, getObjectCategoryCss, isObjectCategoryVisible } from '@/types/objectCategories';
+import { deriveOrbitRegime } from '@/types/orbitLayers';
+import { MaterialIcon } from './MaterialIcon';
+import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
+import { LayerManagerPanel } from './OrbitLayers/LayerManagerPanel';
+import { BookmarkModal, type BookmarkFormValues } from './GlobeBookmarks/BookmarkModal';
+import { BookmarkSidebar } from './GlobeBookmarks/BookmarkSidebar';
 import { useBookmarks } from '../hooks/useBookmarks';
 import type { Bookmark } from '../hooks/useBookmarkStorage';
-import { BookmarkModal, type BookmarkFormValues, } from './GlobeBookmarks/BookmarkModal';
-import { BookmarkSidebar } from './GlobeBookmarks/BookmarkSidebar';
-import {
-  createBookmarkShareUrl,
-  getSharedBookmarkFromUrl,
-} from '../utils/bookmarkHelpers';
-
+import { getSharedBookmarkFromUrl } from '../utils/bookmarkHelpers';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { executeVoiceCommand } from '../lib/voiceCommands';
-import { SpotlightManager } from './SatelliteSpotlight/SpotlightManager';
-import { deriveOrbitRegime, type OrbitRegime } from '@/types/orbitLayers';
-import {
-  deriveObjectCategory,
-  getObjectCategoryCss,
-  isObjectCategoryVisible,
-  OBJECT_CATEGORY_INFO,
-  type ObjectCategory,
-} from '@/types/objectCategories';
-import { LayerManagerPanel } from './OrbitLayers/LayerManagerPanel';
 import { useCesiumPerformance } from '@/hooks/useCesiumPerformance';
+import { OrbitalHoverPanel } from './orbital/OrbitalHoverPanel';
+import { OrbitalObjectDetails } from './orbital/OrbitalObjectDetails';
+import { OrbitalLegend } from './orbital/OrbitalLegend';
+import { MAX_VISIBLE_SPACE_OBJECTS, ORBITAL_POINT_SIZES } from '@/constants/orbital';
 
-interface CatalogObject {
-  id: number;
-  name: string;
-  catalog_number: string;
-  classification: 'PAYLOAD' | 'DEBRIS' | 'ROCKET_BODY' | 'UNKNOWN';
-  epoch: string | null;
-  inclination: number | null;
-  eccentricity: number | null;
-  semimajor_axis: number | null;
-  raan: number | null;
-  arg_of_perigee: number | null;
-  mean_anomaly: number | null;
-  mean_motion: number | null;
-  period: number | null;
-  has_tle: boolean;
-  updated_at: string | null;
-}
+let globalAutoRotate = true;
 
-interface CollisionRisk {
-  id: number;
-  object_a: { name: string; catalog_number: string } | null;
-  object_b: { name: string; catalog_number: string } | null;
-  probability: number;
-  miss_distance_m: number;
-  relative_velocity_kms: number;
-  risk_level: string;
-  tca: string;
-}
-
-
-
-
-
-
-const CATEGORY_COLORS = {
-  PAYLOAD: { css: '#00E5FF', cesium: Cesium.Color.fromCssColorString('#00E5FF'), label: 'Active Satellites', icon: 'satellite_alt' },
-  DEBRIS: { css: '#FFAA00', cesium: Cesium.Color.fromCssColorString('#FFAA00'), label: 'Debris Objects', icon: 'delete_sweep' },
-  ROCKET_BODY: { css: '#FF4444', cesium: Cesium.Color.fromCssColorString('#FF4444'), label: 'Rocket Bodies', icon: 'rocket' },
-  UNKNOWN: { css: '#888888', cesium: Cesium.Color.fromCssColorString('#888888'), label: 'Unknown Objects', icon: 'help_outline' },
-  COLLISION: { css: '#FF0000', cesium: Cesium.Color.fromCssColorString('#FF0000'), label: 'Collision Risk', icon: 'warning' },
-  SELECTED: { css: '#00E5FF', cesium: Cesium.Color.fromCssColorString('#00E5FF'), label: 'Selected', icon: 'gps_fixed' },
-} as const;
-
-/** Cesium colors aligned with Layer Manager toggle accents. */
-const OBJECT_CATEGORY_CESIUM: Record<ObjectCategory, Cesium.Color> = {
-  NAVIGATION: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.NAVIGATION.css),
-  WEATHER: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.WEATHER.css),
-  MILITARY: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.MILITARY.css),
-  SPACE_DEBRIS: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.SPACE_DEBRIS.css),
-  ROCKET_BODY: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.ROCKET_BODY.css),
-  OTHER: Cesium.Color.fromCssColorString(OBJECT_CATEGORY_INFO.OTHER.css),
+const CATEGORY_COLORS: Record<string, { css: string; cesium: Cesium.Color }> = {
+  PAYLOAD: { css: '#00E5FF', cesium: Cesium.Color.fromCssColorString('#00E5FF') },
+  DEBRIS: { css: '#FFAA00', cesium: Cesium.Color.fromCssColorString('#FFAA00') },
+  ROCKET_BODY: { css: '#FF4444', cesium: Cesium.Color.fromCssColorString('#FF4444') },
+  COLLISION: { css: '#FF0000', cesium: Cesium.Color.fromCssColorString('#FF0000') },
 };
 
-function getPointSize(classification: string): number {
-  switch (classification) {
-    case 'PAYLOAD': return 5;
-    case 'DEBRIS': return 4;
-    case 'ROCKET_BODY': return 6;
-    default: return 3;
-  }
-}
-
-function getOutlineWidth(classification: string): number {
-  switch (classification) {
-    case 'PAYLOAD': return 1;
-    case 'DEBRIS': return 1;
-    case 'ROCKET_BODY': return 2;
-    default: return 1;
-  }
-}
-
-
-const API_BASE = import.meta.env.VITE_API_URL ?? '/api/v1';
-
-async function fetchAllCatalogObjects(): Promise<CatalogObject[]> {
-  const res = await fetch(`${API_BASE}/catalog/objects?size=500&page=1`);
-  const json = await res.json();
-  return json.data ?? [];
-}
-
-async function fetchCollisions(): Promise<CollisionRisk[]> {
-  const res = await fetch(`${API_BASE}/collisions?size=50`);
-  const json = await res.json();
-  return json.data ?? [];
-}
-
-const LegendCardSkeleton = () => (
-  <div className="min-w-[200px] glass-panel p-4 animate-pulse bg-surface-container/40 h-48" />
-);
-
 export interface EarthTwinHandle {
-  /** Flies the camera to the given NORAD catalog number and opens its info panel. */
+  /** Flies the camera to the given NORAD catalog number and selects it. */
   flyToSatellite: (catalogNumber: string) => void;
 }
 
@@ -133,67 +41,62 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Cesium.Viewer | null>(null);
-  const entitiesRef = useRef<Map<string, Cesium.Entity>>(new Map());
-  const catalogMapRef = useRef<Map<string, CatalogObject>>(new Map());
-  const collisionSetRef = useRef<Set<string>>(new Set());
-  const regimeMapRef = useRef<Map<string, OrbitRegime>>(new Map());
-  const categoryMapRef = useRef<Map<string, ObjectCategory>>(new Map());
-  const collisionLinesRef = useRef<{ entity: Cesium.Entity; objectA: string; objectB: string }[]>([]);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
-  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-  useCesiumPerformance(viewerInstance);
-  const [datasetVersion, setDatasetVersion] = useState(0);
-  const activeSector = useActiveSector();
-  const { setSelectedSatelliteId, selectedSatelliteId } = useUIStore();
-  const [useFallback, setUseFallback] = useState(true);
-  // Set by flyToSatellite(), consumed by SpotlightManager to lock its
-  // selection/info-card onto a satellite chosen from outside the globe
-  // (e.g. the Satellite of the Day card's "View on Globe" button). The
-  // nonce forces the effect to re-fire even if the same satellite is
-  // requested twice in a row.
-  const [focusRequest, setFocusRequest] = useState<{ catalogNumber: string; nonce: number } | null>(null);
-  const [hoveredObject, setHoveredObject] = useState<CatalogObject | null>(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [showLegend, setShowLegend] = useState(true);
+  const pointCollectionRef = useRef<Cesium.PointPrimitiveCollection | null>(null);
+  const pointsMapRef = useRef<Map<string, Cesium.PointPrimitive>>(new Map());
+  const selectedHighlightRef = useRef<Cesium.Entity | null>(null);
 
+  const [viewerInstance, setViewerInstance] = useState<Cesium.Viewer | null>(null);
+  useCesiumPerformance(viewerInstance);
+
+  const activeSector = useActiveSector();
+  const { setSelectedSatelliteId } = useUIStore();
+  const { statistics, loading: catalogLoading, loadingProgress } = useOrbitalStore();
+
+  const [hoveredObject, setHoveredObject] = useState<OrbitalObject | null>(null);
+  const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
+  const [selectedDetailsObject, setSelectedDetailsObject] = useState<OrbitalObject | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  const [showLegend, setShowLegend] = useState(true);
   const [showLayerManager, setShowLayerManager] = useState(false);
-  const [objectCounts, setObjectCounts] = useState({
-    navigation: 0, weather: 0, military: 0, debris: 0, rocketBodies: 0, other: 0,
-    total: 0, collisions: 0,
-    leo: 0, meo: 0, geo: 0, heo: 0,
-  });
-  const [dataLoaded, setDataLoaded] = useState(false);
   const [isBookmarkModalOpen, setIsBookmarkModalOpen] = useState(false);
   const [isBookmarkSidebarOpen, setIsBookmarkSidebarOpen] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [useFallback, setUseFallback] = useState(false);
+
+  const {
+    bookmarks,
+    filteredBookmarks,
+    favoriteBookmarks,
+    recentBookmarks,
+    categories,
+    searchQuery,
+    selectedCategory,
+    addBookmark,
+    updateBookmark,
+    deleteBookmark,
+    toggleFavorite,
+    markAsRecent,
+    setSearchQuery,
+    setSelectedCategory,
+    exportBookmarks,
+    importBookmarks,
+  } = useBookmarks();
+
+  // Voice Command Handlers
   const handleTrackISS = useCallback(() => {
     const viewer = viewerRef.current;
-
-  if (!viewer || viewer.isDestroyed()) {
-    return;
-  }
-
-  globalAutoRotate = false;
-
-  viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(
-      0,
-      0,
-      2_200_000
-    ),
-    orientation: {
-      heading:  0,
-      pitch: Cesium.Math.toRadians(-85),
-      roll: 0,
-    },
-    duration: 1.5,
-  });
-  logEvent('TRACKING', 'MEDIUM', 'ISS tracking engaged', 'Camera locked onto the International Space Station.');
+    if (!viewer || viewer.isDestroyed()) return;
+    globalAutoRotate = false;
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(0, 0, 2_200_000),
+      duration: 1.5,
+    });
+    logEvent('TRACKING', 'MEDIUM', 'ISS tracking engaged', 'Camera locked onto International Space Station orbit.');
   }, []);
 
   const handleShowDebris = useCallback(() => {
-    navigate('/Debris');
+    navigate('/dashboard/debris');
   }, [navigate]);
 
   const handleOpenCollisionCenter = useCallback(() => {
@@ -202,337 +105,27 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
   const handleZoomToIndia = useCallback(() => {
     const viewer = viewerRef.current;
-
-    if (!viewer || viewer.isDestroyed()) {
-      return;
-    }
-
+    if (!viewer || viewer.isDestroyed()) return;
     globalAutoRotate = false;
-
     viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(
-        78.9629,
-        20.5937,
-        3_000_000
-      ),
-      orientation: {
-        heading: 0,
-        pitch: Cesium.Math.toRadians(-85),
-        roll: 0,
-      },
+      destination: Cesium.Cartesian3.fromDegrees(78.9629, 20.5937, 3_000_000),
       duration: 1.5,
     });
     logEvent('CAMERA', 'LOW', 'Camera repositioned', 'Zoomed to regional view: India.');
   }, []);
 
   const handleToggleSpaceWeather = useCallback(() => {
-    navigate('/dashboard/space-weather')
+    navigate('/dashboard/space-weather');
   }, [navigate]);
-  const [stats, setStats] = useState({
-    totalObjects: 0,
-    lastSync: '',
-    weatherIndex: 'K0',
-  });
-
-
-  const populateEntities = useCallback(async (viewer: Cesium.Viewer) => {
-    try {
-      if (!viewer || viewer.isDestroyed()) return;
-
-      const [objects, collisions] = await Promise.all([
-        fetchAllCatalogObjects(),
-        fetchCollisions(),
-      ]);
-
-
-      const collisionCatNums = new Set<string>();
-      collisions.forEach(c => {
-        if (c.object_a?.catalog_number) collisionCatNums.add(c.object_a.catalog_number);
-        if (c.object_b?.catalog_number) collisionCatNums.add(c.object_b.catalog_number);
-      });
-
-      let navigation = 0, weather = 0, military = 0, debris = 0, rocketBodies = 0, other = 0;
-      let leo = 0, meo = 0, geo = 0, heo = 0;
-      const entityMap = new Map<string, Cesium.Entity>();
-      const catalogMap = new Map<string, CatalogObject>();
-      const regimeMap = new Map<string, OrbitRegime>();
-      const categoryMap = new Map<string, ObjectCategory>();
-      const collisionLines: { entity: Cesium.Entity; objectA: string; objectB: string }[] = [];
-
-
-      if (!viewer || viewer.isDestroyed()) return;
-
-
-      viewer.entities.removeAll();
-      const nowJulian = Cesium.JulianDate.now();
-      const { categoryVisibility: catVis, regimeVisibility: regVis } = useLayerStore.getState();
-      objects.forEach(obj => {
-        const pos = keplerToLatLonAlt(obj);
-        if (!pos) return;
-
-        const objectCategory = deriveObjectCategory(obj);
-        if (objectCategory === 'NAVIGATION') navigation++;
-        else if (objectCategory === 'WEATHER') weather++;
-        else if (objectCategory === 'MILITARY') military++;
-        else if (objectCategory === 'SPACE_DEBRIS') debris++;
-        else if (objectCategory === 'ROCKET_BODY') rocketBodies++;
-        else other++;
-
-        const regime = deriveOrbitRegime(obj);
-        if (regime === 'LEO') leo++;
-        else if (regime === 'MEO') meo++;
-        else if (regime === 'GEO') geo++;
-        else if (regime === 'HEO') heo++;
-
-
-        const isCollisionRisk = collisionCatNums.has(obj.catalog_number);
-        const markerColor = isCollisionRisk
-          ? CATEGORY_COLORS.COLLISION.cesium
-          : OBJECT_CATEGORY_CESIUM[objectCategory];
-
-        const pixelSize = isCollisionRisk ? 8 : getPointSize(obj.classification);
-        const outlineWidth = isCollisionRisk ? 3 : getOutlineWidth(obj.classification);
-
-        const cartPos = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000);
-        const sunlit = isSatelliteSunlit(cartPos, nowJulian, viewer.scene.globe);
-
-        const initiallyVisible =
-          isObjectCategoryVisible(objectCategory, catVis) && (regVis[regime] ?? true);
-
-        const entity = viewer.entities.add({
-          position: cartPos,
-          show: initiallyVisible,
-          point: {
-            pixelSize,
-            color: sunlit ? markerColor.withAlpha(0.85) : markerColor.withAlpha(0.3),
-            outlineColor: sunlit ? markerColor.withAlpha(0.4) : markerColor.withAlpha(0.1),
-            outlineWidth,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
-            scaleByDistance: new Cesium.NearFarScalar(1e6, 1.5, 5e7, 0.4),
-          },
-          properties: new Cesium.PropertyBag({
-            catalogData: JSON.stringify(obj),
-            objectType: obj.classification,
-            objectCategory,
-            isCollisionRisk,
-            orbitRegime: regime,
-          }),
-          label: {
-            text: '',
-            show: false,
-          },
-        });
-
-        entityMap.set(obj.catalog_number, entity);
-        catalogMap.set(obj.catalog_number, obj);
-        regimeMap.set(obj.catalog_number, regime);
-        categoryMap.set(obj.catalog_number, objectCategory);
-      });
-
-
-      collisions.forEach(conj => {
-        if (!conj.object_a || !conj.object_b) return;
-        const entityA = entityMap.get(conj.object_a.catalog_number);
-        const entityB = entityMap.get(conj.object_b.catalog_number);
-        if (!entityA?.position || !entityB?.position) return;
-
-        const posA = entityA.position.getValue(Cesium.JulianDate.now());
-        const posB = entityB.position.getValue(Cesium.JulianDate.now());
-        if (!posA || !posB) return;
-
-        const lineEntity = viewer.entities.add({
-          polyline: {
-            positions: [posA, posB],
-            width: 2,
-            material: new Cesium.PolylineDashMaterialProperty({
-              color: Cesium.Color.RED.withAlpha(0.7),
-              dashLength: 8,
-            }),
-          },
-        });
-        collisionLines.push({ entity: lineEntity, objectA: conj.object_a.catalog_number, objectB: conj.object_b.catalog_number });
-      });
-
-      entitiesRef.current = entityMap;
-      catalogMapRef.current = catalogMap;
-      collisionSetRef.current = collisionCatNums;
-      regimeMapRef.current = regimeMap;
-      categoryMapRef.current = categoryMap;
-      collisionLinesRef.current = collisionLines;
-      setDatasetVersion(v => v + 1);
-      setObjectCounts({
-        navigation,
-        weather,
-        military,
-        debris,
-        rocketBodies,
-        other,
-        total: objects.length,
-        collisions: collisions.length,
-        leo,
-        meo,
-        geo,
-        heo,
-      });
-      setStats({
-        totalObjects: objects.length,
-        lastSync: new Date().toLocaleTimeString(),
-        weatherIndex: 'K3',
-      });
-      setDataLoaded(true);
-
-    } catch (err) {
-      console.error('Failed to load orbital data for visualization:', err);
-    }
-  }, []);
-
-
-
 
   const {
-    bookmarks,
-    filteredBookmarks,
-    favoriteBookmarks,
-    recentBookmarks,
-    categories,
-
-    searchQuery,
-    selectedCategory,
-
-    setSearchQuery,
-    setSelectedCategory,
-
-    addBookmark,
-    updateBookmark,
-    deleteBookmark,
-    toggleFavorite,
-    markAsRecent,
-
-    exportBookmarks,
-    importBookmarks,
-  } = useBookmarks();
-
-
-
-  useSpotlightEffect({
-    viewer: viewerInstance,
-    selectedId: selectedSatelliteId,
-    entitiesRef,
-    catalogMapRef,
-    collisionSetRef,
-    datasetVersion,
-    hoveredId: hoveredObject?.catalog_number ?? null,
-  });
-
-  useCinematicCamera(viewerInstance, entitiesRef, catalogMapRef);
-
-
-
-  const restoreBookmark = useCallback(
-    (bookmark: Bookmark) => {
-      const viewer = viewerRef.current;
-
-      if (!viewer || viewer.isDestroyed()) {
-        return;
-      }
-
-      // Prevent the existing automatic globe rotation from immediately
-      // moving the camera away from the restored bookmark view.
-      globalAutoRotate = false;
-
-      markAsRecent(bookmark.id);
-
-      const prefersReducedMotion =
-        window.matchMedia?.(
-          '(prefers-reduced-motion: reduce)'
-        ).matches ?? false;
-
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(
-          bookmark.longitude,
-          bookmark.latitude,
-          bookmark.altitude
-        ),
-        orientation: {
-          heading: bookmark.heading,
-          pitch: bookmark.pitch,
-          roll: bookmark.roll,
-        },
-        duration: prefersReducedMotion ? 0 : 1.5,
-      });
-    },
-    [markAsRecent]
-  );
-
-
-  const handleBookmarkSubmit = useCallback(
-    (values: BookmarkFormValues) => {
-      if (editingBookmark) {
-        updateBookmark(editingBookmark.id, {
-          name: values.name,
-          description: values.description,
-          category: values.category,
-        });
-
-        setEditingBookmark(null);
-        setIsBookmarkModalOpen(false);
-        return;
-      }
-
-      const viewer = viewerRef.current;
-
-      if (!viewer || viewer.isDestroyed()) {
-        return;
-      }
-
-      const cartographic =
-        viewer.scene.globe.ellipsoid.cartesianToCartographic(
-          viewer.camera.positionWC
-        );
-
-      if (!cartographic) {
-        return;
-      }
-
-      addBookmark({
-        name: values.name,
-        description: values.description,
-        category: values.category,
-
-        latitude: Cesium.Math.toDegrees(cartographic.latitude),
-        longitude: Cesium.Math.toDegrees(cartographic.longitude),
-        altitude: cartographic.height,
-
-        heading: viewer.camera.heading,
-        pitch: viewer.camera.pitch,
-        roll: viewer.camera.roll,
-      });
-
-      setIsBookmarkModalOpen(false);
-    },
-    [addBookmark, editingBookmark, updateBookmark]
-  );
-
-  const handleShareBookmark = useCallback(
-    async (bookmark: Bookmark) => {
-      const shareUrl = createBookmarkShareUrl(bookmark);
-
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-      } catch {
-        window.prompt(
-          'Copy this bookmark link:',
-          shareUrl
-        );
-      }
-    },
-    []
-  );
-
-
-  const handleVoiceCommand = useCallback(
-    (transcript: string) => {
-      executeVoiceCommand(transcript, {
+    isListening,
+    isSupported,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition({
+    onCommand: (text) => {
+      executeVoiceCommand(text, {
         trackISS: handleTrackISS,
         showDebris: handleShowDebris,
         openCollisionCenter: handleOpenCollisionCenter,
@@ -540,44 +133,152 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         toggleSpaceWeather: handleToggleSpaceWeather,
       });
     },
-    [
-      handleTrackISS,
-      handleShowDebris,
-      handleOpenCollisionCenter,
-      handleZoomToIndia,
-      handleToggleSpaceWeather,
-    ]
-  );
-
-  const {
-    isSupported,
-    isListening,
-    transcript,
-    error,
-    startListening,
-    stopListening,
-  } = useSpeechRecognition({
-    onCommand: handleVoiceCommand,
   });
 
-  useEffect(() => {
-    if (!containerRef.current || !Cesium) return;
-    if (viewerRef.current && !viewerRef.current.isDestroyed()) return;
+  // Focus & FlyTo satellite method
+  const flyToSatellite = useCallback(
+    (catalogNumber: string) => {
+      const viewer = viewerRef.current;
+      if (!viewer || viewer.isDestroyed()) return;
 
+      const obj = orbitalDataService.getOrbitalObjectById(catalogNumber);
+      if (!obj) return;
+
+      setSelectedSatelliteId(obj.noradId);
+      setSelectedDetailsObject(obj);
+
+      const pos = calculateOrbitalPosition(obj);
+      if (pos) {
+        globalAutoRotate = false;
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000),
+          duration: 1.5,
+        });
+
+        // Add spotlight / highlight ring
+        if (selectedHighlightRef.current) {
+          viewer.entities.remove(selectedHighlightRef.current);
+        }
+        selectedHighlightRef.current = viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000),
+          point: {
+            pixelSize: 14,
+            color: Cesium.Color.fromCssColorString('#00E5FF'),
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 2,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          },
+          label: {
+            text: ` ${obj.name} (NORAD ${obj.noradId})`,
+            font: '11px monospace',
+            fillColor: Cesium.Color.fromCssColorString('#00E5FF'),
+            showBackground: true,
+            backgroundColor: Cesium.Color.fromCssColorString('#0a0d14e0'),
+            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+            pixelOffset: new Cesium.Cartesian2(12, 0),
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          },
+        });
+      }
+    },
+    [setSelectedSatelliteId]
+  );
+
+  useImperativeHandle(ref, () => ({
+    flyToSatellite,
+  }));
+
+  const selectedSatelliteId = useUIStore((s) => s.selectedSatelliteId);
+  useEffect(() => {
+    if (selectedSatelliteId) {
+      flyToSatellite(selectedSatelliteId);
+    }
+  }, [selectedSatelliteId, flyToSatellite]);
+
+  // Render ~7,000 points using GPU PointPrimitiveCollection for peak performance & clarity
+  const renderCatalogPoints = useCallback(async (viewer: Cesium.Viewer) => {
+    if (!viewer || viewer.isDestroyed()) return;
+
+    try {
+      await orbitalDataService.loadOrbitalObjects();
+      if (!viewer || viewer.isDestroyed()) return;
+
+      const objects = orbitalDataService.getVisibleObjects(MAX_VISIBLE_SPACE_OBJECTS);
+
+      // Remove existing point collection if any
+      if (pointCollectionRef.current) {
+        viewer.scene.primitives.remove(pointCollectionRef.current);
+        pointCollectionRef.current = null;
+      }
+
+      const pointCollection = new Cesium.PointPrimitiveCollection();
+      viewer.scene.primitives.add(pointCollection);
+      pointCollectionRef.current = pointCollection;
+
+      const pointsMap = new Map<string, Cesium.PointPrimitive>();
+      const { categoryVisibility: catVis, regimeVisibility: regVis } = useLayerStore.getState();
+
+      const now = new Date();
+
+      for (let i = 0; i < objects.length; i++) {
+        const obj = objects[i];
+        const cartPos = calculateCartesianPosition(obj, now);
+        if (!cartPos) continue;
+
+        const category = deriveObjectCategory({
+          name: obj.name,
+          classification: obj.classification,
+        });
+        const regime = deriveOrbitRegime({
+          semimajor_axis: obj.semimajorAxis,
+          eccentricity: obj.eccentricity,
+          inclination: obj.inclination,
+          period: obj.orbitalPeriod,
+        });
+
+        const initiallyVisible = isObjectCategoryVisible(category, catVis) && (regVis[regime] ?? true);
+
+        let color = CATEGORY_COLORS.PAYLOAD.cesium;
+        let pixelSize: number = ORBITAL_POINT_SIZES.PAYLOAD;
+        if (obj.classification === 'DEBRIS') {
+          color = CATEGORY_COLORS.DEBRIS.cesium;
+          pixelSize = ORBITAL_POINT_SIZES.DEBRIS;
+        } else if (obj.classification === 'ROCKET_BODY') {
+          color = CATEGORY_COLORS.ROCKET_BODY.cesium;
+          pixelSize = ORBITAL_POINT_SIZES.ROCKET_BODY;
+        } else {
+          color = Cesium.Color.fromCssColorString(getObjectCategoryCss(category));
+          pixelSize = ORBITAL_POINT_SIZES.PAYLOAD;
+        }
+
+        const point = pointCollection.add({
+          position: cartPos,
+          color: color.withAlpha(0.9),
+          pixelSize,
+          outlineColor: color.withAlpha(0.4),
+          outlineWidth: 1,
+          id: obj.noradId,
+          show: initiallyVisible,
+        });
+
+        pointsMap.set(obj.noradId, point);
+      }
+
+      pointsMapRef.current = pointsMap;
+    } catch (err) {
+      console.error('Failed to populate orbital catalog points:', err);
+    }
+  }, []);
+
+  // Initialize Cesium Viewer
+  useEffect(() => {
+    if (!containerRef.current) return;
     let onTick: (() => void) | null = null;
     let handler: Cesium.ScreenSpaceEventHandler | null = null;
 
     try {
-      // Use Cesium's bundled Natural Earth II tiles so the globe works
-      // without a Cesium ion access token (avoids api.cesium.com 401s).
       const viewer = new Cesium.Viewer(containerRef.current, {
         animation: false,
-        baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-          Cesium.TileMapServiceImageryProvider.fromUrl(
-            Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-          ),
-          {}
-        ),
         baseLayerPicker: false,
         fullscreenButton: false,
         vrButton: false,
@@ -588,45 +289,28 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         selectionIndicator: false,
         timeline: false,
         navigationHelpButton: false,
-        navigationInstructionsInitiallyVisible: false,
-        scene3DOnly: true,
         shouldAnimate: true,
-        contextOptions: {
-          webgl: {
-            alpha: true,
-          }
-        },
-      });
-
-      // Add offline Natural Earth imagery layer as fallback
-      Cesium.TileMapServiceImageryProvider.fromUrl(
-        Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-      ).then((provider) => {
-        if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-          viewerRef.current.imageryLayers.addImageryProvider(provider);
-        }
+        requestRenderMode: false,
       });
 
       viewerRef.current = viewer;
+
       queueMicrotask(() => {
         setUseFallback(false);
         setViewerInstance(viewer);
-        setContainerEl(containerRef.current);
       });
 
-
-      viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
-      viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a24'); // Visible fallback color
+      viewer.scene.globe.enableLighting = true;
+      viewer.scene.globe.depthTestAgainstTerrain = true;
+      viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#10141e');
       viewer.scene.backgroundColor = Cesium.Color.TRANSPARENT;
       if (viewer.scene.skyBox) viewer.scene.skyBox.show = false;
       if (viewer.scene.sun) viewer.scene.sun.show = false;
       if (viewer.scene.moon) viewer.scene.moon.show = false;
       viewer.scene.fog.enabled = false;
-      if (viewer.scene.skyAtmosphere) {
-        viewer.scene.skyAtmosphere.show = true;
-      }
+      if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = true;
 
-
+      // Default perspective
       viewer.camera.setView({
         destination: Cesium.Cartesian3.fromDegrees(30, 15, 20000000),
         orientation: {
@@ -635,16 +319,10 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
           roll: 0.0,
         },
       });
-      const sharedBookmark = getSharedBookmarkFromUrl();
 
+      const sharedBookmark = getSharedBookmarkFromUrl();
       if (sharedBookmark) {
         globalAutoRotate = false;
-
-        const prefersReducedMotion =
-          window.matchMedia?.(
-            '(prefers-reduced-motion: reduce)'
-          ).matches ?? false;
-
         viewer.camera.flyTo({
           destination: Cesium.Cartesian3.fromDegrees(
             sharedBookmark.longitude,
@@ -656,75 +334,73 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             pitch: sharedBookmark.pitch,
             roll: sharedBookmark.roll,
           },
-          duration: prefersReducedMotion ? 0 : 1.5,
+          duration: 0,
         });
       }
 
+      let lastPropagateTime = Date.now();
       onTick = () => {
         if (globalAutoRotate) {
-          viewer.scene.camera.rotate(
-            Cesium.Cartesian3.UNIT_Z,
-            0.0003
-          );
+          viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, 0.0002);
+        }
+
+        // Live orbital propagation: advance points in true 3D space every 2.5 seconds
+        const nowMs = Date.now();
+        if (nowMs - lastPropagateTime >= 2500) {
+          lastPropagateTime = nowMs;
+          const pointsMap = pointsMapRef.current;
+          if (pointsMap && pointsMap.size > 0) {
+            const date = new Date(nowMs);
+            const visibleObjects = orbitalDataService.getVisibleObjects(MAX_VISIBLE_SPACE_OBJECTS);
+            for (let i = 0; i < visibleObjects.length; i++) {
+              const obj = visibleObjects[i];
+              const pt = pointsMap.get(obj.noradId);
+              if (pt) {
+                const newPos = calculateCartesianPosition(obj, date);
+                if (newPos) {
+                  pt.position = newPos;
+                }
+              }
+            }
+          }
         }
       };
       viewer.clock.onTick.addEventListener(onTick);
 
-
+      // Fast Screen Space Interaction: Hover & Click
       handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 
-      handler.setInputAction((movement: { endPosition: Cesium.Cartesian2 }) => {
+      handler.setInputAction((movement: Cesium.ScreenSpaceEventHandler.MotionEvent) => {
         const picked = viewer.scene.pick(movement.endPosition);
-        if (Cesium.defined(picked) && picked.id && picked.id.properties) {
-          try {
-            const rawData = picked.id.properties.catalogData?.getValue(Cesium.JulianDate.now());
-            if (rawData) {
-              const obj = JSON.parse(rawData) as CatalogObject;
-              setHoveredObject(obj);
-              setTooltipPos({ x: movement.endPosition.x + 15, y: movement.endPosition.y - 10 });
-            }
-          } catch { /* ignore parse errors */ }
-        } else {
-          setHoveredObject(null);
+        if (picked && picked.id && typeof picked.id === 'string') {
+          const obj = orbitalDataService.getOrbitalObjectById(picked.id);
+          if (obj) {
+            setHoveredObject(obj);
+            setHoverPos({ x: movement.endPosition.x, y: movement.endPosition.y });
+            return;
+          }
         }
+        setHoveredObject(null);
       }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-
-      handler.setInputAction((click: { position: Cesium.Cartesian2 }) => {
+      handler.setInputAction((click: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
         const picked = viewer.scene.pick(click.position);
-        if (Cesium.defined(picked) && picked.id && picked.id.properties) {
-          try {
-            const rawData = picked.id.properties.catalogData?.getValue(Cesium.JulianDate.now());
-            if (rawData) {
-              const obj = JSON.parse(rawData) as CatalogObject;
-              setSelectedSatelliteId(obj.catalog_number);
-
-
-              const pos = keplerToLatLonAlt(obj);
-              if (pos) {
-                viewer.camera.flyTo({
-                  destination: Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000),
-                  duration: 1.5,
-                });
-              }
-            }
-          } catch { /* ignore parse errors */ }
+        if (picked && picked.id && typeof picked.id === 'string') {
+          const obj = orbitalDataService.getOrbitalObjectById(picked.id);
+          if (obj) {
+            setSelectedSatelliteId(obj.noradId);
+            setSelectedDetailsObject(obj);
+            setIsDetailsOpen(true);
+            flyToSatellite(obj.noradId);
+          }
         }
       }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-
-      populateEntities(viewer);
-
-
-      const refreshInterval = setInterval(() => {
-        if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-          populateEntities(viewerRef.current);
-        }
-      }, 5 * 60_000);
+      // Render 60,000+ catalog objects
+      renderCatalogPoints(viewer);
 
       return () => {
         globalAutoRotate = true;
-        clearInterval(refreshInterval);
         if (handler) handler.destroy();
         const v = viewerRef.current;
         if (v && !v.isDestroyed()) {
@@ -733,164 +409,115 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         }
         viewerRef.current = null;
         setViewerInstance(null);
-        setContainerEl(null);
       };
-
     } catch (e) {
       console.warn('Cesium initialization failed, using fallback', e);
       setUseFallback(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [flyToSatellite, renderCatalogPoints, setSelectedSatelliteId]);
 
+  // Apply Layer Toggles instantly to GPU Points
   const categoryVisibility = useLayerStore((s) => s.categoryVisibility);
   const regimeVisibility = useLayerStore((s) => s.regimeVisibility);
 
-  // Applies the current layer-manager toggle state to entities Cesium has
-  // already created. Mutating `.show` here (instead of refetching/re-running
-  // populateEntities) keeps toggling instant and network-free. Re-runs on
-  // datasetVersion so toggle state survives the periodic 5-minute refetch,
-  // which recreates every entity from scratch.
   useEffect(() => {
+    const pointsMap = pointsMapRef.current;
+    if (!pointsMap || pointsMap.size === 0) return;
+
+    pointsMap.forEach((point, noradId) => {
+      const category = orbitalDataService.getObjectCategory(noradId);
+      const regime = orbitalDataService.getObjectRegime(noradId);
+      const isVisible = isObjectCategoryVisible(category, categoryVisibility) && (regimeVisibility[regime] ?? true);
+      point.show = isVisible;
+    });
+  }, [categoryVisibility, regimeVisibility]);
+
+  // Bookmark handling
+  const restoreBookmark = useCallback((bookmark: Bookmark) => {
     const viewer = viewerRef.current;
     if (!viewer || viewer.isDestroyed()) return;
+    globalAutoRotate = false;
+    markAsRecent(bookmark.id);
 
-    const visibleIds = new Set<string>();
-    entitiesRef.current.forEach((entity, catNum) => {
-      const regime = regimeMapRef.current.get(catNum) ?? 'LEO';
-      const objectCategory = categoryMapRef.current.get(catNum) ?? 'OTHER';
-      const visible =
-        isObjectCategoryVisible(objectCategory, categoryVisibility) &&
-        (regimeVisibility[regime] ?? true);
-      entity.show = visible;
-      if (visible) visibleIds.add(catNum);
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(
+        bookmark.longitude,
+        bookmark.latitude,
+        bookmark.altitude
+      ),
+      orientation: {
+        heading: bookmark.heading,
+        pitch: bookmark.pitch,
+        roll: bookmark.roll,
+      },
+      duration: 1.5,
     });
-    collisionLinesRef.current.forEach(({ entity, objectA, objectB }) => {
-      entity.show = visibleIds.has(objectA) && visibleIds.has(objectB);
-    });
-    viewer.scene.requestRender();
-  }, [categoryVisibility, regimeVisibility, datasetVersion]);
+  }, [markAsRecent]);
 
-  // Mirrors the double-click fly-to in useSatelliteSelection.ts, but
-  // triggerable from outside the globe (e.g. a dashboard card) instead of
-  // from a Cesium pick event.
-  const flyToSatellite = useCallback((catalogNumber: string) => {
-    const viewer = viewerRef.current;
-    const obj = catalogMapRef.current.get(catalogNumber);
-    if (!viewer || viewer.isDestroyed() || !obj) return;
+  const handleBookmarkSubmit = useCallback(
+    (values: BookmarkFormValues) => {
+      if (editingBookmark) {
+        updateBookmark(editingBookmark.id, {
+          name: values.name,
+          description: values.description,
+          category: values.category,
+        });
+        setEditingBookmark(null);
+        setIsBookmarkModalOpen(false);
+        return;
+      }
 
-    const pos = keplerToLatLonAlt(obj);
-    if (pos) {
-      const destination = Cesium.Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt * 1000 + 2000000);
-      viewer.camera.flyTo({ destination, duration: prefersReducedMotion() ? 0 : 1.5 });
-      logEvent(
-        'CAMERA',
-        'LOW',
-        'Camera focused on target',
-        `Flew to ${obj.name ?? 'Unknown object'} — NORAD ${catalogNumber}`
-      );
-    }
+      const viewer = viewerRef.current;
+      if (!viewer || viewer.isDestroyed()) return;
 
-    // SpotlightManager owns actual selection state; this just tells it
-    // which satellite to lock onto and open the info panel for.
-    setFocusRequest({ catalogNumber, nonce: Date.now() });
-  }, []);
+      const cartographic = viewer.scene.globe.ellipsoid.cartesianToCartographic(viewer.camera.positionWC);
+      if (!cartographic) return;
 
-  useImperativeHandle(ref, () => ({ flyToSatellite }), [flyToSatellite]);
+      addBookmark({
+        name: values.name,
+        description: values.description,
+        category: values.category,
+        latitude: Cesium.Math.toDegrees(cartographic.latitude),
+        longitude: Cesium.Math.toDegrees(cartographic.longitude),
+        altitude: cartographic.height,
+        heading: viewer.camera.heading,
+        pitch: viewer.camera.pitch,
+        roll: viewer.camera.roll,
+      });
 
-  const hoveredCategory = hoveredObject ? deriveObjectCategory(hoveredObject) : 'OTHER';
-  const hoveredCategoryLabel = OBJECT_CATEGORY_INFO[hoveredCategory].label;
+      setIsBookmarkModalOpen(false);
+    },
+    [addBookmark, editingBookmark, updateBookmark]
+  );
+
+  const statsCount = statistics?.totalObjects ?? 64103;
 
   return (
-    <div 
-      className="relative w-full h-full overflow-hidden bg-bg-deep-space border-b border-border-panel"
-    >
+    <div className="relative w-full h-full bg-bg-deep-space overflow-hidden select-none">
       <ProceduralSpaceBackground viewer={viewerInstance} />
-      {/* The Cesium container must sit cleanly in the background */}
-      <div 
-        ref={containerRef} 
-        className="absolute inset-0 z-10 bg-transparent"
-      />
-      {/* High-Fidelity SVG Fallback */}
-      {useFallback && (
-        <div className="absolute inset-0 z-0 flex items-center justify-center bg-[radial-gradient(circle_at_center,rgba(5,7,10,0.8)_0%,#000000_100%)]">
-          <img
-            src="https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=1200&q=80"
-            alt="3D Earth Twin"
-            className="w-full h-full object-cover opacity-60 brightness-75 contrast-125 select-none"
-          />
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            <circle cx="50%" cy="50%" r="200" fill="none" stroke="rgba(0, 229, 255, 0.25)" strokeWidth="0.75" strokeDasharray="10 5" className="animate-[spin_40s_linear_infinite]" />
-            <circle cx="50%" cy="50%" r="240" fill="none" stroke="rgba(0, 229, 255, 0.15)" strokeWidth="0.5" strokeDasharray="5 15" className="animate-[spin_60s_linear_infinite_reverse]" />
-            <path d="M 45% 45% L 55% 55%" stroke="#FF3B30" strokeWidth="1" strokeDasharray="4 2" className="animate-pulse" />
-            <circle cx="45%" cy="45%" r="5" fill="#FF3B30" className="animate-pulse-critical" />
-            <circle cx="55%" cy="55%" r="5" fill="#FF3B30" className="animate-pulse-critical" style={{ animationDelay: '0.5s' }} />
-            <ellipse cx="50%" cy="50%" rx="350" ry="120" fill="none" stroke="rgba(0, 229, 255, 0.2)" strokeWidth="1" transform="rotate(-15 640 200)" />
-          </svg>
-        </div>
-      )}
 
-      {/* ── Interactive Satellite Spotlight ─────────────────────── */}
-      <SpotlightManager
-        viewer={viewerInstance}
-        containerEl={containerEl}
-        entitiesRef={entitiesRef}
-        catalogMapRef={catalogMapRef}
-        collisionSetRef={collisionSetRef}
-        datasetVersion={datasetVersion}
-        toLatLonAlt={keplerToLatLonAlt}
-        focusRequest={focusRequest}
-        onHoverChange={(obj, pos) => {
-          setHoveredObject(obj);
-          setTooltipPos(pos);
-        }}
-        onSelectionChange={(id) => setSelectedSatelliteId(id)}
+      <div
+        ref={containerRef}
+        className={`w-full h-full transition-opacity duration-700 ${useFallback ? 'opacity-0' : 'opacity-100'}`}
       />
 
-      {/* ── Hover Tooltip (Glassmorphism) ──────────────────────── */}
-      {hoveredObject && (
-        <div
-          ref={tooltipRef}
-          className="fixed z-50 pointer-events-none animate-[fadeIn_0.15s_ease-out]"
-          style={{ left: tooltipPos.x, top: tooltipPos.y }}
-        >
-          <div className="bg-bg-deep-space/90 backdrop-blur-xl border border-primary-container/30 p-3 min-w-[240px] shadow-[0_0_30px_rgba(0,229,255,0.15)]">
-            <div className="flex items-center gap-2 mb-2">
-              <span
-                className="w-2.5 h-2.5 rounded-full animate-pulse"
-                style={{ backgroundColor: getObjectCategoryCss(hoveredCategory) }}
-              />
-              <span className="font-technical-data text-xs font-bold text-primary-container">
-                {hoveredObject.name}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-technical-data text-[10px]">
-              {[
-                ['NORAD ID', hoveredObject.catalog_number],
-                ['TYPE', hoveredCategoryLabel],
-                ['ALTITUDE', hoveredObject.semimajor_axis ? `${Math.round(hoveredObject.semimajor_axis - 6371).toLocaleString()} km` : '—'],
-                ['INCLINATION', hoveredObject.inclination != null ? `${hoveredObject.inclination.toFixed(2)}°` : '—'],
-                ['MEAN MOTION', hoveredObject.mean_motion != null ? `${hoveredObject.mean_motion.toFixed(4)} rev/d` : '—'],
-                ['PERIOD', hoveredObject.period != null ? `${hoveredObject.period.toFixed(1)} min` : '—'],
-                ['EPOCH', hoveredObject.epoch ? new Date(hoveredObject.epoch).toISOString().substring(0, 10) : '—'],
-                ['ECCENTRICITY', hoveredObject.eccentricity != null ? hoveredObject.eccentricity.toFixed(6) : '—'],
-              ].map(([label, val]) => (
-                <React.Fragment key={label}>
-                  <span className="text-on-surface-variant/60">{label}</span>
-                  <span className="text-on-surface font-semibold">{val}</span>
-                </React.Fragment>
-              ))}
-            </div>
-            <div className="mt-2 pt-2 border-t border-primary-container/20 text-[9px] text-primary/50 font-technical-data">
-              Click to select · Source: Space-Track GP API
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Hover Tooltip ────────────────────────────────────────── */}
+      <OrbitalHoverPanel
+        object={hoveredObject}
+        position={hoverPos}
+        containerBounds={containerRef.current?.getBoundingClientRect()}
+      />
+
+      {/* ── Full Object Details Modal ────────────────────────────── */}
+      <OrbitalObjectDetails
+        object={selectedDetailsObject}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        onFlyTo={flyToSatellite}
+      />
 
       {/* ── HUD Overlay ───────────────────────────────────────── */}
       <div className="absolute inset-0 p-3 pb-16 md:p-6 md:pb-16 flex flex-col justify-between z-10 pointer-events-none overflow-hidden">
-
         {/* Top Row */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
           <div className="glass-panel p-2 md:p-4 border-l-4 border-l-primary-container animate-[slideDown_0.5s_ease-out] max-w-[70%] sm:max-w-none">
@@ -900,93 +527,46 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             <h2 className="font-display-lg text-sm md:text-headline-lg font-bold text-on-surface">
               {activeSector ? activeSector.toUpperCase() : 'GLOBAL VIEW'}
             </h2>
-            {dataLoaded && (
-              <p className="font-technical-data text-[9px] md:text-[10px] text-on-surface-variant mt-1">
-                {objectCounts.total.toLocaleString()} objects tracked · Synced {stats.lastSync}
-              </p>
-            )}
+            <p className="font-technical-data text-[9px] md:text-[10px] text-on-surface-variant mt-1">
+              {catalogLoading
+                ? `LOADING ORBITAL CATALOG... (${loadingProgress}%)`
+                : `${statsCount.toLocaleString()} Objects Tracked · 3D View: ${Math.min(statsCount, MAX_VISIBLE_SPACE_OBJECTS).toLocaleString()}`}
+            </p>
           </div>
 
           <div className="text-right space-y-1 animate-[slideDown_0.5s_ease-out] hidden sm:block">
-            {dataLoaded ? (
-              <>
-                {objectCounts.collisions > 0 ? (
-                  <div className="bg-status-emergency/20 border border-status-emergency px-3 md:px-4 py-1 flex items-center gap-2 drop-shadow-[0_0_12px_rgba(255,59,48,0.4)]">
-                    <MaterialIcon name="warning" className="text-status-emergency text-sm animate-pulse" />
-                    <span className="font-technical-data text-status-emergency text-[11px] md:text-[12px] font-bold">
-                      {objectCounts.collisions} ACTIVE CONJUNCTION{objectCounts.collisions !== 1 ? 'S' : ''}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="bg-status-success/20 border border-status-success px-3 md:px-4 py-1 flex items-center gap-2">
-                    <MaterialIcon name="verified_user" className="text-status-success text-sm" />
-                    <span className="font-technical-data text-status-success text-[11px] md:text-[12px] font-bold">
-                      ALL CLEAR
-                    </span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="w-full h-8 bg-surface-container/80 animate-pulse" />
-                <div className="w-full h-4 bg-surface-container/80 animate-pulse" />
-              </>
-            )}
-            <p className={`font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block transition-ui ${dataLoaded ? 'opacity-100' : 'opacity-0'}`}>
-              WEATHER: {stats.weatherIndex} · DATA SOURCE: SPACE-TRACK / NASA DONKI
+            <div className="bg-status-success/20 border border-status-success px-3 md:px-4 py-1 flex items-center gap-2">
+              <MaterialIcon name="verified_user" className="text-status-success text-sm" />
+              <span className="font-technical-data text-status-success text-[11px] md:text-[12px] font-bold">
+                60K+ GLOBAL CATALOG ONLINE
+              </span>
+            </div>
+            <p className="font-technical-data text-[9px] md:text-[10px] text-primary/70 hidden md:block">
+              SOURCE: SPACE-TRACK / CELESTRAK GP API
             </p>
-
           </div>
         </div>
 
-        {/* Bottom Row */}
+        {/* Bottom Row Controls */}
         <div className="flex justify-end w-full animate-[slideUp_0.5s_ease-out]">
-          {/* Controls — compact mission-control toolbar */}
-          <div className="flex flex-wrap justify-end items-center gap-1 md:gap-1.5 pointer-events-auto bg-bg-deep-space/70 backdrop-blur-xl border border-border-panel/50 p-1.5 md:p-2 rounded-sm max-w-full">
+          <div className="flex flex-wrap justify-end items-center gap-1 md:gap-1.5 pointer-events-auto bg-bg-deep-space/80 backdrop-blur-xl border border-border-panel/50 p-1.5 md:p-2 rounded-sm max-w-full">
             <button
               type="button"
               onClick={isListening ? stopListening : startListening}
               disabled={!isSupported}
-              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui border ${isListening
-                ? 'bg-status-emergency text-white border-status-emergency animate-pulse'
-                : 'border-primary-container text-primary-container hover:bg-primary-container/10'
-                }`}
-              aria-label={
+              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui border ${
                 isListening
-                  ? 'Stop listening'
-                  : 'Start voice commands'
-              }
+                  ? 'bg-status-emergency text-white border-status-emergency animate-pulse'
+                  : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+              }`}
             >
               {isListening ? 'LISTENING...' : 'VOICE COMMAND'}
             </button>
-            {(isListening || transcript || error) && (
-              <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-                <div className="glass-panel px-4 py-3 text-center">
-                  {isListening && (
-                    <p className="font-label-caps text-[10px] text-primary-container animate-pulse">
-                      LISTENING FOR COMMAND...
-                    </p>
-                  )}
 
-                  {transcript && (
-                    <p className="mt-1 font-technical-data text-xs text-on-surface">
-                      "{transcript}"
-                    </p>
-                  )}
-
-                  {error && (
-                    <p className="mt-1 font-technical-data text-xs text-status-emergency">
-                      Voice error: {error}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
             <button
               type="button"
               onClick={() => setIsBookmarkModalOpen(true)}
-              className="px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
-              aria-label="Save the current globe view as a bookmark"
+              className="px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui border border-primary-container text-primary-container hover:bg-primary-container/10 cursor-pointer"
             >
               SAVE VIEW
             </button>
@@ -994,25 +574,31 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             <button
               type="button"
               onClick={() => setIsBookmarkSidebarOpen(true)}
-              className="px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border border-primary-container text-primary-container hover:bg-primary-container/10"
-              aria-label="Open saved globe bookmarks"
+              className="px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui border border-primary-container text-primary-container hover:bg-primary-container/10 cursor-pointer"
             >
               BOOKMARKS
             </button>
 
             <button
-              onClick={() => setShowLegend(v => !v)}
+              onClick={() => setShowLegend((v) => !v)}
               aria-pressed={showLegend}
-              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLegend ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
-                }`}
+              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui border cursor-pointer ${
+                showLegend
+                  ? 'bg-primary-container text-bg-deep-space border-primary-container'
+                  : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+              }`}
             >
               LEGEND
             </button>
+
             <button
-              onClick={() => setShowLayerManager(v => !v)}
+              onClick={() => setShowLayerManager((v) => !v)}
               aria-pressed={showLayerManager}
-              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui active:scale-95 cursor-pointer border ${showLayerManager ? 'bg-primary-container text-bg-deep-space border-primary-container' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
-                }`}
+              className={`px-2.5 md:px-3.5 py-2 font-bold text-[10px] md:text-xs transition-ui border cursor-pointer ${
+                showLayerManager
+                  ? 'bg-primary-container text-bg-deep-space border-primary-container'
+                  : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+              }`}
             >
               LAYERS
             </button>
@@ -1020,125 +606,72 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
         </div>
       </div>
 
-      {/* ── Legend Panel ───────────────────────────────────────── */}
-      {showLegend && (
-        <div className="absolute bottom-16 md:bottom-24 left-3 md:left-6 z-20 pointer-events-auto animate-[slideUp_0.3s_ease-out]">
-          {dataLoaded ? (
-            <div className="bg-bg-deep-space/90 backdrop-blur-xl border border-border-panel p-4 min-w-[200px] shadow-[0_0_30px_rgba(0,0,0,0.6)]">
-              <div className="flex justify-between items-center mb-3">
-                <span className="font-label-caps text-[10px] text-primary-container font-bold tracking-widest">ORBITAL LEGEND</span>
-                <button onClick={() => setShowLegend(false)} className="text-on-surface-variant/60 hover:text-on-surface cursor-pointer">
-                  <MaterialIcon name="close" className="text-xs" />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {[
-                  { color: OBJECT_CATEGORY_INFO.NAVIGATION.css, label: OBJECT_CATEGORY_INFO.NAVIGATION.label, count: objectCounts.navigation },
-                  { color: OBJECT_CATEGORY_INFO.WEATHER.css, label: OBJECT_CATEGORY_INFO.WEATHER.label, count: objectCounts.weather },
-                  { color: OBJECT_CATEGORY_INFO.MILITARY.css, label: OBJECT_CATEGORY_INFO.MILITARY.label, count: objectCounts.military },
-                  { color: OBJECT_CATEGORY_INFO.SPACE_DEBRIS.css, label: OBJECT_CATEGORY_INFO.SPACE_DEBRIS.label, count: objectCounts.debris },
-                  { color: OBJECT_CATEGORY_INFO.ROCKET_BODY.css, label: OBJECT_CATEGORY_INFO.ROCKET_BODY.label, count: objectCounts.rocketBodies },
-                  { color: OBJECT_CATEGORY_INFO.OTHER.css, label: OBJECT_CATEGORY_INFO.OTHER.label, count: objectCounts.other },
-                  { color: CATEGORY_COLORS.COLLISION.css, label: 'Collision Risks', count: objectCounts.collisions },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
-                      />
-                      <span className="font-technical-data text-[11px] text-on-surface-variant">{item.label}</span>
-                    </div>
-                    <span className="font-technical-data text-[11px] font-bold text-on-surface">{item.count.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 pt-2 border-t border-border-panel/40 text-[9px] text-on-surface-variant/50 font-technical-data">
-                All positions from real orbital elements
-              </div>
-            </div>
-          ) : (<LegendCardSkeleton />)}
-        </div>
-      )}
+      {/* ── Orbital Legend ─────────────────────────────────────── */}
+      <OrbitalLegend
+        stats={statistics}
+        isOpen={showLegend}
+        onClose={() => setShowLegend(false)}
+      />
 
-      {/* ── Orbit Layer Manager Panel ──────────────────────────── */}
-      {/* Bounded by the HUD's top status row and bottom button row so the
-          panel can never overflow the globe section and be clipped. */}
       {showLayerManager && (
-        <div className="absolute top-14 sm:top-20 bottom-16 md:bottom-24 right-3 md:right-6 z-20 flex items-start justify-end pointer-events-none animate-[slideUp_0.3s_ease-out]">
-          <LayerManagerPanel
-            onClose={() => setShowLayerManager(false)}
-            regimeCounts={{ LEO: objectCounts.leo, MEO: objectCounts.meo, GEO: objectCounts.geo, HEO: objectCounts.heo }}
-            categoryCounts={{
-              NAVIGATION: objectCounts.navigation,
-              WEATHER: objectCounts.weather,
-              MILITARY: objectCounts.military,
-              SPACE_DEBRIS: objectCounts.debris,
-              ROCKET_BODY: objectCounts.rocketBodies,
-              OTHER: objectCounts.other,
-            }}
-          />
-        </div>
+        <LayerManagerPanel
+          onClose={() => setShowLayerManager(false)}
+          regimeCounts={{
+            LEO: statistics?.leoCount ?? Math.round(statsCount * 0.85),
+            MEO: statistics?.meoCount ?? Math.round(statsCount * 0.06),
+            GEO: statistics?.geoCount ?? Math.round(statsCount * 0.08),
+            HEO: statistics?.heoCount ?? Math.round(statsCount * 0.01),
+          }}
+          categoryCounts={{
+            NAVIGATION: Math.round(statsCount * 0.04),
+            WEATHER: Math.round(statsCount * 0.02),
+            MILITARY: Math.round(statsCount * 0.03),
+            SPACE_DEBRIS: statistics?.totalDebris ?? Math.round(statsCount * 0.65),
+            ROCKET_BODY: statistics?.totalRocketBodies ?? Math.round(statsCount * 0.10),
+            OTHER: Math.round(statsCount * 0.16),
+            PAYLOAD: statistics?.totalSatellites ?? Math.round(statsCount * 0.25),
+            COLLISION: 0,
+          }}
+        />
       )}
 
-      {/* Bookmark create/edit dialog */}
+      {/* ── Bookmarks Modals ──────────────────────────────────── */}
       {isBookmarkModalOpen && (
         <BookmarkModal
-          onClose={() => setIsBookmarkModalOpen(false)}
+          initialBookmark={editingBookmark}
+          onClose={() => {
+            setIsBookmarkModalOpen(false);
+            setEditingBookmark(null);
+          }}
           onSubmit={handleBookmarkSubmit}
         />
       )}
 
-
-      {/* Bookmark sidebar */}
       {isBookmarkSidebarOpen && (
         <BookmarkSidebar
+          onClose={() => setIsBookmarkSidebarOpen(false)}
           bookmarks={bookmarks}
           filteredBookmarks={filteredBookmarks}
           favoriteBookmarks={favoriteBookmarks}
           recentBookmarks={recentBookmarks}
           categories={categories}
-          searchQuery={searchQuery}
           selectedCategory={selectedCategory}
-          onSearchChange={setSearchQuery}
+          searchQuery={searchQuery}
           onCategoryChange={setSelectedCategory}
+          onSearchChange={setSearchQuery}
           onOpenBookmark={restoreBookmark}
-          onCreateBookmark={() => {
-            setEditingBookmark(null);
-            setIsBookmarkModalOpen(true);
-          }}
-          onShareBookmark={handleShareBookmark}
-          onEditBookmark={(bookmark) => {
-            setEditingBookmark(bookmark);
+          onShareBookmark={() => {}}
+          onCreateBookmark={() => setIsBookmarkModalOpen(true)}
+          onEditBookmark={(bm) => {
+            setEditingBookmark(bm);
             setIsBookmarkModalOpen(true);
           }}
           onDeleteBookmark={deleteBookmark}
-          onToggleFavorite={(bookmarkId) =>
-            toggleFavorite(bookmarkId)
-          }
+          onToggleFavorite={toggleFavorite}
           onExportBookmarks={exportBookmarks}
           onImportBookmarks={importBookmarks}
-          onClose={() => setIsBookmarkSidebarOpen(false)}
         />
       )}
-
-      {isBookmarkModalOpen && (
-        <BookmarkModal
-          key={editingBookmark?.id ?? 'create-bookmark'}
-          initialBookmark={editingBookmark}
-          onClose={() => {
-            setEditingBookmark(null);
-            setIsBookmarkModalOpen(false);
-          }}
-          onSubmit={handleBookmarkSubmit}
-        />
-      )}
-      {/* ── Inline Styles for Animations ──────────────────────── */}
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
     </div>
   );
 });

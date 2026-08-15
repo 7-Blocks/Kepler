@@ -5,6 +5,8 @@ import { MaterialIcon } from '@/components/MaterialIcon';
 import { api, type SpaceObject } from '@/services/api';
 import { useSatelliteOfTheDay } from '@/hooks/useSatelliteOfTheDay';
 import type { SatelliteStatus } from '@/constants/spotlightSatellites';
+import { orbitalDataService } from '@/services/orbitalDataService';
+import { toSpaceObject } from '@/types/orbital';
 
 const EARTH_RADIUS_KM = 6371;
 
@@ -66,9 +68,10 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({ onViewOnGlobe }) =
     retry: false,
   });
 
-  const liveObject = liveQuery.data?.data;
+  const orbitalFallback = orbitalDataService.getOrbitalObjectById(satellite.catalog_number);
+  const liveObject = liveQuery.data?.data ?? (orbitalFallback ? toSpaceObject(orbitalFallback) : null);
   const orbit = liveObject ? summarizeOrbit(liveObject) : null;
-  const canViewOnGlobe = liveQuery.isSuccess && orbit !== null;
+  const canViewOnGlobe = orbit !== null || Boolean(orbitalFallback);
 
   return (
     <MagicCard
