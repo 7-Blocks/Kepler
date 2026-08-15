@@ -24,6 +24,8 @@ const MEO_ALTITUDE_MIN_KM = 2000;
 export function deriveOrbitRegime(obj: {
   semimajor_axis: number | null;
   eccentricity: number | null;
+  inclination?: number | null;
+  period?: number | null;
 }): OrbitRegime {
   if (obj.semimajor_axis == null) return 'LEO';
 

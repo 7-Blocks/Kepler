@@ -1,455 +1,521 @@
-import React, { useRef } from "react";
-import { Link } from "react-router-dom";
-import { motion, useReducedMotion } from "framer-motion";
-import { MagicCard } from "@/components/ui/magic-card";
-import { Particles } from "@/components/ui/particles";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
-import { MaterialIcon } from "@/components/MaterialIcon";
+/**
+ * DevelopersPage — Kepler Development Network
+ *
+ * Showcases all real GitHub contributors to the Kepler project.
+ * Data lives in src/data/developers.ts; this file only handles presentation.
+ */
+
+import React, { useMemo, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { MagicCard } from '@/components/ui/magic-card';
+import { Particles } from '@/components/ui/particles';
+import { MaterialIcon } from '@/components/MaterialIcon';
+import {
+  DEVELOPERS,
+  DEVELOPER_STATS,
+  type Developer,
+  type FilterArea,
+} from '@/data/developers';
+
+// ─── Animation Variants ────────────────────────────────────────────────────────
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+  },
 };
 
 const stagger = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
 };
 
-const contributors = [
-  {
-    name: "Alex Chen",
-    role: "Lead AI Engineer",
-    avatar: "AC",
-    color: "#00e5ff",
-    contributions: ["Collision prediction models", "Autonomous agent system", "Orbital propagation engine"],
-    github: "https://github.com/alexchen",
-  },
-  {
-    name: "Maria Santos",
-    role: "Full-Stack Developer",
-    avatar: "MS",
-    color: "#7c3aed",
-    contributions: ["Dashboard UI & frontend", "Real-time data pipelines", "WebSocket integration"],
-    github: "https://github.com/mariasantos",
-  },
-  {
-    name: "James Okafor",
-    role: "Space Systems Engineer",
-    avatar: "JO",
-    color: "#a855f7",
-    contributions: ["Space weather integration", "TLE data ingestion", "Conjunction screening algorithms"],
-    github: "https://github.com/jamesokafor",
-  },
-  {
-    name: "Priya Patel",
-    role: "DevOps & Infrastructure",
-    avatar: "PP",
-    color: "#00e5ff",
-    contributions: ["CI/CD pipelines", "Docker & cloud deployment", "Monitoring & observability"],
-    github: "https://github.com/priyapatel",
-  },
-  {
-    name: "Yuki Tanaka",
-    role: "Data Scientist",
-    avatar: "YT",
-    color: "#7c3aed",
-    contributions: ["Risk scoring models", "Anomaly detection", "Data visualization & analytics"],
-    github: "https://github.com/yukitanaka",
-  },
-  {
-    name: "Sarah Williams",
-    role: "Frontend Engineer",
-    avatar: "SW",
-    color: "#a855f7",
-    contributions: ["Component library & design system", "Animation & interaction design", "Accessibility audit"],
-    github: "https://github.com/sarahwilliams",
-  },
+// ─── Filter Config ─────────────────────────────────────────────────────────────
+
+const FILTERS: { key: FilterArea; label: string }[] = [
+  { key: 'all', label: 'ALL' },
+  { key: 'core', label: 'CORE TEAM' },
+  { key: 'contributor', label: 'CONTRIBUTORS' },
+  { key: 'frontend', label: 'FRONTEND' },
+  { key: 'backend', label: 'BACKEND' },
+  { key: 'full-stack', label: 'FULL-STACK' },
+  { key: 'ai-ml', label: 'AI / ML' },
+  { key: 'docs', label: 'DOCS' },
 ];
 
-const sdks = [
-  {
-    name: "Kepler API",
-    description: "RESTful API for satellite tracking, collision data, and orbital analytics.",
-    icon: "api",
-    color: "#00e5ff",
-    endpoint: "/api/v1",
-  },
-  {
-    name: "Python SDK",
-    description: "Native Python library for integrating Kepler data into your ML pipelines and scripts.",
-    icon: "code",
-    color: "#7c3aed",
-    endpoint: "pip install kepler-sdk",
-  },
-  {
-    name: "WebSocket Stream",
-    description: "Real-time event stream for live conjunctions, alerts, and telemetry updates.",
-    icon: "stream",
-    color: "#a855f7",
-    endpoint: "wss://api.kepler.space/events",
-  },
-  {
-    name: "CLI Tool",
-    description: "Command-line interface for querying the catalog, triggering evaluations, and managing agents.",
-    icon: "terminal",
-    color: "#00e5ff",
-    endpoint: "npm install -g @kepler/cli",
-  },
-];
+// ─── Avatar Helper ─────────────────────────────────────────────────────────────
 
-const apiEndpoints = [
-  { method: "GET", path: "/api/v1/dashboard/summary", description: "Dashboard KPI summary" },
-  { method: "GET", path: "/api/v1/catalog/objects", description: "List catalog objects" },
-  { method: "GET", path: "/api/v1/collisions", description: "Collision events" },
-  { method: "POST", path: "/api/v1/agents/trigger/:id", description: "Trigger agent workflow" },
-  { method: "GET", path: "/api/v1/weather/status", description: "Space weather status" },
-  { method: "PATCH", path: "/api/v1/collisions/:id/status", description: "Update collision status" },
-];
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
+
+function getAccentColor(id: string): string {
+  const colors = [
+    '#00e5ff', '#a855f7', '#7c3aed', '#06b6d4', '#8b5cf6',
+    '#22d3ee', '#6366f1', '#3b82f6', '#10b981',
+  ];
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) & 0xffffffff;
+  return colors[Math.abs(hash) % colors.length];
+}
+
+// ─── DeveloperCard Component ───────────────────────────────────────────────────
+
+interface DeveloperCardProps {
+  dev: Developer;
+}
+
+function DeveloperCard({ dev }: DeveloperCardProps) {
+  const reduce = useReducedMotion();
+  const accent = getAccentColor(dev.id);
+  const initials = getInitials(dev.name);
+
+  return (
+    <motion.div
+      variants={fadeUp}
+      whileHover={reduce ? undefined : { y: -4 }}
+      transition={{ duration: 0.25 }}
+      className="h-full"
+    >
+      <MagicCard
+        gradientColor={`${accent}40`}
+        gradientSize={180}
+        className="h-full rounded-xl border border-white/8 group"
+        fillClassName="bg-[#080D18]"
+      >
+        <article
+          className="p-5 flex flex-col h-full"
+          aria-label={`Developer card for ${dev.name}`}
+        >
+          {/* ── Header ── */}
+          <div className="flex items-start gap-3 mb-4">
+            {/* Avatar */}
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-bold font-mono text-sm transition-all duration-300 group-hover:scale-105"
+              style={{
+                background: `linear-gradient(135deg, ${accent}18, ${accent}35)`,
+                border: `1px solid ${accent}30`,
+                color: accent,
+              }}
+              aria-hidden="true"
+            >
+              {initials}
+            </div>
+
+            {/* Name & username */}
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-white text-sm leading-tight truncate">
+                {dev.name}
+              </h3>
+              <p className="text-[#5A6478] text-xs font-mono mt-0.5">@{dev.username}</p>
+              <p className="text-[#8892A6] text-xs mt-0.5 leading-tight">{dev.role}</p>
+            </div>
+
+            {/* Tier badge */}
+            <span
+              className="shrink-0 text-[9px] font-bold font-mono uppercase tracking-[0.14em] px-2 py-0.5 rounded"
+              style={{
+                background: dev.tier === 'core' ? '#00e5ff15' : '#a855f715',
+                color: dev.tier === 'core' ? '#00e5ff' : '#a855f7',
+                border: `1px solid ${dev.tier === 'core' ? '#00e5ff25' : '#a855f725'}`,
+              }}
+            >
+              {dev.tier === 'core' ? 'CORE' : 'CONTRIB'}
+            </span>
+          </div>
+
+          {/* ── Bio ── */}
+          <p className="text-[#8892A6] text-xs leading-relaxed mb-4 flex-1">{dev.bio}</p>
+
+          {/* ── Tech tags ── */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {dev.technologies.slice(0, 4).map((tech) => (
+              <span
+                key={tech}
+                className="text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded border border-white/8 text-[#5A6478] bg-white/4"
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+
+          {/* ── Commit stats ── */}
+          <div className="flex items-center gap-4 mb-4 py-3 border-t border-b border-white/6">
+            <div className="text-center">
+              <p
+                className="text-base font-bold font-mono leading-none"
+                style={{ color: accent }}
+              >
+                {dev.commits}
+              </p>
+              <p className="text-[9px] text-[#5A6478] uppercase tracking-wider mt-0.5">COMMITS</p>
+            </div>
+            <div className="text-center">
+              <p className="text-base font-bold font-mono text-emerald-400 leading-none">
+                +{dev.additions >= 1000 ? `${(dev.additions / 1000).toFixed(1)}k` : dev.additions}
+              </p>
+              <p className="text-[9px] text-[#5A6478] uppercase tracking-wider mt-0.5">ADDED</p>
+            </div>
+            <div className="text-center">
+              <p className="text-base font-bold font-mono text-red-400 leading-none">
+                -{dev.deletions >= 1000 ? `${(dev.deletions / 1000).toFixed(1)}k` : dev.deletions}
+              </p>
+              <p className="text-[9px] text-[#5A6478] uppercase tracking-wider mt-0.5">REMOVED</p>
+            </div>
+          </div>
+
+          {/* ── Links ── */}
+          <div className="flex items-center gap-2">
+            <a
+              href={dev.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold font-mono transition-all duration-200"
+              style={{
+                background: `${accent}12`,
+                border: `1px solid ${accent}25`,
+                color: accent,
+              }}
+              aria-label={`Visit ${dev.name}'s GitHub profile`}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.background = `${accent}22`;
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.background = `${accent}12`;
+              }}
+            >
+              <MaterialIcon name="open_in_new" className="text-xs" />
+              GITHUB
+            </a>
+            {dev.linkedin && (
+              <a
+                href={dev.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-white/8 text-[#5A6478] hover:text-white hover:border-white/20 transition-all duration-200 bg-white/4"
+                aria-label={`Visit ${dev.name}'s LinkedIn profile`}
+              >
+                <MaterialIcon name="work" className="text-sm" />
+              </a>
+            )}
+          </div>
+        </article>
+      </MagicCard>
+    </motion.div>
+  );
+}
+
+// ─── Stats Bar ─────────────────────────────────────────────────────────────────
+
+function StatsBar() {
+  const stats = [
+    { value: String(DEVELOPER_STATS.totalDevelopers), label: 'DEVELOPERS' },
+    { value: String(DEVELOPER_STATS.coreTeam), label: 'CORE TEAM' },
+    { value: String(DEVELOPER_STATS.contributors), label: 'CONTRIBUTORS' },
+    {
+      value: `${(DEVELOPER_STATS.totalAdditions / 1000).toFixed(0)}k`,
+      label: 'LINES ADDED',
+    },
+    { value: 'MIT', label: 'LICENSE' },
+  ];
+
+  return (
+    <div className="border-t border-b border-white/6 py-5 bg-[#060B14]">
+      <div className="max-w-[1180px] mx-auto px-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+          {stats.map((s) => (
+            <div key={s.label} className="text-center">
+              <p className="text-lg font-bold font-mono text-[#00e5ff]">{s.value}</p>
+              <p className="text-[9px] font-mono text-[#5A6478] uppercase tracking-[0.18em] mt-0.5">
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Hero Section ──────────────────────────────────────────────────────────────
 
 function DevelopersHero() {
   const reduce = useReducedMotion();
-  const ref = useRef<HTMLElement>(null);
 
   return (
-    <section ref={ref} className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-[#050811] px-6 pt-28 pb-16">
-      <Particles className="absolute inset-0" quantity={120} color="#7c3aed" />
+    <section className="relative min-h-[68vh] flex items-center justify-center overflow-hidden bg-[#050811] px-6 pt-28 pb-16">
+      <Particles className="absolute inset-0" quantity={90} color="#00e5ff" />
 
+      {/* Ambient glows */}
       <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full bg-[#7c3aed]/5 blur-[130px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-[#00e5ff]/5 blur-[100px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[#00e5ff]/4 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-[#7c3aed]/4 blur-[90px]" />
       </div>
 
       <motion.div
-        initial={reduce ? undefined : { opacity: 0, y: 30 }}
+        initial={reduce ? undefined : { opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-        className="relative z-10 max-w-4xl mx-auto text-center"
+        className="relative z-10 max-w-3xl mx-auto text-center"
       >
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#7c3aed]/20 bg-[#7c3aed]/10 px-5 py-2 text-xs uppercase tracking-[0.22em] text-[#a855f7] mb-8">
-          <span className="h-2 w-2 rounded-full bg-[#a855f7] animate-pulse" />
-          Developers & Contributors
+        {/* System label */}
+        <div className="inline-flex items-center gap-2.5 rounded-sm border border-[#00e5ff]/20 bg-[#00e5ff]/6 px-4 py-1.5 mb-8 font-mono text-[10px] uppercase tracking-[0.22em] text-[#00e5ff]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#00e5ff] animate-pulse" aria-hidden="true" />
+          KEPLER DEVELOPMENT NETWORK ONLINE
         </div>
 
-        <h1 className="font-display-lg text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-[1.05] text-white mb-6">
-          Build with
-          <br />
-          <span className="bg-gradient-to-r from-[#00e5ff] via-[#7c3aed] to-[#a855f7] bg-clip-text text-transparent">
-            Kepler
-          </span>
+        <h1 className="text-[clamp(2.8rem,7vw,5rem)] font-bold leading-[1.04] text-white mb-4">
+          DEVELOPERS
         </h1>
 
-        <p className="font-body-ui text-lg text-[#8892A6] max-w-2xl mx-auto mb-10 leading-relaxed">
-          APIs, SDKs, and tools for integrating Kepler's orbital intelligence into your applications.
-          Join our community of developers and contributors shaping the future of space traffic management.
+        <p className="text-[#8892A6] text-lg leading-relaxed max-w-xl mx-auto mb-10">
+          Meet the people building the future of space situational awareness.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link to="/signup">
-            <ShimmerButton
-              shimmerColor="#7c3aed"
-              background="rgba(124,58,237,0.15)"
-              className="rounded-full px-8 py-3 text-base font-semibold border border-[#7c3aed]/30"
-            >
-              Get API Access
-            </ShimmerButton>
-          </Link>
+        <div className="flex flex-wrap justify-center gap-3">
           <a
             href="https://github.com/7-Blocks/Kepler"
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full border border-white/15 bg-white/5 px-8 py-3 font-medium text-white backdrop-blur transition-all duration-300 hover:border-[#a855f7]/40 hover:bg-[#a855f7]/10 inline-flex items-center gap-2"
+            className="inline-flex items-center gap-2 rounded-sm border border-[#00e5ff]/30 bg-[#00e5ff]/8 px-6 py-2.5 font-mono text-xs uppercase tracking-widest text-[#00e5ff] hover:bg-[#00e5ff]/15 transition-all duration-200"
+            aria-label="View Kepler on GitHub"
           >
             <MaterialIcon name="code" className="text-sm" />
             View on GitHub
           </a>
-        </div>
-
-        <div className="mt-16 flex flex-wrap justify-center gap-10 text-center">
-          {[
-            { value: "6+", label: "Core Contributors" },
-            { value: "24+", label: "API Endpoints" },
-            { value: "4", label: "SDKs & Tools" },
-            { value: "Open Source", label: "MIT License" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <h3 className="text-3xl font-bold font-technical-data text-[#a855f7]">{stat.value}</h3>
-              <p className="text-[#8892A6] text-sm">{stat.label}</p>
-            </div>
-          ))}
+          <Link
+            to="/signup"
+            className="inline-flex items-center gap-2 rounded-sm border border-white/12 bg-white/5 px-6 py-2.5 font-mono text-xs uppercase tracking-widest text-white hover:border-white/25 hover:bg-white/8 transition-all duration-200"
+          >
+            <MaterialIcon name="person_add" className="text-sm" />
+            Join the Team
+          </Link>
         </div>
       </motion.div>
     </section>
   );
 }
 
-function ApiSection() {
-  return (
-    <section className="relative py-24 px-6 section-rule bg-[#050811]">
-      <Particles className="absolute inset-0" quantity={80} color="#00e5ff" />
+// ─── Catalog Section (cards + search + filter) ─────────────────────────────────
 
-      <div className="relative z-10 max-w-[1180px] mx-auto">
+function DeveloperCatalog() {
+  const reduce = useReducedMotion();
+  const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState<FilterArea>('all');
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return DEVELOPERS.filter((d) => {
+      const matchesTier =
+        activeFilter === 'all' ||
+        activeFilter === d.tier ||
+        (d.areas as string[]).includes(activeFilter);
+      if (!matchesTier) return false;
+      if (!q) return true;
+      return (
+        d.name.toLowerCase().includes(q) ||
+        d.username.toLowerCase().includes(q) ||
+        d.role.toLowerCase().includes(q) ||
+        d.technologies.some((t) => t.toLowerCase().includes(q)) ||
+        d.bio.toLowerCase().includes(q)
+      );
+    });
+  }, [search, activeFilter]);
+
+  return (
+    <section className="relative py-20 px-6 bg-[#050811]" aria-label="Developer catalog">
+      <div className="max-w-[1280px] mx-auto">
+
+        {/* ── Section header ── */}
         <motion.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
           variants={stagger}
-          className="text-center mb-16"
+          className="mb-10"
         >
-          <motion.div variants={fadeUp} className="font-technical-data text-xs text-[#00e5ff] tracking-[0.22em] mb-4">
-            API REFERENCE
+          <motion.div
+            variants={fadeUp}
+            className="font-mono text-[10px] text-[#00e5ff] uppercase tracking-[0.22em] mb-3"
+          >
+            CONTRIBUTOR REGISTRY
           </motion.div>
-          <motion.h2 variants={fadeUp} className="font-display-lg text-[clamp(1.8rem,4vw,3rem)] font-bold text-white mb-4">
-            Simple, powerful APIs
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-2">
+            All contributors
           </motion.h2>
-          <motion.p variants={fadeUp} className="font-body-ui text-[#8892A6] max-w-2xl mx-auto">
-            Every endpoint returns structured JSON with consistent error handling. Your API key unlocks the full platform.
+          <motion.p variants={fadeUp} className="text-[#8892A6] text-sm">
+            {DEVELOPER_STATS.totalDevelopers} developers · ordered by contribution volume
           </motion.p>
         </motion.div>
 
-        <div className="max-w-3xl mx-auto">
-          <MagicCard gradientColor="#00e5ff50" className="rounded-2xl" fillClassName="bg-[#0A0F1A]">
-            <div className="p-6 sm:p-8">
-              <div className="flex items-center gap-2 mb-6">
-                <MaterialIcon name="terminal" className="text-[#00e5ff] text-lg" />
-                <span className="font-technical-data text-sm text-[#00e5ff]">Base URL: https://api.kepler.space</span>
-              </div>
-              <div className="space-y-3">
-                {apiEndpoints.map((ep) => (
-                  <div
-                    key={ep.path}
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-t border-white/5"
-                  >
-                    <span
-                      className={`inline-flex items-center justify-center px-2.5 py-1 rounded text-[10px] font-bold font-technical-data uppercase tracking-wider w-16 shrink-0 ${
-                        ep.method === "GET"
-                          ? "bg-[#00e5ff]/10 text-[#00e5ff]"
-                          : ep.method === "POST"
-                          ? "bg-[#7c3aed]/10 text-[#a855f7]"
-                          : "bg-[#a855f7]/10 text-[#a855f7]"
-                      }`}
-                    >
-                      {ep.method}
-                    </span>
-                    <code className="font-technical-data text-sm text-white/80 flex-1">{ep.path}</code>
-                    <span className="font-body-ui text-xs text-[#8892A6] sm:text-right">{ep.description}</span>
-                  </div>
-                ))}
-              </div>
+        {/* ── Controls ── */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          {/* Search */}
+          <div className="relative flex-1 max-w-sm">
+            <label htmlFor="dev-search" className="sr-only">
+              Search developers
+            </label>
+            <MaterialIcon
+              name="search"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A6478] text-sm pointer-events-none"
+              aria-hidden="true"
+            />
+            <input
+              id="dev-search"
+              ref={searchRef}
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search developers..."
+              className="w-full pl-8 pr-4 py-2 bg-white/5 border border-white/10 rounded-sm text-sm text-white placeholder-[#5A6478] font-mono focus:outline-none focus:border-[#00e5ff]/40 focus:bg-[#00e5ff]/5 transition-all duration-200"
+              aria-label="Search developers by name, username, role, or technology"
+            />
+          </div>
+
+          {/* Filter pills */}
+          <div
+            className="flex flex-wrap gap-1.5"
+            role="group"
+            aria-label="Filter developers by area"
+          >
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setActiveFilter(f.key)}
+                aria-pressed={activeFilter === f.key}
+                className={`px-3 py-1.5 rounded-sm font-mono text-[9px] uppercase tracking-[0.16em] border transition-all duration-200 ${
+                  activeFilter === f.key
+                    ? 'bg-[#00e5ff]/12 border-[#00e5ff]/35 text-[#00e5ff]'
+                    : 'bg-white/4 border-white/8 text-[#5A6478] hover:text-white hover:border-white/20'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Grid ── */}
+        {filtered.length > 0 ? (
+          <motion.div
+            key={`${activeFilter}-${search}`}
+            initial={reduce ? undefined : 'hidden'}
+            animate="show"
+            variants={stagger}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          >
+            {filtered.map((dev) => (
+              <DeveloperCard key={dev.id} dev={dev} />
+            ))}
+          </motion.div>
+        ) : (
+          /* ── Empty state ── */
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center py-24 text-center"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="h-12 w-12 rounded-xl border border-white/10 bg-white/4 flex items-center justify-center mb-4">
+              <MaterialIcon name="signal_disconnected" className="text-[#5A6478] text-xl" />
             </div>
-          </MagicCard>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SdksSection() {
-  return (
-    <section className="relative py-24 px-6 section-rule bg-[#050811]">
-      <div className="max-w-[1180px] mx-auto">
-        <motion.div
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          variants={stagger}
-          className="text-center mb-16"
-        >
-          <motion.div variants={fadeUp} className="font-technical-data text-xs text-[#7c3aed] tracking-[0.22em] mb-4">
-            SDKs & TOOLS
-          </motion.div>
-          <motion.h2 variants={fadeUp} className="font-display-lg text-[clamp(1.8rem,4vw,3rem)] font-bold text-white mb-4">
-            Integrate in minutes
-          </motion.h2>
-          <motion.p variants={fadeUp} className="font-body-ui text-[#8892A6] max-w-2xl mx-auto">
-            Language-native libraries and tools for every workflow.
-          </motion.p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
-          {sdks.map((sdk) => (
-            <motion.div
-              key={sdk.name}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
-              variants={fadeUp}
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#5A6478] mb-1">
+              NO DEVELOPER SIGNAL FOUND
+            </p>
+            <p className="text-[#5A6478] text-sm mb-6">
+              No developers match the current search parameters.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setActiveFilter('all');
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-sm border border-white/12 bg-white/5 font-mono text-xs uppercase tracking-widest text-white hover:border-white/25 transition-all duration-200"
             >
-              <MagicCard
-                mode="orb"
-                glowFrom={sdk.color}
-                glowTo={sdk.color}
-                glowOpacity={0.4}
-                glowSize={300}
-                glowBlur={40}
-                className="h-full rounded-2xl border border-white/10"
-                fillClassName="bg-[#0A0F1A]"
-              >
-                <div className="p-6 sm:p-8">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div
-                      className="flex h-12 w-12 items-center justify-center rounded-xl"
-                      style={{
-                        background: `${sdk.color}15`,
-                        border: `1px solid ${sdk.color}25`,
-                      }}
-                    >
-                      <MaterialIcon name={sdk.icon} className="text-xl" style={{ color: sdk.color }} />
-                    </div>
-                    <div>
-                      <h3 className="font-display-lg text-lg font-semibold text-white">{sdk.name}</h3>
-                      <code className="font-technical-data text-xs text-[#8892A6]">{sdk.endpoint}</code>
-                    </div>
-                  </div>
-                  <p className="font-body-ui text-sm text-[#8892A6] leading-relaxed">{sdk.description}</p>
-                </div>
-              </MagicCard>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ContributorsSection() {
-  return (
-    <section className="relative py-24 px-6 section-rule bg-[#050811]">
-      <Particles className="absolute inset-0" quantity={100} color="#a855f7" />
-
-      <div className="relative z-10 max-w-[1180px] mx-auto">
-        <motion.div
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          variants={stagger}
-          className="text-center mb-16"
-        >
-          <motion.div variants={fadeUp} className="font-technical-data text-xs text-[#a855f7] tracking-[0.22em] mb-4">
-            TEAM
+              CLEAR FILTERS
+            </button>
           </motion.div>
-          <motion.h2 variants={fadeUp} className="font-display-lg text-[clamp(1.8rem,4vw,3rem)] font-bold text-white mb-4">
-            Meet the contributors
-          </motion.h2>
-          <motion.p variants={fadeUp} className="font-body-ui text-[#8892A6] max-w-2xl mx-auto">
-            The people building Kepler — open source contributors committed to safer skies.
-          </motion.p>
-        </motion.div>
+        )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contributors.map((person) => (
-            <motion.div
-              key={person.name}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-60px" }}
-              variants={fadeUp}
-            >
-              <MagicCard
-                gradientColor={`${person.color}50`}
-                gradientSize={200}
-                className="h-full rounded-2xl border border-white/10"
-                fillClassName="bg-[#0A0F1A]"
-              >
-                <div className="p-6 sm:p-8">
-                  <div className="flex items-center gap-4 mb-5">
-                    <div
-                      className="flex h-14 w-14 items-center justify-center rounded-2xl font-bold text-lg font-technical-data"
-                      style={{
-                        background: `linear-gradient(135deg, ${person.color}20, ${person.color}40)`,
-                        border: `1px solid ${person.color}30`,
-                        color: person.color,
-                      }}
-                    >
-                      {person.avatar}
-                    </div>
-                    <div>
-                      <h3 className="font-display-lg text-base font-semibold text-white">{person.name}</h3>
-                      <p className="font-body-ui text-sm text-[#8892A6]">{person.role}</p>
-                    </div>
-                  </div>
-                  <ul className="space-y-2" role="list">
-                    {person.contributions.map((c) => (
-                      <li key={c} className="flex items-center gap-2 text-sm text-[#8892A6]">
-                        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: person.color }} />
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={person.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-medium transition-colors"
-                    style={{ color: person.color }}
-                  >
-                    <MaterialIcon name="open_in_new" className="text-sm" />
-                    GitHub Profile
-                  </a>
-                </div>
-              </MagicCard>
-            </motion.div>
-          ))}
-        </div>
+        {/* ── Result count ── */}
+        {filtered.length > 0 && (
+          <p
+            className="mt-6 font-mono text-[10px] text-[#5A6478] uppercase tracking-[0.14em]"
+            aria-live="polite"
+          >
+            SHOWING {filtered.length} / {DEVELOPER_STATS.totalDevelopers} CONTRIBUTORS
+          </p>
+        )}
       </div>
     </section>
   );
 }
 
-function ContributeSection() {
+// ─── Contribute CTA ────────────────────────────────────────────────────────────
+
+function ContributeCTA() {
   const steps = [
-    { icon: "fork_right", title: "Fork the Repo", description: "Clone the repository and set up your local development environment." },
-    { icon: "code", title: "Pick an Issue", description: "Browse open issues and find one that matches your skills and interests." },
-    { icon: "merge_type", title: "Submit a PR", description: "Make your changes and submit a pull request for review." },
-    { icon: "groups", title: "Join the Community", description: "Get feedback, collaborate, and grow with the Kepler community." },
+    { num: '01', title: 'Fork the Repo', desc: 'Clone the repository and set up your local development environment.' },
+    { num: '02', title: 'Pick an Issue', desc: 'Browse open issues and find one that matches your skills and interests.' },
+    { num: '03', title: 'Submit a PR', desc: 'Make your changes and submit a pull request for review.' },
+    { num: '04', title: 'Join the Network', desc: 'Get feedback, collaborate, and appear on this page as a contributor.' },
   ];
 
   return (
-    <section className="relative py-24 px-6 section-rule bg-[#050811]">
-      <div className="max-w-[1180px] mx-auto">
+    <section className="relative py-20 px-6 border-t border-white/6 bg-[#050811]" aria-label="How to contribute">
+      <Particles className="absolute inset-0" quantity={50} color="#7c3aed" />
+
+      <div className="relative z-10 max-w-[1180px] mx-auto">
         <motion.div
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
           variants={stagger}
-          className="text-center mb-16"
+          className="text-center mb-14"
         >
-          <motion.div variants={fadeUp} className="font-technical-data text-xs text-[#00e5ff] tracking-[0.22em] mb-4">
-            CONTRIBUTE
+          <motion.div variants={fadeUp} className="font-mono text-[10px] text-[#7c3aed] uppercase tracking-[0.22em] mb-3">
+            OPEN SOURCE PROTOCOL
           </motion.div>
-          <motion.h2 variants={fadeUp} className="font-display-lg text-[clamp(1.8rem,4vw,3rem)] font-bold text-white mb-4">
-            Help us build the future
+          <motion.h2 variants={fadeUp} className="text-3xl font-bold text-white mb-2">
+            Contribute to Kepler
           </motion.h2>
-          <motion.p variants={fadeUp} className="font-body-ui text-[#8892A6] max-w-2xl mx-auto">
-            Kepler is open source and welcomes contributions from developers, engineers, and space enthusiasts.
+          <motion.p variants={fadeUp} className="text-[#8892A6] text-sm max-w-xl mx-auto">
+            Kepler is open source and welcomes contributions from developers, engineers and space enthusiasts worldwide.
           </motion.p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-4xl mx-auto mb-12">
-          {steps.map((step, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {steps.map((step) => (
             <motion.div
-              key={step.title}
+              key={step.num}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
+              viewport={{ once: true, margin: '-40px' }}
               variants={fadeUp}
             >
               <MagicCard
-                mode="orb"
-                glowFrom="#00e5ff"
-                glowTo="#a855f7"
-                glowOpacity={0.3}
-                glowSize={280}
-                glowBlur={40}
-                className="h-full rounded-2xl border border-white/10"
-                fillClassName="bg-[#0A0F1A]"
+                gradientColor="#7c3aed40"
+                gradientSize={160}
+                className="h-full rounded-xl border border-white/8"
+                fillClassName="bg-[#080D18]"
               >
-                <div className="p-6 text-center">
-                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-[#00e5ff]/10 border border-[#00e5ff]/20 mb-4">
-                    <span className="font-technical-data text-lg font-bold text-[#00e5ff]">{i + 1}</span>
-                  </div>
-                  <h3 className="font-display-lg text-base font-semibold text-white mb-2">{step.title}</h3>
-                  <p className="font-body-ui text-sm text-[#8892A6]">{step.description}</p>
+                <div className="p-5">
+                  <p className="font-mono text-2xl font-bold text-[#7c3aed]/40 mb-3">{step.num}</p>
+                  <h3 className="font-semibold text-white text-sm mb-2">{step.title}</h3>
+                  <p className="text-[#8892A6] text-xs leading-relaxed">{step.desc}</p>
                 </div>
               </MagicCard>
             </motion.div>
@@ -467,10 +533,11 @@ function ContributeSection() {
             href="https://github.com/7-Blocks/Kepler"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-8 py-3 font-medium text-white backdrop-blur transition-all duration-300 hover:border-[#00e5ff]/40 hover:bg-[#00e5ff]/10"
+            className="inline-flex items-center gap-2 rounded-sm border border-[#7c3aed]/30 bg-[#7c3aed]/8 px-8 py-3 font-mono text-xs uppercase tracking-widest text-[#a855f7] hover:bg-[#7c3aed]/15 transition-all duration-200"
+            aria-label="Start contributing to Kepler on GitHub"
           >
-            <MaterialIcon name="code" className="text-sm" />
-            Start Contributing
+            <MaterialIcon name="rocket_launch" className="text-sm" />
+            START CONTRIBUTING
           </a>
         </motion.div>
       </div>
@@ -478,14 +545,15 @@ function ContributeSection() {
   );
 }
 
+// ─── Page Root ─────────────────────────────────────────────────────────────────
+
 export const DevelopersPage: React.FC = () => {
   return (
-    <div className="bg-[#050811]">
+    <div className="bg-[#050811] min-h-screen">
       <DevelopersHero />
-      <ApiSection />
-      <SdksSection />
-      <ContributorsSection />
-      <ContributeSection />
+      <StatsBar />
+      <DeveloperCatalog />
+      <ContributeCTA />
     </div>
   );
 };

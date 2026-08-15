@@ -8,6 +8,8 @@ export type ObjectCategory =
   | 'MILITARY'
   | 'SPACE_DEBRIS'
   | 'ROCKET_BODY'
+  | 'PAYLOAD'
+  | 'COLLISION'
   | 'OTHER';
 
 export const OBJECT_CATEGORIES: ObjectCategory[] = [
@@ -16,6 +18,8 @@ export const OBJECT_CATEGORIES: ObjectCategory[] = [
   'MILITARY',
   'SPACE_DEBRIS',
   'ROCKET_BODY',
+  'PAYLOAD',
+  'COLLISION',
   'OTHER',
 ];
 
@@ -25,6 +29,8 @@ export const OBJECT_CATEGORY_INFO: Record<ObjectCategory, { css: string; label: 
   MILITARY: { css: '#9D7BFF', label: 'Military Satellites' },
   SPACE_DEBRIS: { css: '#FFAA00', label: 'Space Debris' },
   ROCKET_BODY: { css: '#FF4444', label: 'Rocket Bodies' },
+  PAYLOAD: { css: '#00E5FF', label: 'Payload Satellites' },
+  COLLISION: { css: '#FF0000', label: 'Collision Risk' },
   OTHER: { css: '#8793AC', label: 'Other Objects' },
 };
 

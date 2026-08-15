@@ -89,7 +89,7 @@ export const ProceduralSpaceBackground: React.FC<Props> = ({ viewer }) => {
     
     const layer3 = createOffscreenCanvas(TILE_SIZE, TILE_SIZE);
     const ctx3 = layer3.getContext('2d')!;
-    drawStars(ctx3, 200, 2.0, ['#ffffff', '#00e5ff', '#ffaa00']); // Foreground bright stars
+    drawStars(ctx3, 100, 0.9, ['#ffffff60', '#88a0c040']); // Subtle distant stars
     
     const drawTiled = (source: HTMLCanvasElement, xOffset: number, yOffset: number) => {
       // Wrap offsets

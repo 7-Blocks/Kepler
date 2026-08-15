@@ -29,6 +29,9 @@ import SpaceWeather from './pages/SpaceWeather';
 import ButtonBackToTop from './components/ui/ButtonBackToTop';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
+import { GlobalSearchModal } from '@/components/orbital/GlobalSearchModal';
+import { useOrbitalStore } from '@/store';
+import { useEffect } from 'react';
 
 // Lives inside BrowserRouter/QueryClientProvider so it can reach navigate(),
 // the shared uiStore, and React Query's cache. Centralized here per issue #83
@@ -67,6 +70,10 @@ function GlobalShortcuts() {
 }
 
 function App() {
+  useEffect(() => {
+    useOrbitalStore.getState().loadCatalog();
+  }, []);
+
   return (
     <BrowserRouter>
     <Toaster 
@@ -75,6 +82,7 @@ function App() {
       offset={{ top: '4em', right: "16px", left: "16px" }} 
     />
     <GlobalShortcuts />
+    <GlobalSearchModal />
       <Routes>
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<LandingPage />} />

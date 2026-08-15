@@ -37,6 +37,8 @@ export const Default: Story = {
       MILITARY: 260,
       SPACE_DEBRIS: 1200,
       ROCKET_BODY: 340,
+      PAYLOAD: 1600,
+      COLLISION: 0,
       OTHER: 2140,
     },
   },

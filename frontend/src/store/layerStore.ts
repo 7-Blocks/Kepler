@@ -20,6 +20,8 @@ const defaultCategoryVisibility: Record<ObjectCategory, boolean> = {
   MILITARY: true,
   SPACE_DEBRIS: true,
   ROCKET_BODY: true,
+  PAYLOAD: true,
+  COLLISION: true,
   OTHER: true,
 };
 

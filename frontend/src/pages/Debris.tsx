@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MaterialIcon } from '@/components/MaterialIcon';
 import { useCatalogObjects, useCatalogStats, useCatalogSync } from '@/hooks/useApi';
 import type { SpaceObject } from '@/services/api';
+import { useOrbitalStore } from '@/store';
+import { orbitalDataService } from '@/services/orbitalDataService';
+import { toSpaceObject } from '@/types/orbital';
 
 type Classification = 'DEBRIS' | 'ROCKET_BODY';
 
@@ -44,6 +47,10 @@ export const Debris: React.FC = () => {
   const [page, setPage]                = useState(1);
   const PAGE_SIZE = 30;
 
+  useEffect(() => {
+    useOrbitalStore.getState().loadCatalog();
+  }, []);
+
   const onSearch = (val: string) => {
     setSearchQuery(val);
     clearTimeout((window as unknown as { _debrisSearchTimer: ReturnType<typeof setTimeout> })._debrisSearchTimer);
@@ -62,12 +69,48 @@ export const Debris: React.FC = () => {
 
   const statsQ = useCatalogStats();
   const syncM  = useCatalogSync();
+  const orbitalStats = useOrbitalStore((s) => s.statistics);
 
-  const objects: SpaceObject[] = catalogQ.data?.data ?? [];
-  const pagination = catalogQ.data?.pagination;
-  const stats = statsQ.data?.data;
+  const localQuery = useMemo(() => {
+    return orbitalDataService.queryObjects(
+      {
+        objectType: classFilter ? (classFilter as import('@/types/orbital').ObjectType) : 'ALL',
+        searchQuery: debouncedSearch,
+      },
+      page,
+      PAGE_SIZE
+    );
+  }, [classFilter, debouncedSearch, page]);
 
-  const totalDebris = (stats?.debris ?? 0) + (stats?.rocket_bodies ?? 0);
+  const objects: SpaceObject[] = useMemo(() => {
+    if (catalogQ.data?.data && catalogQ.data.data.length > 0) {
+      return catalogQ.data.data;
+    }
+    // Filter to only debris or rocket body if no specific filter
+    const items = classFilter
+      ? localQuery.items
+      : localQuery.items.filter((o) => o.classification === 'DEBRIS' || o.classification === 'ROCKET_BODY');
+    return items.map(toSpaceObject);
+  }, [catalogQ.data, classFilter, localQuery.items]);
+
+  const pagination = catalogQ.data?.pagination ?? {
+    page,
+    size: PAGE_SIZE,
+    total: localQuery.total,
+    pages: localQuery.pages,
+  };
+
+  const stats = statsQ.data?.data ?? (orbitalStats ? {
+    total: orbitalStats.totalObjects,
+    payloads: orbitalStats.totalSatellites,
+    debris: orbitalStats.totalDebris,
+    rocket_bodies: orbitalStats.totalRocketBodies,
+    unknown: 0,
+    last_sync: orbitalStats.lastUpdated ?? new Date().toISOString(),
+  } : undefined);
+
+  const totalDebris = (stats?.debris ?? 41450) + (stats?.rocket_bodies ?? 6140);
+
 
   return (
     <div className="p-4 md:p-6 space-y-6 overflow-y-auto h-full custom-scrollbar technical-grid">

@@ -1,0 +1,13 @@
+{
+  "source": "Space-Track / CelesTrak GP Dataset",
+  "version": "1.0.0",
+  "generatedAt": "2026-08-15T13:42:06.631658+00:00",
+  "recordCount": 64103,
+  "satellites": 16513,
+  "debris": 41450,
+  "rocketBodies": 6140,
+  "payloads": 16513,
+  "activeObjects": 16513,
+  "unknownObjects": 0,
+  "lastUpdated": "2026-08-15T13:42:06.631676+00:00"
+}
