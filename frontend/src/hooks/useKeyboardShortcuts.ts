@@ -77,9 +77,11 @@ export function useKeyboardShortcuts(
   const { disabled = false, definitions = SHORTCUT_DEFINITIONS } = options;
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const handlersRef = useRef(handlers);
-  handlersRef.current = handlers;
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
 
-  const isMac = useMemo(isMacPlatform, []);
+  const isMac = useMemo(() => isMacPlatform(), []);
 
   const openHelp = useCallback(() => setIsHelpOpen(true), []);
   const closeHelp = useCallback(() => setIsHelpOpen(false), []);

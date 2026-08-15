@@ -12,7 +12,6 @@ export const PerformanceOverlay: React.FC = () => {
     activeTab,
     fps,
     frameTimeMs,
-    droppedFrames,
     fpsHistory,
     renderedSatellites,
     activeEntities,

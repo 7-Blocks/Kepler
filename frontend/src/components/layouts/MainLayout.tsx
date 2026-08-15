@@ -1,25 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUIStore, useSidebarCollapsed, useRightDrawerOpen, logEvent } from '@/store';
+import { useUIStore, useSidebarCollapsed, useRightDrawerOpen, logEvent, useLogbookStore } from '@/store';
 import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackground';
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
-import { useLogbookStore, logEvent } from '@/store/logbookStore';
 import { PerformanceOverlay } from '@/components/PerformanceOverlay/PerformanceOverlay';
 import { PerformanceToggleButton } from '@/components/PerformanceOverlay/PerformanceToggleButton';
 import { NotificationCenter } from '@/components/ui/NotificationCenter';
 import { CameraControls } from '@/components/ui/CameraControls';
+import { MaterialIcon } from '@/components/MaterialIcon';
 
 /** Ensures the mission-init System log fires once per browser tab session. */
 let hasLoggedMissionInit = false;
 
 export const MainLayout: React.FC = () => {
   const {
-    sidebarCollapsed,
-    rightDrawerOpen,
     isFlybyHistoryOpen,
-    toggleSidebar,
-    toggleRightDrawer,
     toggleFlybyHistory
   } = useUIStore();
   const sidebarCollapsed = useSidebarCollapsed();

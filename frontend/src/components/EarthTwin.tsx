@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { prefersReducedMotion } from './SatelliteSpotlight/GlowEffect';
-import { useSatelliteSelection } from '@/hooks/useSatelliteSelection';
+
+let globalAutoRotate = true;
 import { useSpotlightEffect } from '@/hooks/useSpotlightEffect';
 import { useCinematicCamera } from '@/hooks/useCinematicCamera';
 import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
@@ -173,7 +174,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     return;
   }
 
-  autoRotateRef.current = false;
+  globalAutoRotate = false;
 
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(
@@ -206,7 +207,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       return;
     }
 
-    autoRotateRef.current = false;
+    globalAutoRotate = false;
 
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(
@@ -386,7 +387,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
   }, []);
 
 
-  const autoRotateRef = useRef(true);
+
 
   const {
     bookmarks,
@@ -411,8 +412,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
     importBookmarks,
   } = useBookmarks();
 
-  const [selectedBookmarkId, setSelectedBookmarkId] =
-    useState('');
+
 
   useSpotlightEffect({
     viewer: viewerInstance,
@@ -426,42 +426,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
   useCinematicCamera(viewerInstance, entitiesRef, catalogMapRef);
 
-  const saveCurrentView = useCallback(() => {
-    const viewer = viewerRef.current;
 
-    if (!viewer || viewer.isDestroyed()) {
-      return;
-    }
-
-    const cartographic =
-      viewer.scene.globe.ellipsoid.cartesianToCartographic(
-        viewer.camera.positionWC
-      );
-
-    if (!cartographic) {
-      return;
-    }
-
-    const timestamp = new Intl.DateTimeFormat('en-IN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date());
-
-    addBookmark({
-      name: `Saved view — ${timestamp}`,
-      description: 'Saved from the current globe camera position.',
-      category: 'Custom',
-
-      latitude: Cesium.Math.toDegrees(cartographic.latitude),
-      longitude: Cesium.Math.toDegrees(cartographic.longitude),
-      altitude: cartographic.height,
-
-      // Cesium expects these values in radians when restoring.
-      heading: viewer.camera.heading,
-      pitch: viewer.camera.pitch,
-      roll: viewer.camera.roll,
-    });
-  }, [addBookmark]);
 
   const restoreBookmark = useCallback(
     (bookmark: Bookmark) => {
@@ -473,7 +438,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
       // Prevent the existing automatic globe rotation from immediately
       // moving the camera away from the restored bookmark view.
-      autoRotateRef.current = false;
+      globalAutoRotate = false;
 
       markAsRecent(bookmark.id);
 
@@ -643,20 +608,19 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       });
 
       viewerRef.current = viewer;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUseFallback(false);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setViewerInstance(viewer);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setContainerEl(containerRef.current);
+      queueMicrotask(() => {
+        setUseFallback(false);
+        setViewerInstance(viewer);
+        setContainerEl(containerRef.current);
+      });
 
 
       viewer.scene.globe.enableLighting = true; // Enable real-time day/night lighting
       viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a1a24'); // Visible fallback color
       viewer.scene.backgroundColor = Cesium.Color.TRANSPARENT;
-      viewer.scene.skyBox.show = false;
-      viewer.scene.sun.show = false;
-      viewer.scene.moon.show = false;
+      if (viewer.scene.skyBox) viewer.scene.skyBox.show = false;
+      if (viewer.scene.sun) viewer.scene.sun.show = false;
+      if (viewer.scene.moon) viewer.scene.moon.show = false;
       viewer.scene.fog.enabled = false;
       if (viewer.scene.skyAtmosphere) {
         viewer.scene.skyAtmosphere.show = true;
@@ -674,7 +638,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       const sharedBookmark = getSharedBookmarkFromUrl();
 
       if (sharedBookmark) {
-        autoRotateRef.current = false;
+        globalAutoRotate = false;
 
         const prefersReducedMotion =
           window.matchMedia?.(
@@ -697,7 +661,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       }
 
       onTick = () => {
-        if (autoRotateRef.current) {
+        if (globalAutoRotate) {
           viewer.scene.camera.rotate(
             Cesium.Cartesian3.UNIT_Z,
             0.0003
@@ -759,6 +723,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
       }, 5 * 60_000);
 
       return () => {
+        globalAutoRotate = true;
         clearInterval(refreshInterval);
         if (handler) handler.destroy();
         const v = viewerRef.current;

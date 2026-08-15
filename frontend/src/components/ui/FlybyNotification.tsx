@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNotificationStore } from '@/store/notificationStore';
 import type { FlybyNotification as FlybyNotificationType } from '@/store/notificationStore';
@@ -12,7 +12,7 @@ interface Props {
 
 const playBeep = () => {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
     if (!AudioContext) return;
     
     const ctx = new AudioContext();
@@ -42,6 +42,13 @@ export const FlybyNotification: React.FC<Props> = ({ notification }) => {
   const setSelectedSatelliteId = useUIStore((s) => s.setSelectedSatelliteId);
   const navigate = useNavigate();
 
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     if (preferences.soundEnabled) {
       playBeep();
@@ -64,7 +71,7 @@ export const FlybyNotification: React.FC<Props> = ({ notification }) => {
     dismiss(notification.id);
   };
 
-  const minutesAway = Math.max(0, Math.round((notification.eta.getTime() - Date.now()) / 60000));
+  const minutesAway = Math.max(0, Math.round((notification.eta.getTime() - now) / 60000));
 
   return (
     <motion.div
