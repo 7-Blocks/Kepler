@@ -81,7 +81,6 @@ interface PerformanceState {
   clearBottlenecks: () => void;
 }
 
-const MAX_HISTORY_LENGTH = 30;
 const MAX_NETWORK_LOGS = 20;
 const MAX_BOTTLENECK_LOGS = 15;
 

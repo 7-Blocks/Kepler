@@ -39,8 +39,6 @@ export function useCinematicCamera(
 
       lastMode.current = mode;
 
-      // 1. Calculate precise real-time position and velocity
-      const now = new Date();
       const p0_geo = keplerToLatLonAlt(catalogData, 0);
       const p1_geo = keplerToLatLonAlt(catalogData, 1); // 1 second into future
 
@@ -59,7 +57,7 @@ export function useCinematicCamera(
       // 'up' is the normal vector from earth center to the satellite
       const up = Cesium.Cartesian3.normalize(p0, new Cesium.Cartesian3());
 
-      let targetPos = new Cesium.Cartesian3();
+      const targetPos = new Cesium.Cartesian3();
       let targetDir = new Cesium.Cartesian3();
       let targetUp = new Cesium.Cartesian3();
 

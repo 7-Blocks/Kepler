@@ -177,7 +177,7 @@ export const SatelliteComparisonModal: React.FC<SatelliteComparisonModalProps> =
                 <thead>
                   <tr className="border-b border-border-panel bg-surface-container">
                     <th className="p-3 font-label-caps text-on-surface-variant text-[10px]">METRIC</th>
-                    {satellites.map((sat, i) => (
+                    {satellites.map((sat) => (
                       <th key={sat.id} className="p-3 font-technical-data font-bold text-primary text-xs w-[120px] max-w-[150px]">
                         <div className="flex flex-col">
                           <span className="truncate" title={sat.name}>{sat.name}</span>

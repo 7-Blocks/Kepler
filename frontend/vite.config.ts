@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), cesium()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(dirname, './src')
     }
   },
   server: {

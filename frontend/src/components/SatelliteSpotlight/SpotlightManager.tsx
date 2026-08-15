@@ -50,11 +50,11 @@ export const SpotlightManager: React.FC<SpotlightManagerProps> = ({
     if (!viewer || viewer.isDestroyed()) return;
     const h = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     handlerRef.current = h;
-    setHandler(h);
+    queueMicrotask(() => setHandler(h));
     return () => {
       h.destroy();
       handlerRef.current = null;
-      setHandler(null);
+      queueMicrotask(() => setHandler(null));
     };
   }, [viewer]);
 

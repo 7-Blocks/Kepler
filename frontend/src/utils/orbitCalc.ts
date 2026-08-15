@@ -74,14 +74,6 @@ export function calculateElevationAngle(satelliteAltKm: number, groundDistanceKm
   // Central angle between observer and satellite's nadir
   const gammaRad = groundDistanceKm / rE;
   
-  // Slant range (distance from observer to satellite)
-  const d = Math.sqrt(rE ** 2 + rS ** 2 - 2 * rE * rS * Math.cos(gammaRad));
-  
-  // Elevation angle calculation
-  const cosEl = (rS * Math.sin(gammaRad)) / d;
-  
-  let elRad = Math.acos(cosEl);
-  
   // If gamma > 90 deg, the satellite is definitely below the horizon, but Math.acos handles 0 to PI.
   // Actually, wait, a standard way is to use atan2 or just simple geometry:
   // el = atan( (cos(gamma) - (rE / rS)) / sin(gamma) )

@@ -3,8 +3,9 @@ import { useUIStore } from '@/store/uiStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useBookmarkStorage } from '@/hooks/useBookmarkStorage';
 import { api } from '@/services/api';
-import type { SpaceObject } from '@/services/api';
+import type { SpaceObject, APIResponse } from '@/services/api';
 import { keplerToLatLonAlt, calculateGroundDistanceKm, calculateElevationAngle } from '@/utils/orbitCalc';
+import type { CatalogObject } from '@/types/satellite';
 
 // Flyby check interval: every 30 seconds
 const CHECK_INTERVAL_MS = 30 * 1000;
@@ -48,7 +49,7 @@ export function useFlybyEngine() {
         const responses = await Promise.allSettled(satPromises);
         
         const satellites = responses
-          .filter((res): res is PromiseFulfilledResult<any> => res.status === 'fulfilled')
+          .filter((res): res is PromiseFulfilledResult<APIResponse<SpaceObject>> => res.status === 'fulfilled')
           .map(res => res.value.data as SpaceObject)
           .filter(Boolean);
 
@@ -66,7 +67,7 @@ export function useFlybyEngine() {
 
         for (const sat of satellites) {
           // Cast SpaceObject to CatalogObject structure expected by keplerToLatLonAlt
-          const catalogObj = sat as any;
+          const catalogObj = sat as unknown as CatalogObject;
 
           for (const loc of targetLocations) {
             let minDistance = Infinity;
