@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 import datetime
 
 from database.session import get_db
-from models.db_models import Satellite, Debris
+from models.db_models import Satellite, Debris, SpaceObject
 from app.core.exceptions import (
     ExternalServiceError,
     NotFoundError,
@@ -115,6 +115,30 @@ def _serialize_debris(deb: Debris) -> Dict[str, Any]:
 
 
 @router.get("/objects", response_model=APIResponse[List[Dict[str, Any]]])
+def _serialize_space_object(obj: SpaceObject) -> Dict[str, Any]:
+    epoch = obj.epoch
+    raan, arg_of_perigee, mean_anomaly = _orbital_angles(obj.tle_line2, obj)
+    return {
+        "id": str(obj.id),
+        "name": obj.objectName or "",
+        "catalog_number": obj.noradId or "",
+        "cospar_id": obj.cospar_id,
+        "classification": obj.objectType or "UNKNOWN",
+        "epoch": epoch if isinstance(epoch, str) else (epoch.isoformat() if epoch else None),
+        "inclination": obj.inclination,
+        "eccentricity": obj.eccentricity,
+        "semimajor_axis": obj.semimajor_axis,
+        "raan": raan,
+        "arg_of_perigee": arg_of_perigee,
+        "mean_anomaly": mean_anomaly,
+        "mean_motion": obj.mean_motion,
+        "period": obj.period,
+        "has_tle": bool(obj.tle_line1 and obj.tle_line2),
+        "updated_at": obj.updated_at.isoformat() if obj.updated_at else None,
+    }
+
+
+@router.get("/objects", response_model=APIResponse[List[Dict[str, Any]]])
 def list_space_objects(
     page: int = Query(1, ge=1),
     size: int = Query(50, ge=1, le=500),
@@ -123,43 +147,36 @@ def list_space_objects(
     db: Session = Depends(get_db),
 ):
     if classification and classification.upper() not in VALID_CLASSIFICATIONS:
-        raise ValidationError(
-            f"'{classification}' is not a valid object classification.",
+        raise ValidationError(f"'{classification}' is not a valid object classification.",
             details={"field": "classification", "value": classification, "allowed": list(VALID_CLASSIFICATIONS)},
         )
 
     cls = classification.upper() if classification else None
     pattern = f"%{search}%" if search else None
 
-    all_docs: List[Dict[str, Any]] = []
+    # FIX: Query the unified SpaceObject schema to enable DB-level pagination
+    query = db.query(SpaceObject)
+    
+    if cls:
+        query = query.filter(SpaceObject.objectType == cls)
+    if pattern:
+        query = query.filter(SpaceObject.objectName.ilike(pattern) | SpaceObject.noradId.ilike(pattern))
 
-    if cls != "DEBRIS":
-        q = db.query(Satellite)
-        if cls:
-            q = q.filter(Satellite.objectType == cls)
-        if pattern:
-            q = q.filter(Satellite.objectName.ilike(pattern) | Satellite.noradId.ilike(pattern))
-        all_docs.extend(_serialize_sat(s) for s in q.all())
-
-    if cls in (None, "DEBRIS"):
-        q = db.query(Debris)
-        if pattern:
-            q = q.filter(Debris.objectName.ilike(pattern) | Debris.noradId.ilike(pattern))
-        all_docs.extend(_serialize_debris(d) for d in q.all())
-
-    total  = len(all_docs)
+    total = query.count()
     offset = (page - 1) * size
-    pages  = (total + size - 1) // size if total else 1
+    
+    # FIX: Apply offset and limit directly to the SQL query
+    records = query.offset(offset).limit(size).all()
+    
+    # FIX: Correct the pagination math
+    pages = (total + size - 1) // size 
 
     return APIResponse(
         success=True,
         message=f"Orbital catalog — {total} objects tracked",
-        data=all_docs[offset: offset + size],
+        data=[_serialize_space_object(r) for r in records],
         pagination=PaginationSchema(page=page, size=size, total=total, pages=pages),
     )
-
-
-@router.get("/objects/{catalog_number}", response_model=APIResponse[Dict[str, Any]])
 def get_space_object(catalog_number: str, db: Session = Depends(get_db)):
     if catalog_number.isdecimal():
         catalog_number = str(int(catalog_number))
