@@ -128,6 +128,17 @@ Kepler/
 
 ## How to Contribute
 
+## Claiming an Issue
+
+If you would like to work on an unassigned issue, comment:
+
+```text
+/claim
+```
+
+The issue will automatically be assigned to you and marked with the assigned label.
+Please only claim an issue if you intend to actively work on it. If an issue is already assigned to another contributor, the claim will not change the existing assignment.
+
 ### Good First Issues
 
 Look for issues tagged [`good-first-issue`](https://github.com/7-Blocks/Kepler/labels/good%20first%20issue). These are scoped to be approachable for new contributors.
