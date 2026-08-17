@@ -23,10 +23,13 @@ jobs:
           # Always checkout the base branch to ensure untrusted PR code is never executed
           ref: ${{ github.event.repository.default_branch }}
 
-      - name: Execute Labeler Script
-        uses: actions/github-script@v8
+      - name: Execute JS Script
+        env:
+          # Safely map the GitHub context to an environment variable first
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const labeler = require('./.github/scripts/labeler.js');
-            await labeler({ github, context, core });
+            // Safely read from process.env to avoid interpolation syntax collisions
+            const issueTitle = process.env.ISSUE_TITLE;
+            console.log(issueTitle);
