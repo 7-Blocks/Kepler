@@ -2,8 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/Logo.svg" />
+    <script>
+      (function () {
+        try {
+          var stored = JSON.parse(localStorage.getItem('kepler-theme'));
+          if (stored && stored.state && stored.state.theme === 'light') {
+            document.documentElement.classList.add('light');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />    <link rel="apple-touch-icon" href="/Logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KEPLER | AI STRATEGIC COMMAND</title>
     <!-- Google Fonts & Material Icons -->

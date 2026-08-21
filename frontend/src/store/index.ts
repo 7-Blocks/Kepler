@@ -7,14 +7,14 @@ import { useLayerStore } from './layerStore';
 import { useLogbookStore } from './logbookStore';
 import { useUIStore } from './uiStore';
 import { useOrbitalStore } from './orbitalStore';
-
+import { useThemeStore } from './themeStore';
 export { useAuthStore } from './authStore';
 export { useDataStore, type DataFilters, type RiskLevel, type TimeRangeOption } from './dataStore';
 export { useLayerStore, type ObjectCategory } from './layerStore';
 export { useLogbookStore, logEvent } from './logbookStore';
 export { useUIStore } from './uiStore';
 export { useOrbitalStore } from './orbitalStore';
-
+export { useThemeStore, type Theme } from './themeStore';
 // Fine-grained atomic selector hooks to prevent unnecessary React re-renders
 
 // Orbital Selectors
@@ -77,6 +77,9 @@ export function useGlobalSearchOpen(): boolean {
   return useUIStore((state) => state.globalSearchOpen);
 }
 
+export function useTheme(): Theme {
+  return useThemeStore((state) => state.theme);
+}
 // Layer Selectors
 export function useCategoryVisibility() {
   return useLayerStore((state) => state.categoryVisibility);

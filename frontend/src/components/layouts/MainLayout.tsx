@@ -6,7 +6,7 @@ import { DynamicBackground } from '@/components/DynamicBackground/DynamicBackgro
 import { LogbookPanel } from '@/components/Logbook/LogbookPanel';
 import { PerformanceOverlay } from '@/components/PerformanceOverlay/PerformanceOverlay';
 import { PerformanceToggleButton } from '@/components/PerformanceOverlay/PerformanceToggleButton';
-import { NotificationCenter } from '@/components/ui/NotificationCenter';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';import { NotificationCenter } from '@/components/ui/NotificationCenter';
 import { CameraControls } from '@/components/ui/CameraControls';
 import { MaterialIcon } from '@/components/MaterialIcon';
 
@@ -246,8 +246,8 @@ export const MainLayout: React.FC = () => {
                 {utcTime}
               </div>
               <PerformanceToggleButton />
-              <div className="flex items-center gap-4">
-                <button
+              <ThemeToggle />
+              <div className="flex items-center gap-4">                <button
                   onClick={toggleRightDrawer}
                   className={`relative transition-ui cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${rightDrawerOpen ? 'text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : 'text-primary hover:text-primary-fixed'}`}
                 >
