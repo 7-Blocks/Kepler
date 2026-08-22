@@ -1,17 +1,78 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/Logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KEPLER | AI STRATEGIC COMMAND</title>
-    <!-- Google Fonts & Material Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/Logo.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KEPLER | AI STRATEGIC COMMAND</title>
+  <!-- Google Fonts & Material Icons -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* SCROLL PROGRESS INDICATOR */
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: transparent;
+      z-index: 99999;
+      pointer-events: none;
+    }
+
+    #scroll-progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg,
+          #5ee7ff,
+          #4facfe,
+          #8b5cf6);
+      transform-origin: left center;
+      transition: width 0.08s linear;
+      box-shadow: 0 0 8px rgba(79, 172, 254, 0.45);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scroll-progress">
+    <div id="scroll-progress-bar"></div>
+  </div>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx">
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const progressBar = document.getElementById("scroll-progress-bar");
+
+      function updateScrollProgress() {
+        const scrollTop = window.scrollY;
+        const documentHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+
+        const progress =
+          documentHeight > 0
+            ? (scrollTop / documentHeight) * 100
+            : 0;
+
+        progressBar.style.width = `${Math.min(progress, 100)}%`;
+      }
+
+      window.addEventListener("scroll", updateScrollProgress, {
+        passive: true
+      });
+
+      window.addEventListener("resize", updateScrollProgress);
+
+      updateScrollProgress();
+    });
+  </script>
+</body>
+
 </html>
