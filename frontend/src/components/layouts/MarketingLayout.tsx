@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -102,6 +103,9 @@ function MarketingNavBar() {
           </nav>
 
           <div className="flex items-center gap-3">
+
+            <ThemeToggle />
+
             <button
               type="button"
               onClick={() => navigate("/signin")}

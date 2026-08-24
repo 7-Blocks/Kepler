@@ -5,6 +5,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* dark-light mode */
+:root {
+  --kepler-background: #10141a;
+  --kepler-surface: #0d1117;
+  --kepler-border-panel: #1f2937;
+  --kepler-on-surface: #dfe2eb;
+  --kepler-on-surface-variant: #bac9cc;
+}
+
+.light {
+  --kepler-background: #f4f7fa;
+  --kepler-surface: #ffffff;
+  --kepler-border-panel: #cbd5e1;
+  --kepler-on-surface: #1e293b;
+  --kepler-on-surface-variant: #475569;
+}
+
 @font-face {
   font-family: "Necosmic";
   src: url("/Necosmic.otf") format("opentype");
@@ -12,8 +29,9 @@
   font-style: normal;
   font-display: swap;
 }
-button, 
-a{
+
+button,
+a {
   cursor: pointer;
 }
 
@@ -24,7 +42,7 @@ a{
   --color-error: #ffb4ab;
   --color-inverse-primary: #006875;
   --color-on-primary-fixed-variant: #004f58;
-  --color-surface: #10141a;
+  --color-surface: var(--kepler-surface);
   --color-on-tertiary-fixed-variant: #594400;
   --color-on-primary-container: #00626e;
   --color-error-container: #93000a;
@@ -33,7 +51,7 @@ a{
   --color-surface-variant: #31353c;
   --color-on-error: #690005;
   --color-secondary-container: #0044eb;
-  --color-background: #0C1220;
+  --color-background: var(--kepler-background);
   --color-outline-variant: #3b494c;
   --color-surface-tint: #00daf3;
   --color-inverse-on-surface: #2d3137;
@@ -43,12 +61,12 @@ a{
   --color-tertiary: #ffeac0;
   --color-on-secondary: #002387;
   --color-on-tertiary-fixed: #251a00;
-  --color-on-surface: #dfe2eb;
+  --color-on-surface: var(--kepler-on-surface);
   --color-on-secondary-fixed: #001355;
   --color-tertiary-fixed-dim: #f3bf26;
   --color-on-tertiary: #3e2e00;
   --color-secondary-fixed: #dde1ff;
-  --color-on-background: #dfe2eb;
+  --color-on-background: var(--kepler-on-surface);
   --color-secondary: #b8c3ff;
   --color-surface-dim: #10141a;
   --color-status-warning: #FF9500;
@@ -88,28 +106,49 @@ a{
   --animate-spin-slow: spin 8s linear infinite;
 
   @keyframes scanline {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100%); }
+    0% {
+      transform: translateY(-100%);
+    }
+
+    100% {
+      transform: translateY(100%);
+    }
   }
+
   @keyframes pulse-critical {
-    0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 4px #FF3B30); }
-    50% { opacity: 0.6; transform: scale(1.1); filter: drop-shadow(0 0 12px #FF3B30); }
+
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      filter: drop-shadow(0 0 4px #FF3B30);
+    }
+
+    50% {
+      opacity: 0.6;
+      transform: scale(1.1);
+      filter: drop-shadow(0 0 12px #FF3B30);
+    }
   }
 }
 
 @layer base {
   body {
-    background-color: #0C1220;
-    color: #dfe2eb;
+    background-color: var(--kepler-background);
+    color: var(--kepler-on-surface);
     overflow: hidden;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 }
 
 body {
   cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjMDAwMDAwIiBzdHJva2U9IiMwMEU1RkYiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTUuNSAzLjIxVjIwLjhjMCAuNDUuNTQuNjcuODUuMzVsNC44Ni00Ljg2YS41LjUgMCAwIDEgLjM1LS4xNWg2Ljg3YS41LjUgMCAwIDAgLjM1LS44NUw2LjM1IDIuODVhLjUuNSAwIDAgMC0uODUuMzVaIj48L3BhdGg+PC9zdmc+"), auto;
 }
+
 .transition-ui {
-  @apply transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)];
+  @apply transition-all duration-300 ease-[cubic-bezier(0.2, 0.8, 0.2, 1)];
 }
 
 .table-head {
@@ -141,8 +180,8 @@ body {
 }
 
 .technical-grid {
-  background-image: 
-    linear-gradient(#1F2937 0.5px, transparent 0.5px), 
+  background-image:
+    linear-gradient(#1F2937 0.5px, transparent 0.5px),
     linear-gradient(90deg, #1F2937 0.5px, transparent 0.5px);
   background-size: 40px 40px;
   background-color: #0C1220;
@@ -167,21 +206,30 @@ body {
   width: 4px;
   height: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #0C1220;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #1F2937;
   border-radius: 2px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #00e5ff;
 }
 
 @keyframes radar-sweep {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
+
 .radar-sweep {
   position: absolute;
   top: 50%;
@@ -257,15 +305,13 @@ body {
   transform: translateX(-50%);
   width: min(100%, 1180px);
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(79, 224, 200, 0.08) 12%,
-    rgba(27, 36, 54, 0.95) 35%,
-    rgba(27, 36, 54, 0.95) 65%,
-    rgba(79, 224, 200, 0.08) 88%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(79, 224, 200, 0.08) 12%,
+      rgba(27, 36, 54, 0.95) 35%,
+      rgba(27, 36, 54, 0.95) 65%,
+      rgba(79, 224, 200, 0.08) 88%,
+      transparent 100%);
   pointer-events: none;
 }
 
@@ -273,83 +319,165 @@ body {
   width: 100%;
   left: 0;
   transform: none;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(27, 36, 54, 0.9) 20%,
-    rgba(79, 224, 200, 0.18) 50%,
-    rgba(27, 36, 54, 0.9) 80%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(27, 36, 54, 0.9) 20%,
+      rgba(79, 224, 200, 0.18) 50%,
+      rgba(27, 36, 54, 0.9) 80%,
+      transparent 100%);
 }
 
 /* ── Dynamic Background Animations ── */
 
 @keyframes bg-drift-slow {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(20%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(20%);
+  }
 }
 
 @keyframes star-twinkle {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes solar-pulse {
-  0%, 100% { filter: brightness(1); transform: scale(1); }
-  50% { filter: brightness(1.3); transform: scale(1.03); }
+
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+
+  50% {
+    filter: brightness(1.3);
+    transform: scale(1.03);
+  }
 }
 
 @keyframes plasma-wave {
-  0% { transform: translateY(0) scaleX(1); }
-  50% { transform: translateY(5px) scaleX(1.02); }
-  100% { transform: translateY(0) scaleX(1); }
+  0% {
+    transform: translateY(0) scaleX(1);
+  }
+
+  50% {
+    transform: translateY(5px) scaleX(1.02);
+  }
+
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
 }
 
 @keyframes particle-drift {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(5px, -3px); }
-  50% { transform: translate(-2px, 5px); }
-  75% { transform: translate(3px, 2px); }
-  100% { transform: translate(0, 0); }
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(5px, -3px);
+  }
+
+  50% {
+    transform: translate(-2px, 5px);
+  }
+
+  75% {
+    transform: translate(3px, 2px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 @keyframes haze-shift {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(10px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(10px);
+  }
 }
 
 @keyframes aurora-wave {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scaleX(1) scaleY(1) translateX(0);
   }
+
   25% {
     transform: scaleX(1.05) scaleY(1.1) translateX(15px);
   }
+
   50% {
     transform: scaleX(0.95) scaleY(0.9) translateX(-10px);
   }
+
   75% {
     transform: scaleX(1.02) scaleY(1.05) translateX(8px);
   }
 }
 
 @keyframes meteor-streak {
-  0% { opacity: 0; transform: rotate(-25deg) translateX(0); }
-  5% { opacity: 1; }
-  15% { opacity: 0.8; }
-  25% { opacity: 0; transform: rotate(-25deg) translateX(100%); }
-  100% { opacity: 0; transform: rotate(-25deg) translateX(100%); }
+  0% {
+    opacity: 0;
+    transform: rotate(-25deg) translateX(0);
+  }
+
+  5% {
+    opacity: 1;
+  }
+
+  15% {
+    opacity: 0.8;
+  }
+
+  25% {
+    opacity: 0;
+    transform: rotate(-25deg) translateX(100%);
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(-25deg) translateX(100%);
+  }
 }
 
 @keyframes collision-pulse {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.4); }
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.4);
+  }
 }
 
 @keyframes orbit-rotate {
-  0% { transform: rotateX(70deg) rotateZ(0deg); }
-  100% { transform: rotateX(70deg) rotateZ(360deg); }
+  0% {
+    transform: rotateX(70deg) rotateZ(0deg);
+  }
+
+  100% {
+    transform: rotateX(70deg) rotateZ(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -361,8 +489,8 @@ body {
 }
 
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
 input:-webkit-autofill:active,
 input:autofill,
 input:autofill:hover,
@@ -371,4 +499,34 @@ input:autofill:active {
   -webkit-text-fill-color: #ffffff !important;
   color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+}
+
+/* Light Mode - Navbar & Cards */
+html.light .navbar,
+html.light nav {
+  background: #ffffff !important;
+  color: #222222 !important;
+}
+
+html.light .navbar a,
+html.light nav a {
+  color: #222222 !important;
+}
+
+html.light .card,
+html.light .project-card,
+html.light .festival-card {
+  background: #ffffff !important;
+  color: #222222 !important;
+  border-color: #e5e5e5 !important;
+}
+
+html.light .card h1,
+html.light .card h2,
+html.light .card h3,
+html.light .card h4,
+html.light .card p,
+html.light .project-card h3,
+html.light .project-card p {
+  color: #222222 !important;
 }
