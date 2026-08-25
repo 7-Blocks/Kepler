@@ -23,7 +23,6 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/deepmhatre13"><img src="https://github.com/deepmhatre13.png" width="50px" style="border-radius:50%;margin:5px;" alt="deepmhatre13" /></a>
 <a href="https://github.com/zuveriyakhan05"><img src="https://github.com/zuveriyakhan05.png" width="50px" style="border-radius:50%;margin:5px;" alt="zuveriyakhan05" /></a>
 <a href="https://github.com/Amayyas"><img src="https://github.com/Amayyas.png" width="50px" style="border-radius:50%;margin:5px;" alt="Amayyas" /></a>
-<a href="https://github.com/tapheret2"><img src="https://github.com/tapheret2.png" width="50px" style="border-radius:50%;margin:5px;" alt="tapheret2" /></a>
 <a href="https://github.com/PushkarP-404"><img src="https://github.com/PushkarP-404.png" width="50px" style="border-radius:50%;margin:5px;" alt="PushkarP-404" /></a>
 <a href="https://github.com/kalpitt"><img src="https://github.com/kalpitt.png" width="50px" style="border-radius:50%;margin:5px;" alt="kalpitt" /></a>
 <a href="https://github.com/shwetakanth09"><img src="https://github.com/shwetakanth09.png" width="50px" style="border-radius:50%;margin:5px;" alt="shwetakanth09" /></a>
