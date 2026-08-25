@@ -136,3 +136,30 @@ def trigger_weather_sync(
         message="NASA DONKI sync complete — events persisted to database.",
         data={"synced_at": datetime.now(timezone.utc).isoformat(), "source": "NASA DONKI API"},
     )
+
+
+@router.get("/drag-estimator", response_model=APIResponse[Dict[str, Any]])
+def estimate_atmospheric_drag(
+    altitude_km: float = Query(400.0, ge=100.0, le=2000.0, description="Satellite altitude in km"),
+    mass_kg: float = Query(500.0, ge=1.0, le=50000.0, description="Satellite mass in kg"),
+    area_m2: float = Query(2.0, ge=0.01, le=100.0, description="Cross-sectional area in m^2"),
+    drag_coefficient: float = Query(2.2, ge=1.0, le=4.0, description="Drag coefficient Cd"),
+    kp_index: Optional[float] = Query(None, ge=0.0, le=9.0, description="Geomagnetic Kp index (defaults to live index)"),
+):
+    if kp_index is None:
+        status = weather_service.get_current_status()
+        kp_index = float(status.get("kp_index", 3.0))
+
+    calc = weather_service.calculate_atmospheric_drag(
+        altitude_km=altitude_km,
+        mass_kg=mass_kg,
+        area_m2=area_m2,
+        drag_coefficient=drag_coefficient,
+        kp_index=kp_index,
+    )
+    return APIResponse(
+        success=True,
+        message=f"Atmospheric drag calculated for altitude {altitude_km} km — {calc['risk_level']} risk",
+        data=calc,
+    )
+

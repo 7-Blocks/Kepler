@@ -278,5 +278,83 @@ class SpaceWeatherService:
             "source":     "NASA DONKI API",
         }
 
+    def calculate_atmospheric_drag(
+        self,
+        altitude_km: float = 400.0,
+        mass_kg: float = 500.0,
+        area_m2: float = 2.0,
+        drag_coefficient: float = 2.2,
+        kp_index: float = 3.0,
+    ) -> Dict[str, Any]:
+        """
+        Calculates atmospheric density, drag acceleration, daily orbital decay rate (km/day),
+        and estimated orbital lifetime based on satellite physical characteristics and geomagnetic Kp index.
+        """
+        import math
+
+        h = max(100.0, min(2000.0, float(altitude_km)))
+        m = max(1.0, float(mass_kg))
+        A = max(0.01, float(area_m2))
+        Cd = max(1.0, min(4.0, float(drag_coefficient)))
+        kp = max(0.0, min(9.0, float(kp_index)))
+
+        # Orbital physics constants
+        R_E = 6378.137  # Earth radius (km)
+        mu = 398600.4418  # Earth GM (km^3/s^2)
+
+        r_km = R_E + h
+        r_m = r_km * 1000.0
+        v_ms = math.sqrt((mu * 1e9) / r_m)  # orbital speed m/s
+
+        # Exponential atmospheric density model (kg/m^3) with Kp storm scaling
+        rho_base = 1e-10 * math.exp(-(h - 200.0) / 55.0)
+        kp_scaling = max(0.5, 1.0 + 0.25 * (kp - 3.0))
+        rho = rho_base * kp_scaling
+
+        # Drag Force Fd = 0.5 * rho * v^2 * Cd * A (Newtons)
+        Fd = 0.5 * rho * (v_ms ** 2) * Cd * A
+        drag_accel_ms2 = Fd / m
+
+        # Daily orbital decay rate (km/day)
+        # da/dt = - (2 * Fd * v) / (m * g)
+        # using energy loss rate: da/dt = (2 * v * Fd) / (m * (mu / r_km^2))
+        g_local = (mu / (r_km ** 2)) * 1000.0  # m/s^2
+        decay_rate_ms = (2.0 * v_ms * Fd) / (m * g_local)
+        decay_rate_km_day = (decay_rate_ms * 86400.0) / 1000.0
+
+        # Estimated lifetime until re-entry altitude (~150 km)
+        usable_alt = max(0.0, h - 150.0)
+        lifetime_days = (usable_alt / decay_rate_km_day) if decay_rate_km_day > 0 else 99999.0
+
+        if decay_rate_km_day < 0.05:
+            risk_level = "NOMINAL"
+            description = "Nominal atmospheric drag. Minimal altitude decay."
+        elif decay_rate_km_day < 0.25:
+            risk_level = "ELEVATED"
+            description = "Elevated drag. Minor orbit maintenance maneuvers recommended."
+        elif decay_rate_km_day < 1.0:
+            risk_level = "HIGH"
+            description = "High atmospheric drag! Significant daily altitude loss."
+        else:
+            risk_level = "CRITICAL"
+            description = "CRITICAL DRAG & DECAY HAZARD! Immediate orbit boost required."
+
+        return {
+            "altitude_km": h,
+            "mass_kg": m,
+            "area_m2": A,
+            "drag_coefficient": Cd,
+            "kp_index": kp,
+            "air_density_kg_m3": f"{rho:.3e}",
+            "orbital_velocity_kms": round(v_ms / 1000.0, 3),
+            "drag_force_n": round(Fd, 5),
+            "drag_accel_ms2": f"{drag_accel_ms2:.3e}",
+            "decay_rate_km_day": round(decay_rate_km_day, 4),
+            "estimated_lifetime_days": round(lifetime_days, 1),
+            "risk_level": risk_level,
+            "description": description,
+        }
+
 
 weather_service = SpaceWeatherService()
+
