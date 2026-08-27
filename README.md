@@ -23,7 +23,6 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/deepmhatre13"><img src="https://github.com/deepmhatre13.png" width="50px" style="border-radius:50%;margin:5px;" alt="deepmhatre13" /></a>
 <a href="https://github.com/zuveriyakhan05"><img src="https://github.com/zuveriyakhan05.png" width="50px" style="border-radius:50%;margin:5px;" alt="zuveriyakhan05" /></a>
 <a href="https://github.com/Amayyas"><img src="https://github.com/Amayyas.png" width="50px" style="border-radius:50%;margin:5px;" alt="Amayyas" /></a>
-<a href="https://github.com/tapheret2"><img src="https://github.com/tapheret2.png" width="50px" style="border-radius:50%;margin:5px;" alt="tapheret2" /></a>
 <a href="https://github.com/PushkarP-404"><img src="https://github.com/PushkarP-404.png" width="50px" style="border-radius:50%;margin:5px;" alt="PushkarP-404" /></a>
 <a href="https://github.com/kalpitt"><img src="https://github.com/kalpitt.png" width="50px" style="border-radius:50%;margin:5px;" alt="kalpitt" /></a>
 <a href="https://github.com/shwetakanth09"><img src="https://github.com/shwetakanth09.png" width="50px" style="border-radius:50%;margin:5px;" alt="shwetakanth09" /></a>
@@ -47,9 +46,13 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/Sk-Uruj"><img src="https://github.com/Sk-Uruj.png" width="50px" style="border-radius:50%;margin:5px;" alt="Sk-Uruj" /></a>
 <a href="https://github.com/SohammPawarr"><img src="https://github.com/SohammPawarr.png" width="50px" style="border-radius:50%;margin:5px;" alt="SohammPawarr" /></a>
 <a href="https://github.com/Pranitrane"><img src="https://github.com/Pranitrane.png" width="50px" style="border-radius:50%;margin:5px;" alt="Pranitrane" /></a>
-<a href="https://github.com/emre155"><img src="https://github.com/emre155.png" width="50px" style="border-radius:50%;margin:5px;" alt="emre155" /></a>
-<a href="https://github.com/Thebinary-bard"><img src="https://github.com/Thebinary-bard.png" width="50px" style="border-radius:50%;margin:5px;" alt="Thebinary-bard" /></a>
+<a href="https://github.com/emreumar"><img src="https://github.com/emreumar.png" width="50px" style="border-radius:50%;margin:5px;" alt="emreumar" /></a>
 <a href="https://github.com/AryanYadav215"><img src="https://github.com/AryanYadav215.png" width="50px" style="border-radius:50%;margin:5px;" alt="AryanYadav215" /></a>
+<a href="https://github.com/Thebinary-bard"><img src="https://github.com/Thebinary-bard.png" width="50px" style="border-radius:50%;margin:5px;" alt="Thebinary-bard" /></a>
+<a href="https://github.com/choprapurvi168-hub"><img src="https://github.com/choprapurvi168-hub.png" width="50px" style="border-radius:50%;margin:5px;" alt="choprapurvi168-hub"/></a>
+<a href="https://github.com/revatikadam0607"><img src="https://github.com/revatikadam0607.png" width="50px" style="border-radius:50%;margin:5px;" alt="revatikadam0607" /></a>
+<a href="https://github.com/Gunjan10-droid"><img src="https://github.com/Gunjan10-droid.png" width="50px" style="border-radius:50%;margin:5px;" alt="Gunjan10-droid" /></a>
+<!-- <a href="https://github.com/tapheret2"><img src="https://github.com/tapheret2.png" width="50px" style="border-radius:50%;margin:5px;" alt="tapheret2" /></a> -->
 <!-- <a href="https://github.com/TheLinuxGuy-ssh"><img src="https://github.com/TheLinuxGuy-ssh.png" width="50px" style="border-radius:50%;margin:5px;" alt="TheLinuxGuy-ssh" /></a> -->
 <!--<a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a> -->
 

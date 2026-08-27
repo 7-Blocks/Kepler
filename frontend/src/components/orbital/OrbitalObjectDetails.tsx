@@ -3,7 +3,10 @@ import { MaterialIcon } from '@/components/MaterialIcon';
 import type { OrbitalObject } from '@/types/orbital';
 import { deriveObjectCategory, OBJECT_CATEGORY_INFO, getObjectCategoryCss } from '@/types/objectCategories';
 import { deriveOrbitRegime } from '@/types/orbitLayers';
-import { calculateOrbitalVelocity } from '@/services/orbitalPositionService';
+import {
+  calculateOrbitalPosition,
+  calculateOrbitalVelocity,
+} from '@/services/orbitalPositionService';
 
 interface OrbitalObjectDetailsProps {
   object: OrbitalObject | null;
@@ -32,7 +35,8 @@ export const OrbitalObjectDetails: React.FC<OrbitalObjectDetailsProps> = ({
     period: object.orbitalPeriod,
   });
 
-  const altKm = object.semimajorAxis ? Math.round(object.semimajorAxis - 6371) : 0;
+  const position = calculateOrbitalPosition(object);
+  const altKm = position ? Math.round(position.alt) : 0;
   const velocity = object.semimajorAxis ? calculateOrbitalVelocity(object.semimajorAxis, altKm) : 7.5;
 
   return (

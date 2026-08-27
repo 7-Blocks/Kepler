@@ -38,7 +38,7 @@ a {
 @theme {
   --color-on-primary: #00363d;
   --color-status-emergency: #FF3B30;
-  --color-inverse-surface: #dfe2eb;
+  --color-inverse-surface: var(--kepler-inverse-surface);
   --color-error: #ffb4ab;
   --color-inverse-primary: #006875;
   --color-on-primary-fixed-variant: #004f58;
@@ -47,14 +47,15 @@ a {
   --color-on-primary-container: #00626e;
   --color-error-container: #93000a;
   --color-on-primary-fixed: #001f24;
-  --color-surface-bright: #353940;
-  --color-surface-variant: #31353c;
+  --color-surface-bright: var(--kepler-surface-bright);
+  --color-surface-variant: var(--kepler-surface-variant);
   --color-on-error: #690005;
   --color-secondary-container: #0044eb;
   --color-background: var(--kepler-background);
   --color-outline-variant: #3b494c;
+  --color-outline-variant: var(--kepler-outline-variant);
   --color-surface-tint: #00daf3;
-  --color-inverse-on-surface: #2d3137;
+  --color-inverse-on-surface: var(--kepler-inverse-on-surface);
   --color-tertiary-fixed: #ffdf96;
   --color-text-satellite: #F9FAFB;
   --color-primary-fixed: #9cf0ff;
@@ -67,31 +68,31 @@ a {
   --color-on-tertiary: #3e2e00;
   --color-secondary-fixed: #dde1ff;
   --color-on-background: var(--kepler-on-surface);
+  --color-on-background: var(--kepler-on-background);
   --color-secondary: #b8c3ff;
-  --color-surface-dim: #10141a;
+  --color-surface-dim: var(--kepler-surface-dim);
   --color-status-warning: #FF9500;
   --color-on-error-container: #ffdad6;
   --color-secondary-fixed-dim: #b8c3ff;
   --color-tertiary-container: #fec931;
-  --color-surface-container-lowest: #0a0e14;
-  --color-surface-container-highest: #31353c;
-  --color-outline: #849396;
-  --color-surface-container-low: #181c22;
+  --color-surface-container-lowest: var(--kepler-surface-container-lowest);
+  --color-surface-container-highest: var(--kepler-surface-container-highest);
+  --color-outline: var(--kepler-outline);
+  --color-surface-container-low: var(--kepler-surface-container-low);
   --color-primary: #c3f5ff;
-  --color-surface-container-high: #262a31;
-  --color-on-surface-variant: #bac9cc;
-  --color-bg-graphite: #05070A;
-  --color-text-muted: #9CA3AF;
+  --color-surface-container-high: var(--kepler-surface-container-high);
+  --color-on-surface-variant: var(--kepler-on-surface-variant);
+  --color-bg-graphite: var(--kepler-bg-graphite);
+  --color-text-muted: var(--kepler-text-muted);
   --color-primary-container: #00e5ff;
   --color-on-secondary-fixed-variant: #0035bd;
-  --color-surface-container: #1c2026;
-  --color-bg-deep-space: #0C1220;
+  --color-surface-container: var(--kepler-surface-container);
+  --color-bg-deep-space: var(--kepler-bg-deep-space);
   --color-status-success: #34C759;
   --color-primary-fixed-dim: #00daf3;
   --color-on-tertiary-container: #6f5500;
   --color-on-secondary-container: #c6cfff;
-  --color-border-panel: #1F2937;
-
+  --color-border-panel: var(--kepler-border-panel);
   --font-body-ui: "Inter", sans-serif;
   --font-label-caps: "IBM Plex Sans", sans-serif;
   --font-technical-data: "IBM Plex Sans", monospace;
@@ -132,17 +133,68 @@ a {
   }
 }
 
+/* Default (dark) theme — matches the app's original look */
+:root {
+  --kepler-background: #0C1220;
+  --kepler-surface: #10141a;
+  --kepler-surface-bright: #353940;
+  --kepler-surface-variant: #31353c;
+  --kepler-outline-variant: #3b494c;
+  --kepler-inverse-surface: #dfe2eb;
+  --kepler-inverse-on-surface: #2d3137;
+  --kepler-on-surface: #dfe2eb;
+  --kepler-on-background: #dfe2eb;
+  --kepler-surface-dim: #10141a;
+  --kepler-surface-container-lowest: #0a0e14;
+  --kepler-surface-container-highest: #31353c;
+  --kepler-outline: #849396;
+  --kepler-surface-container-low: #181c22;
+  --kepler-surface-container-high: #262a31;
+  --kepler-on-surface-variant: #bac9cc;
+  --kepler-bg-graphite: #05070A;
+  --kepler-text-muted: #9CA3AF;
+  --kepler-surface-container: #1c2026;
+  --kepler-bg-deep-space: #0C1220;
+  --kepler-border-panel: #1F2937;
+}
+
+/* Light theme — applied when <html> has class="light" */
+.light {
+  --kepler-background: #F4F6FA;
+  --kepler-surface: #FFFFFF;
+  --kepler-surface-bright: #FFFFFF;
+  --kepler-surface-variant: #E3E8ED;
+  --kepler-outline-variant: #C6CDD1;
+  --kepler-inverse-surface: #10141a;
+  --kepler-inverse-on-surface: #dfe2eb;
+  --kepler-on-surface: #171C22;
+  --kepler-on-background: #171C22;
+  --kepler-surface-dim: #DDE3EA;
+  --kepler-surface-container-lowest: #FFFFFF;
+  --kepler-surface-container-highest: #DEE2E8;
+  --kepler-outline: #6B7478;
+  --kepler-surface-container-low: #F6F8FB;
+  --kepler-surface-container-high: #E6E9EE;
+  --kepler-on-surface-variant: #495056;
+  --kepler-bg-graphite: #E9ECF1;
+  --kepler-text-muted: #6B7280;
+  --kepler-surface-container: #EEF1F5;
+  --kepler-bg-deep-space: #F4F6FA;
+  --kepler-border-panel: #D7DCE2;
+}
+
 @layer base {
   body {
     background-color: var(--kepler-background);
     color: var(--kepler-on-surface);
+    background-color: var(--color-background);
+    color: var(--color-on-background);
     overflow: hidden;
     transition:
       background-color 0.3s ease,
       color 0.3s ease;
   }
 }
-
 body {
   cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjMDAwMDAwIiBzdHJva2U9IiMwMEU1RkYiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTUuNSAzLjIxVjIwLjhjMCAuNDUuNTQuNjcuODUuMzVsNC44Ni00Ljg2YS41LjUgMCAwIDEgLjM1LS4xNWg2Ljg3YS41LjUgMCAwIDAgLjM1LS44NUw2LjM1IDIuODVhLjUuNSAwIDAgMC0uODUuMzVaIj48L3BhdGg+PC9zdmc+"), auto;
 }
@@ -151,6 +203,17 @@ body {
   @apply transition-all duration-300 ease-[cubic-bezier(0.2, 0.8, 0.2, 1)];
 }
 
+/* Smooth color/background transitions when the theme is toggled */
+body,
+header,
+aside,
+main,
+button,
+input,
+textarea,
+.glass-panel {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
 .table-head {
   @apply p-4 font-label-caps text-on-surface-variant;
 }
