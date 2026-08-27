@@ -5,23 +5,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* dark-light mode */
-:root {
-  --kepler-background: #10141a;
-  --kepler-surface: #0d1117;
-  --kepler-border-panel: #1f2937;
-  --kepler-on-surface: #dfe2eb;
-  --kepler-on-surface-variant: #bac9cc;
-}
-
-.light {
-  --kepler-background: #f4f7fa;
-  --kepler-surface: #ffffff;
-  --kepler-border-panel: #cbd5e1;
-  --kepler-on-surface: #1e293b;
-  --kepler-on-surface-variant: #475569;
-}
-
 @font-face {
   font-family: "Necosmic";
   src: url("/Necosmic.otf") format("opentype");
@@ -200,7 +183,7 @@ body {
 }
 
 .transition-ui {
-  @apply transition-all duration-300 ease-[cubic-bezier(0.2, 0.8, 0.2, 1)];
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Smooth color/background transitions when the theme is toggled */
