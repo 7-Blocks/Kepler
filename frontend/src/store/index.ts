@@ -7,7 +7,7 @@ import { useLayerStore } from './layerStore';
 import { useLogbookStore } from './logbookStore';
 import { useUIStore } from './uiStore';
 import { useOrbitalStore } from './orbitalStore';
-import { useThemeStore } from './themeStore';
+import { useThemeStore, type Theme } from './themeStore';
 export { useAuthStore } from './authStore';
 export { useDataStore, type DataFilters, type RiskLevel, type TimeRangeOption } from './dataStore';
 export { useLayerStore, type ObjectCategory } from './layerStore';
