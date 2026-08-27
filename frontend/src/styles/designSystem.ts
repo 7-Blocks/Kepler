@@ -6,20 +6,20 @@ export const colors = {
   bgGraphite: '#05070a',
   surface: '#0d1117',
   borderPanel: '#1f2937',
-  
-  
+
+
   primary: '#c3f5ff',
-  primaryContainer: '#00e5ff', 
+  primaryContainer: '#00e5ff',
   secondary: '#b8c3ff',
-  secondaryContainer: '#0044eb', 
+  secondaryContainer: '#0044eb',
   tertiary: '#ffeac0',
-  
-  
+
+
   emergency: '#FF3B30',
   warning: '#FF9500',
   success: '#34C759',
-  
-  
+
+
   textSatellite: '#F9FAFB',
   textMuted: '#9CA3AF',
   onSurface: '#dfe2eb',

@@ -1,3 +1,4 @@
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -33,6 +34,23 @@ import { GlobalSearchModal } from '@/components/orbital/GlobalSearchModal';
 import { useOrbitalStore } from '@/store';
 import { useEffect } from 'react';
 
+export function TestTheme() {
+  return (
+    <div className="p-8 bg-background text-on-surface">
+      <h2 className="text-2xl font-bold">
+        Kepler Theme Test
+      </h2>
+
+      <p className="mt-2 text-on-surface-variant">
+        This should change between light and dark mode.
+      </p>
+
+      <div className="mt-6">
+        <ThemeToggle />
+      </div>
+    </div>
+  );
+}
 // Lives inside BrowserRouter/QueryClientProvider so it can reach navigate(),
 // the shared uiStore, and React Query's cache. Centralized here per issue #83
 // so shortcuts don't get scattered across pages.
@@ -76,13 +94,13 @@ function App() {
 
   return (
     <BrowserRouter>
-    <Toaster 
-      toastOptions={toastOptions} 
-      position="top-right" 
-      offset={{ top: '4em', right: "16px", left: "16px" }} 
-    />
-    <GlobalShortcuts />
-    <GlobalSearchModal />
+      <Toaster
+        toastOptions={toastOptions}
+        position="top-right"
+        offset={{ top: '4em', right: "16px", left: "16px" }}
+      />
+      <GlobalShortcuts />
+      <GlobalSearchModal />
       <Routes>
         <Route element={<MarketingLayout />}>
           <Route path="/" element={<LandingPage />} />
@@ -109,7 +127,7 @@ function App() {
           <Route path="mission-planner" element={<MissionPlanner />} />
           <Route path="settings" element={<Settings />} />
         </Route>
-        
+
         {/* Legacy redirect routes */}
         <Route path="/space-traffic" element={<Navigate to="/dashboard/space-traffic" replace />} />
         <Route path="/satellites" element={<Navigate to="/dashboard/satellites" replace />} />
