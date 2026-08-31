@@ -44,6 +44,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/draexon"><img src="https://github.com/draexon.png" width="50px" style="border-radius:50%;margin:5px;" alt="draexon" /></a>
 <a href="https://github.com/AaineeSinha"><img src="https://github.com/AaineeSinha.png" width="50px" style="border-radius:50%;margin:5px;" alt="AaineeSinha" /></a>
 <a href="https://github.com/Sk-Uruj"><img src="https://github.com/Sk-Uruj.png" width="50px" style="border-radius:50%;margin:5px;" alt="Sk-Uruj" /></a>
+<a href="https://github.com/teja-311"><img src="https://github.com/teja-311.png" width="50px" style="border-radius:50%;margin:5px;" alt="teja-311" /></a>
 <a href="https://github.com/SohammPawarr"><img src="https://github.com/SohammPawarr.png" width="50px" style="border-radius:50%;margin:5px;" alt="SohammPawarr" /></a>
 <a href="https://github.com/Pranitrane"><img src="https://github.com/Pranitrane.png" width="50px" style="border-radius:50%;margin:5px;" alt="Pranitrane" /></a>
 <a href="https://github.com/emreumar"><img src="https://github.com/emreumar.png" width="50px" style="border-radius:50%;margin:5px;" alt="emreumar" /></a>
