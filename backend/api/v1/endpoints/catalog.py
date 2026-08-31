@@ -114,7 +114,6 @@ def _serialize_debris(deb: Debris) -> Dict[str, Any]:
     }
 
 
-@router.get("/objects", response_model=APIResponse[List[Dict[str, Any]]])
 def _serialize_space_object(obj: SpaceObject) -> Dict[str, Any]:
     epoch = obj.epoch
     raan, arg_of_perigee, mean_anomaly = _orbital_angles(obj.tle_line2, obj)
@@ -177,6 +176,7 @@ def list_space_objects(
         data=[_serialize_space_object(r) for r in records],
         pagination=PaginationSchema(page=page, size=size, total=total, pages=pages),
     )
+@router.get("/objects/{catalog_number}", response_model=APIResponse[Dict[str, Any]])
 def get_space_object(catalog_number: str, db: Session = Depends(get_db)):
     if catalog_number.isdecimal():
         catalog_number = str(int(catalog_number))
