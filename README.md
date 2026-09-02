@@ -17,6 +17,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <h1>Contributors 👥</h1>
 
 <a href="https://github.com/krishkhinchi"><img src="https://github.com/krishkhinchi.png" width="50px" style="border-radius:50%;margin:5px;" alt="krishkhinchi" /></a>
+<a href="https://github.com/lucky-panchal"><img src="https://github.com/lucky-panchal.png" width="50px" style="border-radius:50%;margin:5px;" alt="lucky-panchal" /></a>
 <a href="https://github.com/Diwakar-odds"><img src="https://github.com/Diwakar-odds.png" width="50px" style="border-radius:50%;margin:5px;" alt="Diwakar-odds" /></a>
 <a href="https://github.com/KrupaShah20"><img src="https://github.com/KrupaShah20.png" width="50px" style="border-radius:50%;margin:5px;" alt="KrupaShah20" /></a>
 <a href="https://github.com/Priteshsolanki12"><img src="https://github.com/Priteshsolanki12.png" width="50px" style="border-radius:50%;margin:5px;" alt="Priteshsolanki12" /></a>
