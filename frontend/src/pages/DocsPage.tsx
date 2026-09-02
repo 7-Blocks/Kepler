@@ -260,7 +260,7 @@ export function DocsPage() {
                     whileInView="show"
                     viewport={{ once: true, margin: "-30px" }}
                     variants={fadeUp}
-                    id={cat.title.toLowerCase().replace(/\s+/g, "-").replace("&", "")}
+                    id={cat.title.toLowerCase().replace(/\s+/g, "-").replace(/&/g, "")}
                   >
                     <MagicCard
                       gradientColor={`${cat.gradientFrom}50`}
