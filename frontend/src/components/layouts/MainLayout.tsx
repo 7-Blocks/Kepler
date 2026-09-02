@@ -138,14 +138,18 @@ export const MainLayout: React.FC = () => {
         >
           {/* Logo & Header */}
           <div className="px-6 py-5 flex items-center justify-between">
-            <div className={`${!mobileSidebarOpen && sidebarCollapsed ? 'hidden' : 'block'}`}>
+            <NavLink
+              to="/"
+              className={`${!mobileSidebarOpen && sidebarCollapsed ? 'hidden' : 'block'} transition-ui hover:opacity-90`}
+              aria-label="Go to Kepler home"
+            >
               <h1 className="font-display-lg text-headline-lg font-bold tracking-tighter text-primary-container drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]">
                 KEPLER
               </h1>
               <p className="font-label-caps text-[9px] sm:text-label-caps text-primary-fixed-dim opacity-70 mt-1">
                 AI STRATEGIC COMMAND
               </p>
-            </div>
+            </NavLink>
 
             {/* Collapse toggle (desktop) / Close toggle (mobile) */}
             <button
