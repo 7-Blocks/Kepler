@@ -14,6 +14,8 @@ import { useWeatherStatus } from '@/hooks/useApi';
 import type { Collision, AgentDecision } from '@/services/api';
 import { useOrbitalStore } from '@/store';
 import { logEvent } from '@/store/logbookStore';
+import { useEventTimeline } from '@/hooks/useEventTimeline';
+import type { TimelineEvent } from '@/types/events';
 
 const riskColor = (level: string) => {
   switch (level) {
@@ -45,6 +47,12 @@ function formatTCA(tca: string | null): string {
   return `T-MINUS ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function formatEventMissDistance(event: TimelineEvent): string {
+  const distance = event.telemetry?.miss_distance_m;
+  if (distance == null) return '—';
+  return distance < 1000 ? `${distance.toFixed(0)}m` : `${(distance / 1000).toFixed(2)} KM`;
+}
+
 const KPISkeleton = () => (
   <div className="glass-panel p-4 h-24 animate-pulse bg-surface-container/40 rounded-xl" />
 );
@@ -60,6 +68,7 @@ export const Dashboard: React.FC = () => {
   const agents   = useAgentRuns({ size: 6 });
   const weather  = useWeatherStatus();
   const orbitalStats = useOrbitalStore((s) => s.statistics);
+  const eventTimeline = useEventTimeline();
 
   useEffect(() => {
     useOrbitalStore.getState().loadCatalog();
@@ -127,6 +136,10 @@ export const Dashboard: React.FC = () => {
   }, [s, w, orbitalStats]);
 
   const conjunctions = useMemo(() => collisions.data?.data ?? [], [collisions.data]);
+  const liveConjunctionEvents = useMemo(
+    () => eventTimeline.events.filter((event) => event.category === 'CONJUNCTION').slice(0, 5),
+    [eventTimeline.events]
+  );
   const agentRuns    = agents.data?.data ?? [];
 
   // Log newly-detected CRITICAL/HIGH risk conjunctions as Alert events —
@@ -233,11 +246,11 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
-            {collisions.isLoading ? (
+            {collisions.isLoading && liveConjunctionEvents.length === 0 ? (
               <div className="flex gap-4 min-w-[600px]">
                 {[0, 1, 2].map(i => <CollisionCardSkeleton key={i} />)}
               </div>
-            ) : conjunctions.length === 0 ? (
+            ) : liveConjunctionEvents.length === 0 && conjunctions.length === 0 ? (
               <div className="flex items-center justify-center h-28 glass-panel border-dashed border-2 border-border-panel rounded-xl">
                 <div className="text-center">
                   <MaterialIcon name="check_circle" className="text-status-success text-3xl mb-2" />
@@ -251,6 +264,62 @@ export const Dashboard: React.FC = () => {
               </div>
             ) : (
               <div className="flex gap-4 min-w-[600px]">
+                {liveConjunctionEvents.map((event) => {
+                  const probability = event.telemetry?.collision_probability;
+                  const severity = event.severity === 'CRITICAL' ? 'CRITICAL' : event.severity;
+                  const satellite = event.satellite_name ?? 'UNKNOWN SATELLITE';
+                  const debris = event.title.split(' vs ')[1] ?? 'UNKNOWN OBJECT';
+
+                  return (
+                    <motion.div
+                      key={event.id}
+                      whileHover={{ y: -3, scale: 1.02 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="shrink-0"
+                    >
+                      <MagicCard
+                        gradientColor={severity === 'CRITICAL' || severity === 'HIGH' ? '#FF3B30' : '#FF9500'}
+                        gradientSize={200}
+                        gradientOpacity={0.3}
+                        className="w-64 sm:w-72 rounded-xl border border-white/10 hover:border-white/20 transition-colors duration-300 shadow-md hover:shadow-lg"
+                        fillClassName="bg-[#0A0F1A]"
+                      >
+                        <div className={`p-4 border-l-4 ${riskColor(severity)} relative overflow-hidden rounded-l`}>
+                          <div className="absolute top-0 right-0 p-2 opacity-10">
+                            <MaterialIcon name="crisis_alert" className={`text-6xl ${riskBarColor(severity)}`} />
+                          </div>
+                          <div className="flex justify-between items-start mb-4 relative z-10">
+                            <div>
+                              <p className="text-[10px] text-text-muted mb-1 font-technical-data">
+                                {satellite} vs {debris}
+                              </p>
+                              <p className="font-bold text-sm text-on-surface font-technical-data">
+                                {new Date(event.timestamp).toISOString().replace('T', ' ').substring(0, 19)}Z
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className={`text-xs font-bold font-technical-data ${riskColor(severity).split(' ')[1]}`}>
+                                {probability != null ? `${(probability * 100).toFixed(2)}% PROB` : 'LIVE UPDATE'}
+                              </p>
+                              <p className="text-[9px] text-text-muted font-label-caps uppercase">{severity}</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2 relative z-10">
+                            <div className="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`${riskBarColor(severity)} h-full ${severity === 'CRITICAL' ? 'animate-pulse' : ''}`}
+                                style={{ width: `${Math.min(100, (probability ?? 0) * 100 * 10)}%` }}
+                              />
+                            </div>
+                            <p className="text-[10px] text-primary/80 font-technical-data">
+                              MISS DISTANCE: {formatEventMissDistance(event)}
+                            </p>
+                          </div>
+                        </div>
+                      </MagicCard>
+                    </motion.div>
+                  );
+                })}
                 {conjunctions.map((conj: Collision) => (
                   <motion.div
                     key={conj.id}
