@@ -8,10 +8,10 @@ import { Link } from "react-router-dom";
 import { MouseParallax } from "./MouseParallax";
 
 const TELEMETRY = [
-  { label: "OBJECTS TRACKED", value: "34,900+" },
+  { label: "OBJECTS TRACKED", value: "64,000+" },
   { label: "ACTIVE CONJUNCTIONS", value: "128" },
   { label: "AVG. LEAD TIME", value: "36 HRS" },
-  { label: "MODEL CONFIDENCE", value: "97.2%" },
+  { label: "MODEL CONFIDENCE", value: "98.2%" },
 ];
 
 const fadeUp = {
@@ -25,41 +25,32 @@ const fadeUp = {
 
 export function Hero() {
   return (
-    <section className="relative flex min-h-screen w-full items-center overflow-hidden bg-[radial-gradient(120%_90%_at_50%_10%,#0B111F_0%,#05070C_60%)] font-[Inter]">
-      <MouseParallax className="absolute inset-0" strength={20}>
+    <section id="hero" className="relative flex min-h-screen w-full items-center overflow-hidden bg-[radial-gradient(120%_90%_at_50%_10%,#0B111F_0%,#05070C_60%)] font-[Inter]">
+      <MouseParallax className="absolute inset-0 z-0" strength={20}>
         <Particles  quantity={220} />
       </MouseParallax>
 
-      
-      <div
-        className="absolute left-1/2 top-[32%] h-[240px] w-[240px] max-w-[85vw] -translate-x-1/2 -translate-y-1/2 opacity-40
-                   sm:left-auto sm:right-[3%] sm:top-1/2 sm:h-[380px] sm:w-[380px] sm:translate-x-0 sm:-translate-y-1/2 sm:opacity-70
-                   lg:right-[5%] lg:h-[520px] lg:w-[520px] lg:opacity-90"
-      >
-        <MouseParallax strength={10}>
-          <OrbitSatellites />
-        </MouseParallax>
+      {/* Full-bleed Fixed Viewport Globe Layer */}
+      <div className="pointer-events-none fixed inset-0 z-[1] will-change-transform">
+        <Globe />
+      </div>
 
-        <MouseParallax strength={20} className="absolute inset-0 flex items-center justify-center">
-          <Globe className="h-max-[480px] w-max-[480px]" />
-        </MouseParallax>
+      {/* Orbit satellites overlay synced with GSAP scroll timeline */}
+      <div
+        id="orbit-satellites-wrapper"
+        className="pointer-events-none absolute left-1/2 top-[32%] h-[240px] w-[240px] max-w-[85vw] -translate-x-1/2 -translate-y-1/2 opacity-0
+                   sm:left-auto sm:right-[3%] sm:top-1/2 sm:h-[380px] sm:w-[380px] sm:translate-x-0 sm:-translate-y-1/2
+                   lg:right-[5%] lg:h-[520px] lg:w-[520px] z-[2] transition-opacity duration-300"
+      >
+        {/* <MouseParallax strength={10}>
+          <OrbitSatellites />
+        </MouseParallax> */}
       </div>
 
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#05070C_0%,rgba(5,7,12,0.85)_38%,rgba(5,7,12,0.25)_62%,transparent_85%)] sm:bg-[linear-gradient(90deg,#05070C_0%,rgba(5,7,12,0.85)_38%,rgba(5,7,12,0.25)_62%,transparent_85%)]" />
 
       <div className="relative z-10 mx-auto w-full max-w-[1280px] px-6 sm:px-8 lg:px-10 pt-[120px] sm:pt-[160px] pb-12">
         <div className="max-w-[620px]">
-          <motion.div
-            initial="hidden"
-            animate="show"
-            custom={0}
-            variants={fadeUp}
-            className="mb-5 inline-flex items-center gap-2 font-[JetBrains_Mono] text-xs tracking-[0.2em] text-[#8793AC]"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-[#4CD6F0] shadow-[0_0_8px_#4CD6F0]" />
-            ORBITAL INTELLIGENCE PLATFORM
-          </motion.div>
-
           <motion.h1
             initial="hidden"
             animate="show"
