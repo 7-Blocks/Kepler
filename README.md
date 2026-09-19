@@ -18,6 +18,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 
 <a href="https://github.com/krishkhinchi"><img src="https://github.com/krishkhinchi.png" width="50px" style="border-radius:50%;margin:5px;" alt="krishkhinchi" /></a>
 <a href="https://github.com/lucky-panchal"><img src="https://github.com/lucky-panchal.png" width="50px" style="border-radius:50%;margin:5px;" alt="lucky-panchal" /></a>
+<a href="https://github.com/TheLinuxGuy-ssh"><img src="https://github.com/TheLinuxGuy-ssh.png" width="50px" style="border-radius:50%;margin:5px;" alt="TheLinuxGuy-ssh" /></a>
 <a href="https://github.com/Diwakar-odds"><img src="https://github.com/Diwakar-odds.png" width="50px" style="border-radius:50%;margin:5px;" alt="Diwakar-odds" /></a>
 <a href="https://github.com/KrupaShah20"><img src="https://github.com/KrupaShah20.png" width="50px" style="border-radius:50%;margin:5px;" alt="KrupaShah20" /></a>
 <a href="https://github.com/Priteshsolanki12"><img src="https://github.com/Priteshsolanki12.png" width="50px" style="border-radius:50%;margin:5px;" alt="Priteshsolanki12" /></a>
@@ -55,8 +56,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/revatikadam0607"><img src="https://github.com/revatikadam0607.png" width="50px" style="border-radius:50%;margin:5px;" alt="revatikadam0607" /></a>
 <a href="https://github.com/Gunjan10-droid"><img src="https://github.com/Gunjan10-droid.png" width="50px" style="border-radius:50%;margin:5px;" alt="Gunjan10-droid" /></a>
 <!-- <a href="https://github.com/tapheret2"><img src="https://github.com/tapheret2.png" width="50px" style="border-radius:50%;margin:5px;" alt="tapheret2" /></a> -->
-<!-- <a href="https://github.com/TheLinuxGuy-ssh"><img src="https://github.com/TheLinuxGuy-ssh.png" width="50px" style="border-radius:50%;margin:5px;" alt="TheLinuxGuy-ssh" /></a> -->
-<!--<a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a> -->
+<!-- <a href="https://github.com/hanu-14"><img src="https://github.com/hanu-14.png" width="50px" style="border-radius:50%;margin:5px;" alt="hanu-14" /></a> -->
 
 </div>
 <!-- CONTRIBUTORS_END -->
