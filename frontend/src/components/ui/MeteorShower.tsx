@@ -105,18 +105,28 @@ export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) =>
   }, [enabled]);
 
   useEffect(() => {
-    // Pause animations when tab is not visible
+    // Pause animations when tab is not visible, resume when visible
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        // Tab hidden: cancel animation frame
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
         }
+      } else if (enabled && !prefersReducedMotion.current) {
+        // Tab visible: resume animation if enabled
+        const animate = (timestamp: number) => {
+          if (!document.hidden && enabled && !prefersReducedMotion.current) {
+            spawnMeteor(timestamp);
+            animationFrameRef.current = requestAnimationFrame(animate);
+          }
+        };
+        animationFrameRef.current = requestAnimationFrame(animate);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+  }, [enabled]);
 
   if (!enabled || prefersReducedMotion.current) {
     return null;
@@ -129,45 +139,54 @@ export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) =>
       style={{ mixBlendMode: 'screen' }}
       aria-hidden="true"
     >
-      {meteors.map((meteor) => (
-        <div
-          key={meteor.id}
-          className="absolute"
-          style={{
-            left: `${meteor.startX}%`,
-            top: `${meteor.startY}%`,
-            width: `${meteor.length}px`,
-            height: '2px',
-            background: `linear-gradient(90deg, 
-              rgba(255, 255, 255, ${meteor.opacity}) 0%, 
-              rgba(200, 220, 255, ${meteor.opacity * 0.6}) 50%, 
-              transparent 100%)`,
-            transform: `rotate(${Math.atan2(meteor.endY - meteor.startY, meteor.endX - meteor.startX)}rad)`,
-            boxShadow: `0 0 6px rgba(255, 255, 255, ${meteor.opacity * 0.8})`,
-            animation: `meteorFall ${meteor.duration}ms linear forwards`,
-            willChange: 'transform, opacity',
-          }}
-        />
-      ))}
-      
-      <style>{`
-        @keyframes meteorFall {
-          0% {
-            transform: translateX(0) translateY(0) rotate(var(--meteor-angle, 45deg));
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateX(var(--meteor-distance-x, 200px)) translateY(var(--meteor-distance-y, 200px)) rotate(var(--meteor-angle, 45deg));
-            opacity: 0;
-          }
-        }
-      `}</style>
+      {meteors.map((meteor) => {
+        const angle = Math.atan2(meteor.endY - meteor.startY, meteor.endX - meteor.startX);
+        const distanceX = (meteor.endX - meteor.startX) * window.innerWidth / 100;
+        const distanceY = (meteor.endY - meteor.startY) * window.innerHeight / 100;
+        
+        return (
+          <div
+            key={meteor.id}
+            className="absolute"
+            style={{
+              left: `${meteor.startX}%`,
+              top: `${meteor.startY}%`,
+              width: `${meteor.length}px`,
+              height: '2px',
+              background: `linear-gradient(90deg, 
+                rgba(255, 255, 255, ${meteor.opacity}) 0%, 
+                rgba(200, 220, 255, ${meteor.opacity * 0.6}) 50%, 
+                transparent 100%)`,
+              transform: `rotate(${angle}rad)`,
+              boxShadow: `0 0 6px rgba(255, 255, 255, ${meteor.opacity * 0.8})`,
+              animation: `meteorFall-${meteor.id} ${meteor.duration}ms linear forwards`,
+              willChange: 'transform, opacity',
+              ['--meteor-distance-x' as string]: `${distanceX}px`,
+              ['--meteor-distance-y' as string]: `${distanceY}px`,
+              ['--meteor-angle' as string]: `${angle}rad`,
+            }}
+          >
+            <style>{`
+              @keyframes meteorFall-${meteor.id} {
+                0% {
+                  transform: translateX(0) translateY(0) rotate(${angle}rad);
+                  opacity: 0;
+                }
+                10% {
+                  opacity: 1;
+                }
+                90% {
+                  opacity: 1;
+                }
+                100% {
+                  transform: translateX(${distanceX}px) translateY(${distanceY}px) rotate(${angle}rad);
+                  opacity: 0;
+                }
+              }
+            `}</style>
+          </div>
+        );
+      })}
     </div>
   );
 };
