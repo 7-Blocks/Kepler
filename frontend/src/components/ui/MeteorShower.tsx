@@ -169,9 +169,6 @@ export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) =>
               boxShadow: `0 0 6px rgba(255, 255, 255, ${meteor.opacity * 0.8})`,
               animation: `meteorFall-${meteor.id} ${meteor.duration}ms linear forwards`,
               willChange: 'transform, opacity',
-              ['--meteor-distance-x' as string]: `${distanceX}px`,
-              ['--meteor-distance-y' as string]: `${distanceY}px`,
-              ['--meteor-angle' as string]: `${angle}rad`,
             }}
           >
             <style>{`
