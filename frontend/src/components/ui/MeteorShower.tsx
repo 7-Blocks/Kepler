@@ -143,7 +143,7 @@ export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) =>
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 pointer-events-none overflow-hidden z-[5]"
+      className="absolute inset-0 pointer-events-none overflow-hidden z-[5]"
       style={{ mixBlendMode: 'screen' }}
       aria-hidden="true"
     >
