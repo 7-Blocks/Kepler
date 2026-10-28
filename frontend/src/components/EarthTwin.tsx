@@ -501,7 +501,8 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
       <div
         ref={containerRef}
-        className={`w-full h-full transition-opacity duration-700 ${useFallback ? 'opacity-0' : 'opacity-100'}`}
+        className={`relative w-full h-full transition-opacity duration-700 ${useFallback ? 'opacity-0' : 'opacity-100'}`}
+        style={{ zIndex: 1 }}
       />
 
       {/* Meteor shower effect - renders above background and viewer, below HUD */}
