@@ -497,15 +497,15 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
   return (
     <div className="relative w-full h-full bg-bg-deep-space overflow-hidden select-none">
-      {/* Meteor shower background effect */}
-      <MeteorShower enabled={meteorShowerEnabled} />
-      
       <ProceduralSpaceBackground viewer={viewerInstance} />
 
       <div
         ref={containerRef}
         className={`w-full h-full transition-opacity duration-700 ${useFallback ? 'opacity-0' : 'opacity-100'}`}
       />
+
+      {/* Meteor shower effect - renders above background and viewer, below HUD */}
+      <MeteorShower enabled={meteorShowerEnabled} />
 
       {/* ── Hover Tooltip ────────────────────────────────────────── */}
       <OrbitalHoverPanel

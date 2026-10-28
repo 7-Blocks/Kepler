@@ -18,20 +18,20 @@ interface MeteorShowerProps {
 
 export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) => {
   const [meteors, setMeteors] = useState<Meteor[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const animationFrameRef = useRef<number>();
-  const lastSpawnTimeRef = useRef<number>(0);
-  const prefersReducedMotion = useRef(
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastSpawnTimeRef = useRef<number>(0);
 
   useEffect(() => {
     // Check for reduced motion preference
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    prefersReducedMotion.current = mediaQuery.matches;
+    setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = () => {
-      prefersReducedMotion.current = mediaQuery.matches;
+      setPrefersReducedMotion(mediaQuery.matches);
     };
     
     mediaQuery.addEventListener('change', handleChange);
@@ -80,8 +80,12 @@ export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) =>
   };
 
   useEffect(() => {
-    if (!enabled || prefersReducedMotion.current) {
+    if (!enabled || prefersReducedMotion) {
       setMeteors([]);
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
       return;
     }
 
@@ -98,44 +102,48 @@ export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) =>
 
     return () => {
       isActive = false;
-      if (animationFrameRef.current) {
+      if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
     };
-  }, [enabled]);
+  }, [enabled, prefersReducedMotion]);
 
   useEffect(() => {
     // Pause animations when tab is not visible, resume when visible
     const handleVisibilityChange = () => {
       if (document.hidden) {
         // Tab hidden: cancel animation frame
-        if (animationFrameRef.current) {
+        if (animationFrameRef.current !== null) {
           cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
         }
-      } else if (enabled && !prefersReducedMotion.current) {
-        // Tab visible: resume animation if enabled
-        const animate = (timestamp: number) => {
-          if (!document.hidden && enabled && !prefersReducedMotion.current) {
-            spawnMeteor(timestamp);
-            animationFrameRef.current = requestAnimationFrame(animate);
-          }
-        };
-        animationFrameRef.current = requestAnimationFrame(animate);
+      } else if (enabled && !prefersReducedMotion) {
+        // Tab visible: resume animation if enabled and not already running
+        if (animationFrameRef.current === null) {
+          const animate = (timestamp: number) => {
+            if (!document.hidden && enabled && !prefersReducedMotion) {
+              spawnMeteor(timestamp);
+              animationFrameRef.current = requestAnimationFrame(animate);
+            }
+          };
+          animationFrameRef.current = requestAnimationFrame(animate);
+        }
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [enabled]);
+  }, [enabled, prefersReducedMotion]);
 
-  if (!enabled || prefersReducedMotion.current) {
+  if (!enabled || prefersReducedMotion) {
     return null;
   }
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 pointer-events-none overflow-hidden z-0"
+      className="fixed inset-0 pointer-events-none overflow-hidden z-[5]"
       style={{ mixBlendMode: 'screen' }}
       aria-hidden="true"
     >
