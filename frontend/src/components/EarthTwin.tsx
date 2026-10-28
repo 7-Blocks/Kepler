@@ -9,6 +9,8 @@ import { deriveObjectCategory, getObjectCategoryCss, isObjectCategoryVisible } f
 import { deriveOrbitRegime } from '@/types/orbitLayers';
 import { MaterialIcon } from './MaterialIcon';
 import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
+import { MeteorShower } from '@/components/ui/MeteorShower';
+import { MeteorShowerToggle } from '@/components/ui/MeteorShowerToggle';
 import { LayerManagerPanel } from './OrbitLayers/LayerManagerPanel';
 import { BookmarkModal, type BookmarkFormValues } from './GlobeBookmarks/BookmarkModal';
 import { BookmarkSidebar } from './GlobeBookmarks/BookmarkSidebar';
@@ -50,6 +52,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
   const activeSector = useActiveSector();
   const { setSelectedSatelliteId } = useUIStore();
+  const meteorShowerEnabled = useUIStore((s) => s.meteorShowerEnabled);
   const { statistics, loading: catalogLoading, loadingProgress } = useOrbitalStore();
 
   const [hoveredObject, setHoveredObject] = useState<OrbitalObject | null>(null);
@@ -494,6 +497,9 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
   return (
     <div className="relative w-full h-full bg-bg-deep-space overflow-hidden select-none">
+      {/* Meteor shower background effect */}
+      <MeteorShower enabled={meteorShowerEnabled} />
+      
       <ProceduralSpaceBackground viewer={viewerInstance} />
 
       <div
@@ -602,6 +608,8 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             >
               LAYERS
             </button>
+
+            <MeteorShowerToggle />
           </div>
         </div>
       </div>

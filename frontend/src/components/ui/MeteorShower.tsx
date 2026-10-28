@@ -1,0 +1,173 @@
+import React, { useEffect, useRef, useState } from 'react';
+
+interface Meteor {
+  id: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  duration: number;
+  delay: number;
+  length: number;
+  opacity: number;
+}
+
+interface MeteorShowerProps {
+  enabled?: boolean;
+}
+
+export const MeteorShower: React.FC<MeteorShowerProps> = ({ enabled = true }) => {
+  const [meteors, setMeteors] = useState<Meteor[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number>();
+  const lastSpawnTimeRef = useRef<number>(0);
+  const prefersReducedMotion = useRef(
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
+  useEffect(() => {
+    // Check for reduced motion preference
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotion.current = mediaQuery.matches;
+
+    const handleChange = () => {
+      prefersReducedMotion.current = mediaQuery.matches;
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const createMeteor = (): Meteor => {
+    const startX = Math.random() * 100;
+    const startY = Math.random() * 50; // Top half of screen
+    
+    // Meteor moves diagonally down and to the side
+    const angle = (Math.random() * 45 + 15) * (Math.PI / 180); // 15-60 degrees
+    const distance = Math.random() * 40 + 30; // Distance traveled
+    
+    const endX = startX + Math.cos(angle) * distance;
+    const endY = startY + Math.sin(angle) * distance;
+    
+    return {
+      id: `meteor-${Date.now()}-${Math.random()}`,
+      startX,
+      startY,
+      endX,
+      endY,
+      duration: Math.random() * 1000 + 800, // 800-1800ms
+      delay: 0,
+      length: Math.random() * 60 + 40, // 40-100px trail
+      opacity: Math.random() * 0.4 + 0.3, // 0.3-0.7
+    };
+  };
+
+  const spawnMeteor = (currentTime: number) => {
+    // Random spawn interval: 2-5 seconds
+    const spawnInterval = Math.random() * 3000 + 2000;
+    
+    if (currentTime - lastSpawnTimeRef.current > spawnInterval) {
+      lastSpawnTimeRef.current = currentTime;
+      
+      const newMeteor = createMeteor();
+      setMeteors(prev => [...prev, newMeteor]);
+      
+      // Remove meteor after animation completes
+      setTimeout(() => {
+        setMeteors(prev => prev.filter(m => m.id !== newMeteor.id));
+      }, newMeteor.duration + 500);
+    }
+  };
+
+  useEffect(() => {
+    if (!enabled || prefersReducedMotion.current) {
+      setMeteors([]);
+      return;
+    }
+
+    let isActive = true;
+    
+    const animate = (timestamp: number) => {
+      if (!isActive) return;
+      
+      spawnMeteor(timestamp);
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      isActive = false;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [enabled]);
+
+  useEffect(() => {
+    // Pause animations when tab is not visible
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  if (!enabled || prefersReducedMotion.current) {
+    return null;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 pointer-events-none overflow-hidden z-0"
+      style={{ mixBlendMode: 'screen' }}
+      aria-hidden="true"
+    >
+      {meteors.map((meteor) => (
+        <div
+          key={meteor.id}
+          className="absolute"
+          style={{
+            left: `${meteor.startX}%`,
+            top: `${meteor.startY}%`,
+            width: `${meteor.length}px`,
+            height: '2px',
+            background: `linear-gradient(90deg, 
+              rgba(255, 255, 255, ${meteor.opacity}) 0%, 
+              rgba(200, 220, 255, ${meteor.opacity * 0.6}) 50%, 
+              transparent 100%)`,
+            transform: `rotate(${Math.atan2(meteor.endY - meteor.startY, meteor.endX - meteor.startX)}rad)`,
+            boxShadow: `0 0 6px rgba(255, 255, 255, ${meteor.opacity * 0.8})`,
+            animation: `meteorFall ${meteor.duration}ms linear forwards`,
+            willChange: 'transform, opacity',
+          }}
+        />
+      ))}
+      
+      <style>{`
+        @keyframes meteorFall {
+          0% {
+            transform: translateX(0) translateY(0) rotate(var(--meteor-angle, 45deg));
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(var(--meteor-distance-x, 200px)) translateY(var(--meteor-distance-y, 200px)) rotate(var(--meteor-angle, 45deg));
+            opacity: 0;
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
