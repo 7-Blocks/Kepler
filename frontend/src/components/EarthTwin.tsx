@@ -9,6 +9,8 @@ import { deriveObjectCategory, getObjectCategoryCss, isObjectCategoryVisible } f
 import { deriveOrbitRegime } from '@/types/orbitLayers';
 import { MaterialIcon } from './MaterialIcon';
 import { ProceduralSpaceBackground } from '@/components/ui/ProceduralSpaceBackground';
+import { MeteorShower } from '@/components/ui/MeteorShower';
+import { MeteorShowerToggle } from '@/components/ui/MeteorShowerToggle';
 import { LayerManagerPanel } from './OrbitLayers/LayerManagerPanel';
 import { BookmarkModal, type BookmarkFormValues } from './GlobeBookmarks/BookmarkModal';
 import { BookmarkSidebar } from './GlobeBookmarks/BookmarkSidebar';
@@ -50,6 +52,7 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
   const activeSector = useActiveSector();
   const { setSelectedSatelliteId } = useUIStore();
+  const meteorShowerEnabled = useUIStore((s) => s.meteorShowerEnabled);
   const { statistics, loading: catalogLoading, loadingProgress } = useOrbitalStore();
 
   const [hoveredObject, setHoveredObject] = useState<OrbitalObject | null>(null);
@@ -498,8 +501,12 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
 
       <div
         ref={containerRef}
-        className={`w-full h-full transition-opacity duration-700 ${useFallback ? 'opacity-0' : 'opacity-100'}`}
+        className={`relative w-full h-full transition-opacity duration-700 ${useFallback ? 'opacity-0' : 'opacity-100'}`}
+        style={{ zIndex: 1 }}
       />
+
+      {/* Meteor shower effect - renders above background and viewer, below HUD */}
+      <MeteorShower enabled={meteorShowerEnabled} />
 
       {/* ── Hover Tooltip ────────────────────────────────────────── */}
       <OrbitalHoverPanel
@@ -602,6 +609,8 @@ export const EarthTwin = forwardRef<EarthTwinHandle>((_props, ref) => {
             >
               LAYERS
             </button>
+
+            <MeteorShowerToggle />
           </div>
         </div>
       </div>

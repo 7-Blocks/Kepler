@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { logEvent } from './logbookStore';
 
 export type CameraMode = 'FREE' | 'CHASE' | 'COCKPIT' | 'EARTH_OBSERVER' | 'ORBITAL';
@@ -13,6 +14,7 @@ interface UIState {
   globalSearchOpen: boolean;
   isFlybyHistoryOpen: boolean;
   cameraMode: CameraMode;
+  meteorShowerEnabled: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleRightDrawer: () => void;
@@ -25,47 +27,62 @@ interface UIState {
   setGlobalSearchOpen: (open: boolean) => void;
   toggleFlybyHistory: () => void;
   setCameraMode: (mode: CameraMode) => void;
+  setMeteorShowerEnabled: (enabled: boolean) => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  sidebarCollapsed: false,
-  rightDrawerOpen: false,
-  selectedSatelliteId: null,   
-  selectedSatelliteIds: [],
-  selectedCollisionId: null,   
-  activeSector: '',
-  globalSearchOpen: false,
-  isFlybyHistoryOpen: false,
-  cameraMode: 'FREE',
-  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-  toggleRightDrawer: () => set((state) => ({ rightDrawerOpen: !state.rightDrawerOpen })),
-  setRightDrawerOpen: (open) => set({ rightDrawerOpen: open }),
-  setSelectedSatelliteId: (id) =>
-    set((state) => {
-      // Single source of truth for satellite selection — both the 3D globe
-      // and the satellite list page funnel here, so log it once, here,
-      // rather than at every call site (which would double-log the globe
-      // path, since it also updates this same field).
-      if (id && id !== state.selectedSatelliteId) {
-        logEvent('TRACKING', 'LOW', 'Satellite locked', `NORAD ${id}`, { CATALOG_NUMBER: id });
-      }
-      return { selectedSatelliteId: id };
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      sidebarCollapsed: false,
+      rightDrawerOpen: false,
+      selectedSatelliteId: null,   
+      selectedSatelliteIds: [],
+      selectedCollisionId: null,   
+      activeSector: '',
+      globalSearchOpen: false,
+      isFlybyHistoryOpen: false,
+      cameraMode: 'FREE',
+      meteorShowerEnabled: true,
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      toggleRightDrawer: () => set((state) => ({ rightDrawerOpen: !state.rightDrawerOpen })),
+      setRightDrawerOpen: (open) => set({ rightDrawerOpen: open }),
+      setSelectedSatelliteId: (id) =>
+        set((state) => {
+          // Single source of truth for satellite selection — both the 3D globe
+          // and the satellite list page funnel here, so log it once, here,
+          // rather than at every call site (which would double-log the globe
+          // path, since it also updates this same field).
+          if (id && id !== state.selectedSatelliteId) {
+            logEvent('TRACKING', 'LOW', 'Satellite locked', `NORAD ${id}`, { CATALOG_NUMBER: id });
+          }
+          return { selectedSatelliteId: id };
+        }),
+      setSelectedSatelliteIds: (ids) => set({ selectedSatelliteIds: ids }),
+      toggleSatelliteSelection: (id) => set((state) => {
+        const isSelected = state.selectedSatelliteIds.includes(id);
+        if (isSelected) {
+          return { selectedSatelliteIds: state.selectedSatelliteIds.filter(sid => sid !== id) };
+        }
+        if (state.selectedSatelliteIds.length >= 4) {
+          return { selectedSatelliteIds: state.selectedSatelliteIds };
+        }
+        return { selectedSatelliteIds: [...state.selectedSatelliteIds, id] };
+      }),
+      setSelectedCollisionId: (id) => set({ selectedCollisionId: id }),
+      setActiveSector: (sector) => set({ activeSector: sector }),
+      setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
+      toggleFlybyHistory: () => set((state) => ({ isFlybyHistoryOpen: !state.isFlybyHistoryOpen })),
+      setCameraMode: (mode) => set({ cameraMode: mode }),
+      setMeteorShowerEnabled: (enabled) => set({ meteorShowerEnabled: enabled }),
     }),
-  setSelectedSatelliteIds: (ids) => set({ selectedSatelliteIds: ids }),
-  toggleSatelliteSelection: (id) => set((state) => {
-    const isSelected = state.selectedSatelliteIds.includes(id);
-    if (isSelected) {
-      return { selectedSatelliteIds: state.selectedSatelliteIds.filter(sid => sid !== id) };
+    {
+      name: 'kepler-ui-settings',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        meteorShowerEnabled: state.meteorShowerEnabled,
+        sidebarCollapsed: state.sidebarCollapsed,
+      }),
     }
-    if (state.selectedSatelliteIds.length >= 4) {
-      return { selectedSatelliteIds: state.selectedSatelliteIds };
-    }
-    return { selectedSatelliteIds: [...state.selectedSatelliteIds, id] };
-  }),
-  setSelectedCollisionId: (id) => set({ selectedCollisionId: id }),
-  setActiveSector: (sector) => set({ activeSector: sector }),
-  setGlobalSearchOpen: (open) => set({ globalSearchOpen: open }),
-  toggleFlybyHistory: () => set((state) => ({ isFlybyHistoryOpen: !state.isFlybyHistoryOpen })),
-  setCameraMode: (mode) => set({ cameraMode: mode }),
-}));
+  )
+);
