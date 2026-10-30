@@ -30,6 +30,7 @@ An AI-Powered Autonomous Space Traffic Management Platform
 <a href="https://github.com/shwetakanth09"><img src="https://github.com/shwetakanth09.png" width="50px" style="border-radius:50%;margin:5px;" alt="shwetakanth09" /></a>
 <a href="https://github.com/ronaksarda"><img src="https://github.com/ronaksarda.png" width="50px" style="border-radius:50%;margin:5px;" alt="ronaksarda" /></a>
 <a href="https://github.com/SankeerthNara"><img src="https://github.com/SankeerthNara.png" width="50px" style="border-radius:50%;margin:5px;" alt="SankeerthNara" /></a>
+<a href="https://github.com/kirtan597"><img src="https://github.com/kirtan597.png" width="50px" style="border-radius:50%;margin:5px;" alt="kirtan597" /></a>
 <a href="https://github.com/ChinmaySonar007"><img src="https://github.com/ChinmaySonar007.png" width="50px" style="border-radius:50%;margin:5px;" alt="ChinmaySonar007" /></a>
 <a href="https://github.com/muntasiractive"><img src="https://github.com/muntasiractive.png" width="50px" style="border-radius:50%;margin:5px;" alt="muntasiractive" /></a>
 <a href="https://github.com/nayanraj864-cmyk"><img src="https://github.com/nayanraj864-cmyk.png" width="50px" style="border-radius:50%;margin:5px;" alt="nayanraj864-cmyk" /></a>
